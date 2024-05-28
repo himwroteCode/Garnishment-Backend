@@ -66,8 +66,22 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'auth_project.urls'
+# settings.py
 
-CORS_ALLOWED_ORIGINS = ['*']
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://garnishment-backend.onrender.com", 
+]
+
+# Static files settings
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Other settings...
+
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
