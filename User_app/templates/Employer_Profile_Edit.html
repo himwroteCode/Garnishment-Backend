@@ -1,0 +1,57 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Edit Employer Profile</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script src='main.js'></script>
+</head>
+<body>
+    <form id="employerProfileForm" ,"{% url 'update_employer_profile' %}">
+        <input type="number" name="profile_id" placeholder="Profile Id"><br>
+        <input type="text" name="employer_name" placeholder="Employer Name"><br>
+        <input type="text" name="street_name" placeholder="Street Name"><br>
+        <input type="text" name="city" placeholder="City Name"><br>
+        <input type="text" name="state" placeholder="State"><br>
+        <input type="text" name="country" placeholder="Country"><br>
+        <input type="number" name="zipcode" placeholder="zipcode"><br>
+        <input type="email" name="email" placeholder="Email"><br>
+        <input type="number" name="number_of_employer" placeholder="Number of Employer"><br>
+        <input type="text" name="department" placeholder="Department"><br>
+        <button type="submit">Update Employer Profile</button>
+    </form>
+
+    <div id="message"></div>
+
+ 
+    <script>
+        document.getElementById("employerProfileForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+
+            // Send POST request to the API endpoint
+            fetch("update_employer_profile/", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'  // Ensure CSRF token is included
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display response message
+                document.getElementById("message").innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("message").innerText = "Error updating employer profile.";
+            });
+        });
+    </script>
+</body>
+</html>
