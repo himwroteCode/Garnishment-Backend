@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ],
+  
   "builds": [{
       "src": "auth_app/wsgi.py",
       "use": "@vercel/python",
