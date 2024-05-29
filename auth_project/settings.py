@@ -137,7 +137,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-os.environ['DATABASE_URL'] = "postgres://default:Muqh6FRKE0tX@ep-young-thunder-a1xcb189.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+os.environ['DATABASE_URL'] = "postgres://default:cxyLP23ezgKQ@ep-falling-mouse-a1nq5lfg.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
 
 DATABASES = {
     'default': dj_database_url.config(

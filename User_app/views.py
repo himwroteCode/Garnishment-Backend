@@ -28,31 +28,40 @@ from django.db import transaction
 from rest_framework.decorators import api_view
 
 
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.hashers import check_password
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from rest_framework import status
+from .models import Employer_Profile
+from rest_framework_simplejwt.tokens import RefreshToken
+
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'message': 'Invalid JSON', 'status_code':status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'success': False, 'message': 'Invalid JSON', 'status_code': status.HTTP_400_BAD_REQUEST})
 
         email = data.get('email')
         password = data.get('password')
 
         if not email or not password:
-            return JsonResponse({'success': False, 'message': 'email and password are required','status_code':status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'success': False, 'message': 'Email and password are required', 'status_code': status.HTTP_400_BAD_REQUEST})
 
         try:
             user = Employer_Profile.objects.get(email=email)
         except Employer_Profile.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Invalid credentials','status_code':status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'success': False, 'message': 'Invalid credentials', 'status_code': status.HTTP_400_BAD_REQUEST})
 
         if check_password(password, user.password):
-            auth_login(request, user) 
+            auth_login(request, user)
             user_data = {
                 'id': user.id,
                 'username': user.username,
-                'name': user.name,
+                'name': user.employer_name,
                 'email': user.email,
             }
             refresh = RefreshToken.for_user(user)
@@ -62,13 +71,13 @@ def login(request):
                 'user_data': user_data,
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'code': status.HTTP_200_OK,
+                'status_code': status.HTTP_200_OK,
             }
             return JsonResponse(response_data)
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid credentials','status_code':status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'success': False, 'message': 'Invalid credentials', 'status_code': status.HTTP_400_BAD_REQUEST})
     else:
-        return JsonResponse({'message': 'Please use POST method for login','status_code':status.HTTP_400_BAD_REQUEST})
+        return JsonResponse({'message': 'Please use POST method for login', 'status_code': status.HTTP_400_BAD_REQUEST})
 
 
 
@@ -115,7 +124,9 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 import json
 from rest_framework import status
-from User_app.models import Employer_Profile
+from  .models import Employer_Profile
+
+from django.contrib.auth.hashers import make_password
 
 @csrf_exempt
 def register(request):
@@ -130,28 +141,26 @@ def register(request):
         email = data.get('email')
         password1 = data.get('password1')
         password2 = data.get('password2')
+        street_name = data.get('street_name')
+        federal_employer_identification_number = data.get('federal_employer_identification_number')
+        city = data.get('city')
+        state = data.get('state')
+        country = data.get('country')
+        zipcode = data.get('zipcode')
+        number_of_employees = data.get('number_of_employees')
+        department = data.get('department')
+        location = data.get('location')
 
-        # Optional fields
-        street_name = data.get('street_name', '')
-        federal_employer_identification_number = data.get('federal_employer_identification_number', '')
-        city = data.get('city', '')
-        state = data.get('state', '')
-        country = data.get('country', '')
-        zipcode = data.get('zipcode', '')
-        number_of_employees = data.get('number_of_employees', '')
-        department = data.get('department', '')
-        location = data.get('location', '')
-
-        # Check for required fields
         if not all([employer_name, username, email, password1, password2]):
-            return JsonResponse({'error': 'Name, username, email, and both password fields are required', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'error': 'All required fields are mandatory', 'status_code': status.HTTP_400_BAD_REQUEST})
 
         if password1 != password2:
             return JsonResponse({'error': 'Passwords do not match', 'status_code': status.HTTP_400_BAD_REQUEST})
 
         if not (len(password1) >= 8 and any(c.isupper() for c in password1) and any(c.islower() for c in password1) and any(c.isdigit() for c in password1) and any(c in '!@#$%^&*()_+' for c in password1)):
-            return JsonResponse({'error': 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'error': 'Password must meet complexity requirements', 'status_code': status.HTTP_400_BAD_REQUEST})
 
+        User = get_user_model()
         if Employer_Profile.objects.filter(username=username).exists():
             return JsonResponse({'error': 'Username taken', 'status_code': status.HTTP_400_BAD_REQUEST})
         if Employer_Profile.objects.filter(email=email).exists():
@@ -159,19 +168,19 @@ def register(request):
 
         try:
             user = Employer_Profile.objects.create(
-                employer_name=employer_name,
-                email=email,
-                username=username,
-                password=password1,
-                federal_employer_identification_number=federal_employer_identification_number or None,
-                street_name=street_name or None,
-                city=city or None,
-                state=state or None,
-                country=country or None,
-                zipcode=zipcode or None,
-                number_of_employees=number_of_employees or None,
-                department=department or None,
-                location=location or None
+                employer_name=employer_name, 
+                email=email, 
+                username=username, 
+                password=make_password(password1),  # Hash the password
+                federal_employer_identification_number=federal_employer_identification_number,
+                street_name=street_name, 
+                city=city, 
+                state=state, 
+                country=country, 
+                zipcode=zipcode, 
+                number_of_employees=number_of_employees, 
+                department=department, 
+                location=location
             )
             user.save()
             return JsonResponse({'message': 'Successfully registered', 'status_code': status.HTTP_201_CREATED})

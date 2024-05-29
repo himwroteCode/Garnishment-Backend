@@ -34,25 +34,30 @@ class Profile(models.Model):
 # Employer_Profile details
 
 
-class Employer_Profile(models.Model):
-    employer_id = models.AutoField(primary_key=True)
-    employer_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=255)
-    federal_employer_identification_number = models.CharField(max_length=255, blank=True, null=True)
-    street_name = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=255, blank=True, null=True)
-    state = models.CharField(max_length=255, blank=True, null=True)
-    country = models.CharField(max_length=255, blank=True, null=True)
-    zipcode = models.CharField(max_length=20, blank=True, null=True)
-    number_of_employees = models.IntegerField(blank=True, null=True)
-    department = models.CharField(max_length=255, blank=True, null=True)
-    location = models.CharField(max_length=255, blank=True, null=True)
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.db import models
 
+class Employer_Profile(AbstractBaseUser):
+    employer_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=100, unique=True)
+    street_name = models.CharField(max_length=255, null=True, blank=True)
+    federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=255, null=True, blank=True)
+    state = models.CharField(max_length=255, null=True, blank=True)
+    country = models.CharField(max_length=255, null=True, blank=True)
+    zipcode = models.CharField(max_length=10, null=True, blank=True)
+    number_of_employees = models.IntegerField(null=True, blank=True)
+    department = models.CharField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    last_login = models.DateTimeField(null=True, blank=True)  # Add this line
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'employer_name']
 
     def __str__(self):
-        return self.employer_name
+        return self.username
+
 
 class Employee_Details(models.Model):
     employer_id=models.IntegerField(max_length=20)
