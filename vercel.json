@@ -1,20 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "build_files.sh",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "public" }
-    },
-    {
-      "src": "manage.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "manage.py"
-    }
-  ]
-}
+  "builds": [{
+      "src": "auth_app/wsgi.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.11" }
+      }],
+      "routes": [
+          {
+              "src": "/(.*)",
+              "dest": "auth_app/wsgi.py"
+          }
+              ]
+              }
