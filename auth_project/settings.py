@@ -131,12 +131,13 @@ WSGI_APPLICATION = 'auth_project.wsgi.app'
 
 #     }
 # }
+#postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
 
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-os.environ['DATABASE_URL'] = 'postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
+os.environ['DATABASE_URL'] = "postgres://default:Muqh6FRKE0tX@ep-young-thunder-a1xcb189.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
 
 DATABASES = {
     'default': dj_database_url.config(
