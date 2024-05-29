@@ -54,7 +54,7 @@ class Employee_Details(models.Model):
     employer_id=models.IntegerField(max_length=20)
     employee_id = models.AutoField(primary_key=True)
     employee_name = models.CharField(max_length=50)
-    garnishment_fees  = models.FloatField(max_length=50)
+    department=models.CharField(max_length=50)
     net_pay=  models.FloatField()
     minimun_wages=  models.CharField(max_length=50)
     pay_cycle=models.FloatField()
