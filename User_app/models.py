@@ -33,19 +33,23 @@ class Profile(models.Model):
 
 # Employer_Profile details
 
+
 class Employer_Profile(models.Model):
     employer_id = models.AutoField(primary_key=True)
-    employer_name = models.CharField(max_length=50)
-    email = models.EmailField(max_length=30)
-    federal_employer_identification_number = models.CharField(max_length=50)
-    street_name = models.CharField(max_length=50)
-    city = models.CharField(max_length=50)
-    state = models.CharField(max_length=50)
-    country = models.CharField(max_length=50)
-    zipcode = models.IntegerField()
-    number_of_employees = models.IntegerField()
-    department = models.CharField(max_length=50)
-    location = models.CharField(max_length=50)
+    employer_name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=255, unique=True)
+    password = models.CharField(max_length=255)
+    federal_employer_identification_number = models.CharField(max_length=255, blank=True, null=True)
+    street_name = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=True)
+    country = models.CharField(max_length=255, blank=True, null=True)
+    zipcode = models.CharField(max_length=20, blank=True, null=True)
+    number_of_employees = models.IntegerField(blank=True, null=True)
+    department = models.CharField(max_length=255, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+
 
     def __str__(self):
         return self.employer_name
@@ -83,3 +87,8 @@ class IWO_Details_PDF(models.Model):
     employee_id=models.IntegerField()
     IWO_Status =models.CharField(max_length=50)
 
+class IWO_Details_PDF(models.Model):
+    IWO_ID = models.AutoField(primary_key=True)
+    employer_id=models.IntegerField()
+    employee_id=models.IntegerField()
+    IWO_Status =models.CharField(max_length=50)
