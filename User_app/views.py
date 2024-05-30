@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login 
@@ -16,26 +16,18 @@ import json
 from rest_framework.generics import DestroyAPIView
 from rest_framework import viewsets
 from rest_framework.generics import RetrieveUpdateAPIView
-from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployeeDetailsSerializer,GetEmployerDetailsSerializer,EmployeeDetailsSerializer
+from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployeeDetailsSerializer,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from .forms import PDFUploadForm
-from .models import PDFFile
 from django.db import transaction
 from rest_framework.decorators import api_view
+from rest_framework import status, viewsets
 
 
-from django.contrib.auth import login as auth_login
-from django.contrib.auth.hashers import check_password
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from rest_framework import status
-from .models import Employer_Profile
-from rest_framework_simplejwt.tokens import RefreshToken
 
 @csrf_exempt
 def login(request):
@@ -280,7 +272,7 @@ def TaxDetails(request):
 class EmployerProfileEditView(RetrieveUpdateAPIView):
     queryset = Employer_Profile.objects.all()
     serializer_class = EmployerProfileSerializer
-    lookup_field = 'employer_id'
+    lookup_field = 'id'
     @csrf_exempt
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -297,7 +289,7 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
             return JsonResponse({'error': 'Federal Employer Identification Number must be exactly 9 characters long', 'status_code':status.HTTP_400_BAD_REQUEST})
 
         # Validate email if it's being updated
-        if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(employer_id=instance.employer_id).exists():
+        if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(id=instance.id).exists():
             return JsonResponse({'error': 'Email already registered', 'status_code':status.HTTP_400_BAD_REQUEST})
 
         serializer = self.get_serializer(instance, data=data, partial=True)
@@ -440,8 +432,6 @@ def get_employer_details(request, employer_id):
     
 
 
-
-
 @csrf_exempt
 def insert_iwo_detail(request):
     if request.method == 'POST':
@@ -495,4 +485,78 @@ def get_dashboard_data(request):
     }
 
     return JsonResponse({'data':data,'status_code':status.HTTP_200_OK})
+
+
+@csrf_exempt
+def TaxDetails(request):
+    if request.method == 'POST' :
+        try:
+            data = json.loads(request.body)
+            required_fields = ['employee_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
+            
+            Tax_details.objects.create(**data)
+            return JsonResponse({'message': 'Tax Details Successfully Registered', 'status_code':status.HTTP_201_CREATED})
+        
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format','status_code':status.HTTP_400_BAD_REQUEST})
+        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
   
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DepartmentViewSet(viewsets.ModelViewSet):
+#     queryset = Department.objects.all()
+#     serializer_class = DepartmentSerializer
+#     csrf_exempt
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_create(serializer)
+#         response_data = {
+#             'success': True,
+#             'message': 'Detail successfully registered',
+#             'Code': status.HTTP_201_CREATED
+#         }
+#         headers = self.get_success_headers(serializer.data)
+#         return JsonResponse(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
+@csrf_exempt
+def DepartmentViewSet(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            required_fields = ['department_name', 'employer_id']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
+            user = Department.objects.create(**data)
+            return JsonResponse({'message': 'Department Details Successfully Registered'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+    else:
+        return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
+
+@csrf_exempt
+def LocationViewSet(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            required_fields = ['employer_id','state','city','street']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
+            user = Location.objects.create(**data)
+            return JsonResponse({'message': 'Location Details Successfully Registered'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+    else:
+        return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
+
+

@@ -90,10 +90,20 @@ class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
     employer_id=models.IntegerField()
     employee_id=models.IntegerField()
-    IWO_Status =models.CharField(max_length=50)
+    IWO_Status =models.CharField(max_length=250)
 
-class IWO_Details_PDF(models.Model):
-    IWO_ID = models.AutoField(primary_key=True)
+class Department(models.Model):
+    department_id = models.AutoField(primary_key=True)
+    department_name=models.CharField(max_length=250)
     employer_id=models.IntegerField()
-    employee_id=models.IntegerField()
-    IWO_Status =models.CharField(max_length=50)
+
+class Location(models.Model):
+    location_id = models.AutoField(primary_key=True)
+    employer_id=models.IntegerField()
+    state=models.CharField(max_length=250)
+    city=models.CharField(max_length=250)
+    street=models.CharField(max_length=250)
+    
+    
+
+
