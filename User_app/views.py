@@ -536,6 +536,8 @@ def DepartmentViewSet(request):
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
+            if Employee_Details.objects.filter(department_name=data['department_name']).exists():
+                 return JsonResponse({'error': 'Department already exists', 'status_code':status.HTTP_400_BAD_REQUEST})            
             user = Department.objects.create(**data)
             return JsonResponse({'message': 'Department Details Successfully Registered'}, status=status.HTTP_201_CREATED)
         except Exception as e:
