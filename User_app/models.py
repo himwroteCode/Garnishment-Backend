@@ -38,6 +38,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 class Employer_Profile(AbstractBaseUser):
+    employer_id = models.AutoField(primary_key=True)
     employer_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=100, unique=True)
@@ -104,6 +105,6 @@ class Location(models.Model):
     city=models.CharField(max_length=250)
     street=models.CharField(max_length=250)
     
-    
+
 
 

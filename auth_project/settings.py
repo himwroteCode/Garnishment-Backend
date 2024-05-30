@@ -13,6 +13,11 @@ import os
 from pathlib import Path
 import dj_database_url
 
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'employer_id',
+}
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -137,7 +142,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-os.environ['DATABASE_URL'] = "postgres://default:cxyLP23ezgKQ@ep-falling-mouse-a1nq5lfg.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+os.environ['DATABASE_URL'] = "postgres://default:MkzwX17HERNt@ep-wild-moon-a14vky3k.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
 
 DATABASES = {
     'default': dj_database_url.config(

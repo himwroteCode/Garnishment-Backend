@@ -28,6 +28,14 @@ from rest_framework.decorators import api_view
 from rest_framework import status, viewsets
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.hashers import check_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+import json
+from .models import Employer_Profile
 
 @csrf_exempt
 def login(request):
@@ -35,41 +43,67 @@ def login(request):
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'message': 'Invalid JSON', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid JSON',
+                'status_code': status.HTTP_400_BAD_REQUEST
+            })
 
         email = data.get('email')
         password = data.get('password')
 
         if not email or not password:
-            return JsonResponse({'success': False, 'message': 'Email and password are required', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({
+                'success': False,
+                'message': 'Email and password are required',
+                'status_code': status.HTTP_400_BAD_REQUEST
+            })
 
         try:
             user = Employer_Profile.objects.get(email=email)
         except Employer_Profile.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Invalid credentials', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid credentials',
+                'status_code': status.HTTP_400_BAD_REQUEST
+            })
 
         if check_password(password, user.password):
             auth_login(request, user)
             user_data = {
-                'id': user.id,
+                'employer_id': user.employer_id,
                 'username': user.username,
                 'name': user.employer_name,
                 'email': user.email,
             }
-            refresh = RefreshToken.for_user(user)
-            response_data = {
-                'success': True,
-                'message': 'Login successful',
-                'user_data': user_data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'status_code': status.HTTP_200_OK,
-            }
-            return JsonResponse(response_data)
+            try:
+                refresh = RefreshToken.for_user(user)
+                response_data = {
+                    'success': True,
+                    'message': 'Login successful',
+                    'user_data': user_data,
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                    'status_code': status.HTTP_200_OK,
+                }
+                return JsonResponse(response_data)
+            except AttributeError as e:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Error generating tokens: {str(e)}',
+                    'status_code': status.HTTP_500_INTERNAL_SERVER_ERROR
+                })
         else:
-            return JsonResponse({'success': False, 'message': 'Invalid credentials', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid credentials',
+                'status_code': status.HTTP_400_BAD_REQUEST
+            })
     else:
-        return JsonResponse({'message': 'Please use POST method for login', 'status_code': status.HTTP_400_BAD_REQUEST})
+        return JsonResponse({
+            'message': 'Please use POST method for login',
+            'status_code': status.HTTP_400_BAD_REQUEST
+        })
 
 
 
@@ -272,7 +306,7 @@ def TaxDetails(request):
 class EmployerProfileEditView(RetrieveUpdateAPIView):
     queryset = Employer_Profile.objects.all()
     serializer_class = EmployerProfileSerializer
-    lookup_field = 'id'
+    lookup_field = 'employer_id'
     @csrf_exempt
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -289,7 +323,7 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
             return JsonResponse({'error': 'Federal Employer Identification Number must be exactly 9 characters long', 'status_code':status.HTTP_400_BAD_REQUEST})
 
         # Validate email if it's being updated
-        if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(id=instance.id).exists():
+        if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(employer_id=instance.employer_id).exists():
             return JsonResponse({'error': 'Email already registered', 'status_code':status.HTTP_400_BAD_REQUEST})
 
         serializer = self.get_serializer(instance, data=data, partial=True)
@@ -423,8 +457,6 @@ def get_employer_details(request, employer_id):
                     'Code': status.HTTP_200_OK}
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
-
-
         except Employer_Profile.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
     else:
@@ -536,7 +568,7 @@ def DepartmentViewSet(request):
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
-            if Employee_Details.objects.filter(department_name=data['department_name']).exists():
+            if Department.objects.filter(department_name=data['department_name']).exists():
                  return JsonResponse({'error': 'Department already exists', 'status_code':status.HTTP_400_BAD_REQUEST})            
             user = Department.objects.create(**data)
             return JsonResponse({'message': 'Department Details Successfully Registered'}, status=status.HTTP_201_CREATED)
