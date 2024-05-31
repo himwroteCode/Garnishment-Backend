@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department, Location
+from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department, Location,Tax_details
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -52,4 +52,9 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
+        fields = '__all__'
+
+class TaxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tax_details
         fields = '__all__'

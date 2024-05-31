@@ -73,7 +73,7 @@ class Employee_Details(models.Model):
   
 class Tax_details(models.Model):
     tax_id = models.AutoField(primary_key=True)
-    employee_id=models.IntegerField(max_length=20)
+    employer_id=models.IntegerField(max_length=20)
     fedral_income_tax =models.FloatField()
     social_and_security =models.FloatField()
     medicare_tax= models.FloatField()

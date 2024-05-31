@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet
+from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details
 from django.urls import include, path
 from rest_framework import routers
 
@@ -27,8 +27,9 @@ urlpatterns = [
     path('IWO_Data',views.insert_iwo_detail, name='iwo_pdf_data'),
     path('Department',DepartmentViewSet, name='Department'),
     path('Location',views.LocationViewSet, name='Location'),  
-
-
+    path('GetTaxDetails/<int:employer_id>/',views.get_Tax_details, name='GetTaxDetails'),  
+    path('GetDepartmentDetails/<int:employer_id>/',views.get_Department_details, name='GetDepartmentDetails'), 
+    path('GetLocationDetails/<int:employer_id>/',views.get_Location_details, name='GetLocationDetails'),       
 
 ]
 

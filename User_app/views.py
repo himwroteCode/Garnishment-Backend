@@ -16,7 +16,7 @@ import json
 from rest_framework.generics import DestroyAPIView
 from rest_framework import viewsets
 from rest_framework.generics import RetrieveUpdateAPIView
-from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployeeDetailsSerializer,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer
+from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployeeDetailsSerializer,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import get_user_model
@@ -26,7 +26,7 @@ from .forms import PDFUploadForm
 from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework import status, viewsets
-
+from django.utils.decorators import method_decorator
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -300,7 +300,27 @@ def TaxDetails(request):
     else:
         return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
     
-    
+@api_view(['GET'])
+def get_Location_Deatils(request, employer_id):
+    employees=LocationSerializer.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            serializer = TaxSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+
+
+        except Tax_details.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
+
+
 #for Updating the Employer Profile data
 
 class EmployerProfileEditView(RetrieveUpdateAPIView):
@@ -360,9 +380,21 @@ class UserUpdateAPIView(RetrieveUpdateAPIView):
     
 
 
-
+class UserDeleteAPIView(DestroyAPIView):
+    queryset = CustomUser.objects.all()
+    lookup_field = 'username' 
+    @csrf_exempt
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        response_data = {
+                'success': True,
+                'message': 'Data Deleted successfully',
+                'Code': status.HTTP_204_NO_CONTENT}
+        return JsonResponse(response_data)
+    
 #update employee Details
-from django.utils.decorators import method_decorator
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
@@ -398,7 +430,6 @@ class UserDeleteAPIView(DestroyAPIView):
     
 
 #PDF upload view
-
 @transaction.atomic
 def upload_pdf(request):
     if request.method == 'POST':
@@ -421,6 +452,86 @@ def upload_pdf(request):
 
 
 #Get Employer Details on the bases of Employer_ID
+
+@api_view(['GET'])
+def get_employee_by_employer_id(request, employer_id):
+    employees=Employee_Details.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            serializer = GetEmployeeDetailsSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+
+
+        except Employee_Details.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
+
+
+@api_view(['GET'])
+def get_Tax_details(request, employer_id):
+    employees=Tax_details.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            serializer = TaxSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+
+
+        except Tax_details.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
+@api_view(['GET'])
+def get_Location_details(request, employer_id):
+    employees=Location.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            serializer = LocationSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+
+
+        except Tax_details.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
+@api_view(['GET'])
+def get_Department_details(request, employer_id):
+    employees=Department.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            serializer = DepartmentSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+
+
+        except Tax_details.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
+
 
 @api_view(['GET'])
 def get_employee_by_employer_id(request, employer_id):
