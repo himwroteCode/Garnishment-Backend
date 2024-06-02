@@ -704,4 +704,18 @@ def LocationViewSet(request):
     else:
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
 
-
+# For Deleting the Employer Profile data
+@method_decorator(csrf_exempt, name='dispatch')
+class EmployeeDeleteAPIView(DestroyAPIView):
+    queryset = Employee_Details.objects.all()
+    lookup_field = 'employee_id' 
+    @csrf_exempt
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        response_data = {
+                'success': True,
+                'message': 'Data Deleted successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+    
