@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView
+from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView
 from django.urls import include, path
 from rest_framework import routers
 
@@ -31,7 +31,9 @@ urlpatterns = [
     path('GetDepartmentDetails/<int:employer_id>/',views.get_Department_details, name='GetDepartmentDetails'), 
     path('GetLocationDetails/<int:employer_id>/',views.get_Location_details, name='Get-Location-Details'),    
     path('EmployeeDeleteAPIView/<int:employee_id>/',EmployeeDeleteAPIView.as_view(), name='Employee-Delete-APIView'),
-    path('ExportEmployees/<int:employer_id>/', views.export_employee_data, name='export-employee-data'),       
+    path('ExportEmployees/<int:employer_id>/', views.export_employee_data, name='export-employee-data'),
+    path('EmployeeImportView', EmployeeImportView.as_view(), name='Employee-Import-View'),
+
 ]
 
 
