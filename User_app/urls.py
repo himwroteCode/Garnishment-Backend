@@ -30,8 +30,8 @@ urlpatterns = [
     path('GetTaxDetails/<int:employer_id>/',views.get_Tax_details, name='GetTaxDetails'),  
     path('GetDepartmentDetails/<int:employer_id>/',views.get_Department_details, name='GetDepartmentDetails'), 
     path('GetLocationDetails/<int:employer_id>/',views.get_Location_details, name='Get-Location-Details'),    
-    path('EmployeeDeleteAPIView/<int:employee_id>/',EmployeeDeleteAPIView.as_view(), name='Employee-Delete-APIView'),       
-
+    path('EmployeeDeleteAPIView/<int:employee_id>/',EmployeeDeleteAPIView.as_view(), name='Employee-Delete-APIView'),
+    path('ExportEmployees/<int:employer_id>/', views.export_employee_data, name='export-employee-data'),       
 ]
 
 

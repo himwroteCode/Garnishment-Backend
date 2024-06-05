@@ -13,10 +13,11 @@ from django.contrib.auth import logout
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 import json
+from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView
 from rest_framework import viewsets
 from rest_framework.generics import RetrieveUpdateAPIView
-from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployeeDetailsSerializer,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer
+from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import get_user_model
@@ -25,17 +26,15 @@ from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
 from rest_framework.decorators import api_view
-from rest_framework import status, viewsets
 from django.utils.decorators import method_decorator
-
+import csv
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-import json
-from .models import Employer_Profile
+
 
 @csrf_exempt
 def login(request):
@@ -145,14 +144,6 @@ def login(request):
 
 #     return render(request, 'register.html')
 
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.contrib.auth import get_user_model
-import json
-from rest_framework import status
-from  .models import Employer_Profile
-
-from django.contrib.auth.hashers import make_password
 
 @csrf_exempt
 def register(request):
@@ -458,7 +449,7 @@ def get_employee_by_employer_id(request, employer_id):
     employees=Employee_Details.objects.filter(employer_id=employer_id)
     if employees.exists():
         try:
-            serializer = GetEmployeeDetailsSerializer(employees, many=True)
+            serializer = EmployeeDetailsSerializer(employees, many=True)
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -538,7 +529,7 @@ def get_employee_by_employer_id(request, employer_id):
     employees=Employee_Details.objects.filter(employer_id=employer_id)
     if employees.exists():
         try:
-            serializer = GetEmployeeDetailsSerializer(employees, many=True)
+            serializer = EmployeeDetailsSerializer(employees, many=True)
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -719,3 +710,27 @@ class EmployeeDeleteAPIView(DestroyAPIView):
                 'Code': status.HTTP_200_OK}
         return JsonResponse(response_data)
     
+
+
+@api_view(['GET'])
+def export_employee_data(request, employer_id):
+    try:
+        employees = Employee_Details.objects.filter(employer_id=employer_id)
+        if not employees.exists():
+            return JsonResponse({'detail': 'No employees found for this employer ID', status:status.HTTP_404_NOT_FOUND})
+
+        serializer = EmployeeDetailsSerializer(employees, many=True)
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="employees_{employer_id}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['employee_id','employee_name', 'department', 'net_pay', 'minimun_wages', 'pay_cycle','number_of_garnishment','location'])  # Add your field names here
+
+        for employee in serializer.data:
+            writer.writerow([employee['employee_id'],employee['employee_name'], employee['department'], employee['net_pay'], employee['minimun_wages'], employee['pay_cycle'],employee['number_of_garnishment'],employee['location']])
+
+        return response
+    except Exception as e:
+        return JsonResponse({'detail': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR})
