@@ -735,61 +735,68 @@ def export_employee_data(request, employer_id):
 
 
 
+# class EmployeeImportView(APIView):
+#     def post(self, request, format=None):
+#         csv_file = request.FILES.get('file')
+#         if not csv_file.name.endswith('.csv'):
+#             return Response({"error": "File is not CSV"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         file_data = csv_file.read().decode('utf-8')
+#         csv_reader = csv.DictReader(StringIO(file_data))
+
+#         employees = []
+#         for row in csv_reader:
+#             employee_data={
+#                 'employer_id':row['employer_id'],
+#                 'employee_id':row['employee_id'],
+#                 'employee_name':row['employee_name'],
+#                 'department':row['department'],
+#                 'position':row['position'],
+#                 'net_pay':row['net_pay'],
+#                 'minimun_wages':row['minimun_wages'],
+#                 'pay_cycle':row['pay_cycle'],
+#                 'number_of_garnishment':row['number_of_garnishment'],
+#                 'location':row['location']}
+#             serializer = EmployeeDetailsSerializer(data=employee_data)
+#             if serializer.is_valid():
+#                 employees.append(serializer.save())
+#             else:
+#                 return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         return JsonResponse({"success": f"{len(employees)}employees uploaded successfully", status:status.HTTP_201_CREATED})
+
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import pandas as pd
+
 class EmployeeImportView(APIView):
-    def post(self, request, format=None):
-        csv_file = request.FILES.get('file')
-        if not csv_file.name.endswith('.csv'):
-            return Response({"error": "File is not CSV"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file or not file.name.endswith('.csv'):
+            return Response({"error": "File is not a CSV or not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_data = csv_file.read().decode('utf-8')
-        csv_reader = csv.DictReader(StringIO(file_data))
-
-        employees = []
-        for row in csv_reader:
-            employee_data={
-                'employer_id':row['employer_id'],
-                'employee_id':row['employee_id'],
-                'employee_name':row['employee_name'],
-                'department':row['department'],
-                'position':row['position'],
-                'net_pay':row['net_pay'],
-                'minimun_wages':row['minimun_wages'],
-                'pay_cycle':row['pay_cycle'],
-                'number_of_garnishment':row['number_of_garnishment'],
-                'location':row['location']}
-            serializer = EmployeeDetailsSerializer(data=employee_data)
-            if serializer.is_valid():
-                employees.append(serializer.save())
-            else:
-                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return JsonResponse({"success": f"{len(employees)}employees uploaded successfully", status:status.HTTP_201_CREATED})
+        try:
+            data = pd.read_csv(file)
+            for _, row in data.iterrows():
+                employee_data = {
+                    "first_name": row["first_name"],
+                    "last_name": row["last_name"],
+                    "email": row["email"],
+                    "phone_number": row["phone_number"],
+                    "position": row["position"]
+                }
+                serializer = EmployeeDetailsSerializer(data=employee_data)
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Employees imported successfully"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# import pandas as pd
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-# from django.core.files.storage import default_storage
 
-# from .models import Employee  # Assuming you have an Employee model
 
-# @csrf_exempt
-# def import_csv(request):
-#     if request.method == 'POST' and request.FILES.get('file'):
-#         csv_file = request.FILES['file']
-#         file_name = default_storage.save(csv_file.name, csv_file)
-#         file_path = default_storage.path(file_name)
 
-#         try:
-#             data = pd.read_csv(file_path)
-#             for _, row in data.iterrows():
-#                 Employee.objects.create(
-#                     employer_id=row['employer_id'],
-#                     name=row['name'],
-#                     position=row['position'],
-#                     # Add other fields here
-#                 )
-#             return JsonResponse({'message': 'Data imported successfully'}, status=200)
-#         except Exception as e:
-#             return JsonResponse({'error': str(e)}, status=400)
-#     return JsonResponse({'error': 'Invalid request'}, status=400)
