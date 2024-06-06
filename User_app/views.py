@@ -733,70 +733,123 @@ def export_employee_data(request, employer_id):
     except Exception as e:
         return JsonResponse({'detail': str(e), 'status': status.HTTP_500_INTERNAL_SERVER_ERROR})
 
-
-
 # class EmployeeImportView(APIView):
-#     def post(self, request, format=None):
-#         csv_file = request.FILES.get('file')
-#         if not csv_file.name.endswith('.csv'):
-#             return Response({"error": "File is not CSV"}, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         # Check if 'file' is in request.FILES
+#         if 'file' not in request.FILES:
+#             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         file = request.FILES['file']
+#         if not file.name.endswith(('.csv', '.xsl', '.xlsx')):
+#             return Response({"error": "This is not a valid file type"}, status=status.HTTP_400_BAD_REQUEST)
 
-#         file_data = csv_file.read().decode('utf-8')
-#         csv_reader = csv.DictReader(StringIO(file_data))
-
+#         try:
+#             file_data = file.read().decode('utf-8').splitlines()
+#         except UnicodeDecodeError:
+#             try:
+#                 file_data = file.read().decode('latin-1').splitlines()
+#             except UnicodeDecodeError:
+#                 return Response({"error": "File encoding not supported"}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         reader = csv.DictReader(file_data)
+        
 #         employees = []
-#         for row in csv_reader:
-#             employee_data={
-#                 'employer_id':row['employer_id'],
-#                 'employee_id':row['employee_id'],
-#                 'employee_name':row['employee_name'],
-#                 'department':row['department'],
-#                 'position':row['position'],
-#                 'net_pay':row['net_pay'],
-#                 'minimun_wages':row['minimun_wages'],
-#                 'pay_cycle':row['pay_cycle'],
-#                 'number_of_garnishment':row['number_of_garnishment'],
-#                 'location':row['location']}
+#         for row in reader:
+#             employee_data = {
+#                 'employer_id': row['employer_id'],
+#                 'employee_id': row['employee_id'],
+#                 'employee_name': row['employee_name'],
+#                 'department': row['department'],
+#                 'net_pay': row['net_pay'],
+#                 'minimum_wages': row['minimum_wages'],
+#                 'pay_cycle': row['pay_cycle'],
+#                 'number_of_garnishment': row['number_of_garnishment'],
+#                 'location': row['location']
+#             }
 #             serializer = EmployeeDetailsSerializer(data=employee_data)
 #             if serializer.is_valid():
 #                 employees.append(serializer.save())
 #             else:
-#                 return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         return Response({"message": "CSV file processed successfully"}, status=status.HTTP_201_CREATED)
 
-#         return JsonResponse({"success": f"{len(employees)}employees uploaded successfully", status:status.HTTP_201_CREATED})
 
-# views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import pandas as pd
+# class EmployeeImportView(APIView):
+#     def post(self, request):
+#         if 'file' not in request.FILES:
+#             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         file = request.FILES['file']
+#         file_name = file.name
+
+#         # Check the file extension
+#         if file_name.endswith('.csv'):
+#             df = pd.read_csv(file)
+#         elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
+#             df = pd.read_excel(file)
+#         else:
+#             return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         employees = []
+#         for _, row in df.iterrows():
+#             employee_data={
+#             # 'employer_id':row['employer_id'],
+#             'employee_id':row['employee_id'],
+#             'employee_name':row['employee_name'],
+#             'department':row['department'],
+#             'net_pay':row['net_pay'],
+#             'minimun_wages':row['minimun_wages'],
+#             'pay_cycle':row['pay_cycle'],
+#             'number_of_garnishment':row['number_of_garnishment'],
+#             'location':row['location']
+#             }
+#             serializer = EmployeeDetailsSerializer(data=employee_data)
+#             if serializer.is_valid():
+#                 employees.append(serializer.save())
+#             else:
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         return JsonResponse({"message": "File processed successfully", status:status.HTTP_201_CREATED})
+
 
 class EmployeeImportView(APIView):
-    def post(self, request):
-        file = request.FILES.get('file')
-        if not file or not file.name.endswith('.csv'):
-            return Response({"error": "File is not a CSV or not provided"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, employer_id):
+        # Ensure the employer exists
+        #employer = get_object_or_404(Employee_Details, id=employer_id)
+        if 'file' not in request.FILES:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        file = request.FILES['file']
+        file_name = file.name
 
-        try:
-            data = pd.read_csv(file)
-            for _, row in data.iterrows():
-                employee_data = {
-                    "first_name": row["first_name"],
-                    "last_name": row["last_name"],
-                    "email": row["email"],
-                    "phone_number": row["phone_number"],
-                    "position": row["position"]
-                }
-                serializer = EmployeeDetailsSerializer(data=employee_data)
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"message": "Employees imported successfully"}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Check the file extension
+        if file_name.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
+            df = pd.read_excel(file)
+        else:
+            return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
+        
 
-
-
-
-
+        df['employer_id'] = employer_id
+        
+        employees = []
+        for _, row in df.iterrows():
+            employee_data={
+            'employee_name':row['employee_name'],
+            'department':row['department'],
+            'net_pay':row['net_pay'],
+            'minimun_wages':row['minimun_wages'],
+            'pay_cycle':row['pay_cycle'],
+            'number_of_garnishment':row['number_of_garnishment'],
+            'location':row['location'],
+            'employer_id': row['employer_id'] 
+            }
+            serializer = EmployeeDetailsSerializer(data=employee_data)
+            if serializer.is_valid():
+                employees.append(serializer.save())
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"message": "File processed successfully"}, status=status.HTTP_201_CREATED)
