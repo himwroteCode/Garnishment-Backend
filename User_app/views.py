@@ -220,7 +220,10 @@ def EmployeeDetails(request):
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
-    
+
+
+
+
 @csrf_exempt
 def TaxDetails(request):
     if request.method == 'POST' :
@@ -322,7 +325,7 @@ class UserUpdateAPIView(RetrieveUpdateAPIView):
         return JsonResponse(response_data)
     
 
-
+#Delete User Deatils
 class UserDeleteAPIView(DestroyAPIView):
     queryset = CustomUser.objects.all()
     lookup_field = 'username' 
@@ -337,8 +340,6 @@ class UserDeleteAPIView(DestroyAPIView):
         return JsonResponse(response_data)
     
 #update employee Details
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
     queryset = Employee_Details.objects.all()
@@ -354,6 +355,60 @@ class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
                 'message': 'Data Updated successfully',
                 'Code': status.HTTP_200_OK}
         return JsonResponse(response_data)
+
+
+#update Tax Details
+@method_decorator(csrf_exempt, name='dispatch')
+class TaxDetailsUpdateAPIView(RetrieveUpdateAPIView):
+    queryset = Tax_details.objects.all()
+    serializer_class = TaxSerializer
+    lookup_field = 'tax_id'  
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response_data = {
+                'success': True,
+                'message': 'Data Updated successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+
+#update Location Details
+@method_decorator(csrf_exempt, name='dispatch')
+class LocatiionDetailsUpdateAPIView(RetrieveUpdateAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    lookup_field = 'location_id'  
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response_data = {
+                'success': True,
+                'message': 'Data Updated successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+    
+
+#update Department Details
+@method_decorator(csrf_exempt, name='dispatch')
+class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    lookup_field = 'department_id'  
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response_data = {
+                'success': True,
+                'message': 'Data Updated successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+
 
 
 # For Deleting the Employer Profile data
@@ -617,7 +672,7 @@ def LocationViewSet(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            required_fields = ['employer_id','state','city','street']
+            required_fields = ['employer_id','state','city']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
@@ -643,6 +698,7 @@ class EmployeeDeleteAPIView(DestroyAPIView):
                 'Code': status.HTTP_200_OK}
         return JsonResponse(response_data)
     
+
 @api_view(['GET'])
 def export_employee_data(request, employer_id):
     try:
@@ -673,6 +729,8 @@ def export_employee_data(request, employer_id):
         return response
     except Exception as e:
         return JsonResponse({'detail': str(e), 'status': status.HTTP_500_INTERNAL_SERVER_ERROR})
+
+
 
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):

@@ -106,7 +106,7 @@ class Location(models.Model):
     employer_id=models.IntegerField()
     state=models.CharField(max_length=250)
     city=models.CharField(max_length=250)
-    street=models.CharField(max_length=250)
+    # street=models.CharField(max_length=250)
     
 
 
