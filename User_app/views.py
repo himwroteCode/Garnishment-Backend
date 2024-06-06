@@ -97,46 +97,6 @@ def login(request):
         })
 
 
-
-# @csrf_exempt
-# def register(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             first_name = data.get('first_name')
-#             last_name = data.get('last_name')
-#             username = data.get('username')
-#             email = data.get('email')
-#             gender = data.get('gender')
-#             contact_number = data.get('contact_number')
-#             password1 = data.get('password1')
-#             password2 = data.get('password2')
-#             # first_name = request.POST.get('first_name')
-#             # last_name = request.POST.get('last_name')
-#             # username = request.POST.get('username')
-#             # email = request.POST.get('email')
-#             # gender = request.POST.get('gender')
-#             # contact_number = request.POST.get('contact_number')
-#             # password1 = request.POST.get('password1')
-#             # password2 = request.POST.get('password2')
-#             if password1 == password2:
-#                 User = get_user_model()
-#                 if User.objects.filter(username=username).exists():
-#                     return JsonResponse({'error': 'Username Taken'}, status=status.HTTP_400_BAD_REQUEST)
-#                 elif User.objects.filter(email=email).exists():
-#                     return JsonResponse({'error': 'Email Taken'}, status=status.HTTP_400_BAD_REQUEST)
-#                 else:
-#                     user = CustomUser.objects.create_user(first_name=first_name, last_name=last_name, email=email, gender=gender, contact_number=contact_number, username=username, password=password1)
-#                     user.save()
-#                     return JsonResponse({'message': 'Successfully Registered'})
-#             else:
-#                 return JsonResponse({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
-#         except Exception as e:
-#             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#     return render(request, 'register.html')
-
-
 @csrf_exempt
 def register(request):
     if request.method == 'POST':
@@ -590,9 +550,6 @@ def insert_iwo_detail(request):
 
 
 
-
-
-
 @csrf_exempt
 def get_dashboard_data(request):
     total_iwo = IWO_Details_PDF.objects.count()
@@ -618,7 +575,7 @@ def TaxDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
+            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
@@ -636,22 +593,6 @@ def TaxDetails(request):
         return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
   
 
-# @method_decorator(csrf_exempt, name='dispatch')
-# class DepartmentViewSet(viewsets.ModelViewSet):
-#     queryset = Department.objects.all()
-#     serializer_class = DepartmentSerializer
-#     csrf_exempt
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         self.perform_create(serializer)
-#         response_data = {
-#             'success': True,
-#             'message': 'Detail successfully registered',
-#             'Code': status.HTTP_201_CREATED
-#         }
-#         headers = self.get_success_headers(serializer.data)
-#         return JsonResponse(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
 @csrf_exempt
 def DepartmentViewSet(request):
@@ -732,86 +673,6 @@ def export_employee_data(request, employer_id):
         return response
     except Exception as e:
         return JsonResponse({'detail': str(e), 'status': status.HTTP_500_INTERNAL_SERVER_ERROR})
-
-# class EmployeeImportView(APIView):
-#     def post(self, request):
-#         # Check if 'file' is in request.FILES
-#         if 'file' not in request.FILES:
-#             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-#         file = request.FILES['file']
-#         if not file.name.endswith(('.csv', '.xsl', '.xlsx')):
-#             return Response({"error": "This is not a valid file type"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             file_data = file.read().decode('utf-8').splitlines()
-#         except UnicodeDecodeError:
-#             try:
-#                 file_data = file.read().decode('latin-1').splitlines()
-#             except UnicodeDecodeError:
-#                 return Response({"error": "File encoding not supported"}, status=status.HTTP_400_BAD_REQUEST)
-        
-#         reader = csv.DictReader(file_data)
-        
-#         employees = []
-#         for row in reader:
-#             employee_data = {
-#                 'employer_id': row['employer_id'],
-#                 'employee_id': row['employee_id'],
-#                 'employee_name': row['employee_name'],
-#                 'department': row['department'],
-#                 'net_pay': row['net_pay'],
-#                 'minimum_wages': row['minimum_wages'],
-#                 'pay_cycle': row['pay_cycle'],
-#                 'number_of_garnishment': row['number_of_garnishment'],
-#                 'location': row['location']
-#             }
-#             serializer = EmployeeDetailsSerializer(data=employee_data)
-#             if serializer.is_valid():
-#                 employees.append(serializer.save())
-#             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-#         return Response({"message": "CSV file processed successfully"}, status=status.HTTP_201_CREATED)
-
-
-# class EmployeeImportView(APIView):
-#     def post(self, request):
-#         if 'file' not in request.FILES:
-#             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-#         file = request.FILES['file']
-#         file_name = file.name
-
-#         # Check the file extension
-#         if file_name.endswith('.csv'):
-#             df = pd.read_csv(file)
-#         elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-#             df = pd.read_excel(file)
-#         else:
-#             return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
-        
-#         employees = []
-#         for _, row in df.iterrows():
-#             employee_data={
-#             # 'employer_id':row['employer_id'],
-#             'employee_id':row['employee_id'],
-#             'employee_name':row['employee_name'],
-#             'department':row['department'],
-#             'net_pay':row['net_pay'],
-#             'minimun_wages':row['minimun_wages'],
-#             'pay_cycle':row['pay_cycle'],
-#             'number_of_garnishment':row['number_of_garnishment'],
-#             'location':row['location']
-#             }
-#             serializer = EmployeeDetailsSerializer(data=employee_data)
-#             if serializer.is_valid():
-#                 employees.append(serializer.save())
-#             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-#         return JsonResponse({"message": "File processed successfully", status:status.HTTP_201_CREATED})
-
 
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):
