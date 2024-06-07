@@ -131,7 +131,7 @@ def register(request):
 
         User = get_user_model()
         if Employer_Profile.objects.filter(username=username).exists():
-            return JsonResponse({'error': 'Username taken', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'error': 'User Already Used', 'status_code': status.HTTP_400_BAD_REQUEST})
         if Employer_Profile.objects.filter(email=email).exists():
             return JsonResponse({'error': 'Email taken', 'status_code': status.HTTP_400_BAD_REQUEST})
 
