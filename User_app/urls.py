@@ -36,6 +36,7 @@ urlpatterns = [
     path('TaxDetailsUpdate/<int:tax_id>/', TaxDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
     path('DepartmentDetailsUpdate/<int:department_id>/', DepartmentDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
     path('LocatiionDetailsUpdate/<int:location_id>/', LocatiionDetailsUpdateAPIView.as_view(), name='Department-Details-Update-APIView'),
+    path('CalculationDataView', views.CalculationDataView, name='Calculation Data'),
 ]
 
 

@@ -107,6 +107,22 @@ class Location(models.Model):
     state=models.CharField(max_length=250)
     city=models.CharField(max_length=250)
     # street=models.CharField(max_length=250)
+
+
+class calculation_data(models.Model):
+    employee_id = models.AutoField(primary_key=True)
+    employee_name = models.CharField(max_length=100)
+    earning = models.FloatField()
+    taxes = models.CharField(max_length=100, unique=True)
+    FIT = models.FloatField()
+    social = models.FloatField()
+    medicare = models.FloatField()
+    state = models.FloatField()
+    garnishment_fees = models.CharField(max_length=255, null=True, blank=True)
+    arrears_greater_than_12_weeks = models.BooleanField()
+    minimun_wage = models.IntegerField(null=True, blank=True)
+    total_amount_to_withhold = models.FloatField()
+
     
 
 

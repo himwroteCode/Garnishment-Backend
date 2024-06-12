@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,calculation_data
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -683,6 +683,8 @@ def LocationViewSet(request):
     else:
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
 
+
+
 # For Deleting the Employer Profile data
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDeleteAPIView(DestroyAPIView):
@@ -698,6 +700,7 @@ class EmployeeDeleteAPIView(DestroyAPIView):
                 'Code': status.HTTP_200_OK}
         return JsonResponse(response_data)
     
+
 
 @api_view(['GET'])
 def export_employee_data(request, employer_id):
@@ -749,10 +752,7 @@ class EmployeeImportView(APIView):
             df = pd.read_excel(file)
         else:
             return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-        df['employer_id'] = employer_id
-        
+        df['employer_id'] = employer_id        
         employees = []
         for _, row in df.iterrows():
             employee_data={
@@ -772,3 +772,21 @@ class EmployeeImportView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response({"message": "File processed successfully"}, status=status.HTTP_201_CREATED)
+
+
+
+@csrf_exempt
+def CalculationDataView(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            required_fields = ['employee_name','Earning','Taxes','FIT','social','medicare','state','garnishment_fees' ,'arrears_greater_than_12_weeks','minimun_wage','total_amount_to_withhold']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})         
+            user = calculation_data.objects.create(**data)
+            return JsonResponse({'message': 'Calculations Details Successfully Registered', status:status.HTTP_201_CREATED})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+    else:
+        return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
