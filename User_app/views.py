@@ -780,7 +780,7 @@ def CalculationDataView(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_name','Earning','Taxes','FIT','social','medicare','state','garnishment_fees' ,'arrears_greater_than_12_weeks','minimun_wage','total_amount_to_withhold']
+            required_fields = ['employee_name','earning','taxes','FIT','social','medicare','state','garnishment_fees' ,'arrears_greater_than_12_weeks','minimun_wage','total_amount_to_withhold']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})         
