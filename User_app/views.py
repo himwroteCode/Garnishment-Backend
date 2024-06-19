@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,Gcalculation_data
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,Garcalculation_data,CalculationResult
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -725,7 +725,7 @@ def export_employee_data(request, employer_id):
                 employee.get('net_pay', ''),
                 employee.get('minimun_wages', ''),
                 employee.get('pay_cycle', ''),
-                employee.get('number_of_garnishment', ''),
+                employee.get('number_of_garnishment ', ''),
                 employee.get('location', '')
             ])
 
@@ -780,13 +780,103 @@ def CalculationDataView(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_name', 'earning', 'taxes', 'FIT', 'social', 'medicare', 'state', 'garnishment_fees', 'arrears_greater_than_12_weeks', 'minimun_wage', 'total_amount_to_withhold']
+            required_fields = ['earning', 'have_any_arrears' ,'garnishment_fees', 'arrears_greater_than_12_weeks', 'arrears_amt' , 'total_amount_to_withhold']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)         
-            user = Gcalculation_data.objects.create(**data)
+            user = Garcalculation_data.objects.create(**data)
             return JsonResponse({'message': 'Calculations Details Successfully Registered'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
     else:
         return JsonResponse({'message': 'Please use POST method', status:status.HTTP_400_BAD_REQUEST})
+
+
+
+
+#class Gcalculations(APIView):
+def Gcalculations(request, employee_id, employer_id):
+    try:
+        # Retrieve the employee, tax, and employer records
+        employee = Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
+        tax = Tax_details.objects.get(employer_id=employer_id)
+        employer = Employer_Profile.objects.get(employer_id=employer_id)
+        gdata=Garcalculation_data.objects.get(employee_id=employee_id, employer_id=employer_id)
+        
+        # Calculate the various taxes
+        federal_income_tax = employee.net_pay * tax.fedral_income_tax / 100
+        social_tax = employee.net_pay * tax.social_and_security / 100
+        medicare_tax = employee.net_pay * tax.medicare_tax / 100
+        state_tax = employee.net_pay * tax.state_taxes / 100
+        total_tax = federal_income_tax + social_tax + medicare_tax + state_tax
+        disposable_earnings = employee.net_pay - total_tax
+        
+        # Calculate allowable disposable earnings
+        fmw = 30 * 7.5  # Federal Minimum Wage
+        ccpa_limit = 0.65  # Maximum CCPA limit (65%)
+        allowable_disposable_earnings = disposable_earnings * (1 - ccpa_limit)
+        withholding_available = allowable_disposable_earnings - gdata.garnishment_fees
+        # Determine the allowable garnishment amount
+        if (allowable_disposable_earnings - fmw) < 0:
+            allowable_garnishment_amount = 0
+        else:
+            allowable_garnishment_amount = allowable_disposable_earnings - fmw
+        if allowable_garnishment_amount < withholding_available:
+            allowed_amount_for_garnishment = allowable_garnishment_amount
+        else:
+            allowed_amount_for_garnishment = withholding_available
+        
+        # Determine allocation method for garnishment
+        if employer.state in ["Texas", "Washington"]:
+            allocation_method_for_garnishment = "Divide Equally"
+        else:
+            allocation_method_for_garnishment = "Prorate"
+        # Calculate the amount left for arrears
+        allowed_child_support_arrear = gdata.arrears_amt
+        amount_left_for_arrears = allowed_amount_for_garnishment - gdata.arrears_amt
+        
+        if gdata.have_any_arrears:
+            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment - allowed_child_support_arrear
+        else:
+            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment - allowed_child_support_arrear
+        
+        # Save the calculation result to the database
+        CalculationResult.objects.create(
+        employee_id=employee_id,
+        employer_id=employer_id,
+        result=allowed_amount_for_other_garnishment)    
+        return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
+    
+    except Employee_Details.DoesNotExist:
+        return JsonResponse({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Tax_details.DoesNotExist:
+        return JsonResponse({'error': 'Tax details not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Employer_Profile.DoesNotExist:
+        return JsonResponse({'error': 'Employer not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+    # if employee.exists():
+    #     try:
+    #         serializer = GetEmployerDetailsSerializer(employee, many=True)
+
+
+    #         response_data = {
+    #                 'success': True,
+    #                 'message': 'Data Get successfully',
+    #                 'Code': status.HTTP_200_OK}
+    #         response_data['data'] = serializer.data
+    #         return JsonResponse(response_data)
+    #     except Employer_Profile.DoesNotExist:
+    #         return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    # else:
+    #     return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
+
+
+
+    

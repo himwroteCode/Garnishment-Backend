@@ -70,7 +70,6 @@ class Employee_Details(models.Model):
     pay_cycle = models.FloatField()
     number_of_garnishment = models.IntegerField()
     location = models.CharField(max_length=255)
-
     def __str__(self):
         return self.employee_name
   
@@ -109,21 +108,21 @@ class Location(models.Model):
     # street=models.CharField(max_length=250)
 
 
-class Gcalculation_data(models.Model):
-    employee_id = models.AutoField(primary_key=True)
-    employee_name = models.CharField(max_length=100)
+
+class Garcalculation_data(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
     earning = models.FloatField()
-    taxes = models.FloatField()
-    FIT = models.FloatField()
-    social = models.FloatField()
-    medicare = models.FloatField()
-    state = models.FloatField()
     garnishment_fees = models.FloatField()
     arrears_greater_than_12_weeks = models.BooleanField()
-    minimun_wage = models.IntegerField()
     total_amount_to_withhold = models.FloatField()
+    have_any_arrears = models.BooleanField()
+    arrears_amt = models.FloatField()
 
-    
+class CalculationResult(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    result = models.FloatField()   
 
 
 
