@@ -51,7 +51,7 @@ class Employer_Profile(AbstractBaseUser):
     number_of_employees = models.IntegerField(null=True, blank=True)
     department = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
-    last_login = models.DateTimeField(null=True, blank=True)  # Add this line
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'employer_name']
@@ -123,6 +123,17 @@ class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()   
+
+
+class LogEntry(models.Model):
+    action = models.CharField(max_length=255)
+    details = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    additional_info = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.timestamp} - {self.user} - {self.action}'
 
 
 

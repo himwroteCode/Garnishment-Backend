@@ -10,9 +10,7 @@ from rest_framework import routers
 
 urlpatterns = [
     path("register", views.register, name="register"),
-    path("login",views.login, name="login"),
-    path('dashboard/',views.dashboard,name='dashboard'),
-    path('logout',views.logout,name='logout'),
+    path("login",views.login, name="login"),    
     path('employer-profile/', views.EmployerProfile, name='employer_profile'),
     path('TaxDetails/', views.TaxDetails, name='Tax_details'),
     path('employee_details/', views.EmployeeDetails, name='employee_details'),

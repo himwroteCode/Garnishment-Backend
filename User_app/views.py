@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,Garcalculation_data,CalculationResult
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,Garcalculation_data,CalculationResult,LogEntry
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -69,6 +69,12 @@ def login(request):
             }
             try:
                 refresh = RefreshToken.for_user(user)
+
+                employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
+                LogEntry.objects.create(
+                action='Employer Login',
+                details=f'Employer Login Successfully with ID {employee.employer_id}'
+            )
                 response_data = {
                     'success': True,
                     'message': 'Login successful',
@@ -131,7 +137,7 @@ def register(request):
 
         User = get_user_model()
         if Employer_Profile.objects.filter(username=username).exists():
-            return JsonResponse({'error': 'User Already Used', 'status_code': status.HTTP_400_BAD_REQUEST})
+            return JsonResponse({'error': 'Username already used', 'status_code': status.HTTP_400_BAD_REQUEST})
         if Employer_Profile.objects.filter(email=email).exists():
             return JsonResponse({'error': 'Email taken', 'status_code': status.HTTP_400_BAD_REQUEST})
 
@@ -152,24 +158,19 @@ def register(request):
                 location=location
             )
             user.save()
+
+            # Assuming your primary key is employer_id
+            employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
+            LogEntry.objects.create(
+                action='Employer Register',
+                details=f'Employer Register Succesfully with ID {employee.employer_id}'
+            )
             return JsonResponse({'message': 'Successfully registered', 'status_code': status.HTTP_201_CREATED})
         except Exception as e:
             return JsonResponse({'error': str(e), 'status_code': status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return JsonResponse({'message': 'Please use POST method for registration', 'status_code': status.HTTP_400_BAD_REQUEST})
-
-#new
-
-
-def dashboard(request):
-    return render( 'dashboard.html')
-
-def logout(request):
-    logout(request)
-    return redirect('login')
-
-
-
+    
 
 @csrf_exempt
 def EmployerProfile(request):
@@ -189,6 +190,12 @@ def EmployerProfile(request):
                 return JsonResponse({'error': 'Email already registered', 'status_code':status.HTTP_400_BAD_REQUEST})
             
             user = Employer_Profile.objects.create(**data)
+            # Assuming your primary key is employer_id
+            employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
+            LogEntry.objects.create(
+                action='Employer details added',
+                details=f'Employer details with ID {employee.employer_id}'
+            )
             return JsonResponse({'message': 'Employer Detail Successfully Registered'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
@@ -209,8 +216,16 @@ def EmployeeDetails(request):
             
             # if Employee_Details.objects.filter(employee_id=data['employee_id']).exists():
             #     return JsonResponse({'error': 'Employee ID already exists', 'status_code':status.HTTP_400_BAD_REQUEST})
+
             
-            Employee_Details.objects.create(**data)
+            user=Employee_Details.objects.create(**data)
+            user.save()
+
+            employee = get_object_or_404(Employee_Details, employee_id=user.employee_id)
+            LogEntry.objects.create(
+                action='Employee details added',
+                details=f'Employee details added with ID {employee.employee_id}'
+            )
             return JsonResponse({'message': 'Employee Details Successfully Registered', 'status_code':status.HTTP_201_CREATED})
         
         except json.JSONDecodeError:
@@ -220,7 +235,6 @@ def EmployeeDetails(request):
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
-
 
 
 
@@ -235,7 +249,14 @@ def TaxDetails(request):
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
             
-            Tax_details.objects.create(**data)
+            user=Tax_details.objects.create(**data)
+            user.save()
+
+            employee = get_object_or_404(Tax_details, tax_id=user.tax_id)
+            LogEntry.objects.create(
+                action='Tax details added',
+                details=f'Tax details have been successfully added for tax ID {employee.tax_id}'
+            )
             return JsonResponse({'message': 'Tax Details Successfully Registered', 'status_code':status.HTTP_201_CREATED})
         
         except json.JSONDecodeError:
@@ -251,7 +272,13 @@ def get_Location_Deatils(request, employer_id):
     employees=LocationSerializer.objects.filter(employer_id=employer_id)
     if employees.exists():
         try:
-            serializer = TaxSerializer(employees, many=True)
+            serializer = LocationSerializer(employees, many=True)
+
+            employee = get_object_or_404(Location, location_id=serializer.location_id)
+            LogEntry.objects.create(
+                action='Location details added',
+                details=f'Location details have been successfully added for Location ID {employees.location_id}'
+            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -295,6 +322,10 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        LogEntry.objects.create(
+                action='Tax details added',
+                details=f'Tax details Successfully added with ID {instance.employer_id}'
+            )
 
         response_data = {
             'success': True,
@@ -350,6 +381,10 @@ class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        LogEntry.objects.create(
+        action='Employee details added',
+        details=f'Employee details have been successfully added for Employee ID {instance.employee_id}'
+            )
         response_data = {
                 'success': True,
                 'message': 'Data Updated successfully',
@@ -372,7 +407,12 @@ class TaxDetailsUpdateAPIView(RetrieveUpdateAPIView):
                 'success': True,
                 'message': 'Data Updated successfully',
                 'Code': status.HTTP_200_OK}
+        LogEntry.objects.create(
+        action='Tax details Updated',
+        details=f'Tax details have been Updated successfully added for tax ID {instance.tax_id}'
+            )
         return JsonResponse(response_data)
+
 
 #update Location Details
 @method_decorator(csrf_exempt, name='dispatch')
@@ -385,6 +425,10 @@ class LocatiionDetailsUpdateAPIView(RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        LogEntry.objects.create(
+        action='Location details Updated',
+        details=f'LOcation details have been Updated successfully added for Location ID{instance.location_id}'
+            )
         response_data = {
                 'success': True,
                 'message': 'Data Updated successfully',
@@ -403,6 +447,10 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        LogEntry.objects.create(
+        action='Department details Updated',
+        details=f'Department details have been successfully added for Loaction ID{instance.department_id}'
+            )
         response_data = {
                 'success': True,
                 'message': 'Data Updated successfully',
@@ -420,6 +468,10 @@ class UserDeleteAPIView(DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
+        LogEntry.objects.create(
+        action='Department details Updated',
+        details=f'Department details Updated successfully with ID {instance.department_id}'
+            )
         response_data = {
                 'success': True,
                 'message': 'Data Deleted successfully',
@@ -440,7 +492,11 @@ def upload_pdf(request):
             # Store PDF file data in the database
             pdf_record = PDFFile(name=pdf_name, data=pdf_data)
             pdf_record.save()
-
+            employee = get_object_or_404(PDFFile, id=pdf_record.id)
+            LogEntry.objects.create(
+            action='Department details Updated',
+            details=f'Department details Updated successfully with ID {employee.id}')
+        
             return HttpResponse("File uploaded successfully.")
     else:
         form = PDFUploadForm()
@@ -450,13 +506,17 @@ def upload_pdf(request):
 
 
 #Get Employer Details on the bases of Employer_ID
-
 @api_view(['GET'])
-def get_employee_by_employer_id(request, employer_id):
+def get_employee_by_employer_id(self, employer_id):
     employees=Employee_Details.objects.filter(employer_id=employer_id)
+    instance = self.get_object()
     if employees.exists():
         try:
             serializer = EmployeeDetailsSerializer(employees, many=True)
+            LogEntry.objects.create(
+            action='employee details GET',
+            details=f'Employee details GET successfully with Emplloyee ID {instance.employee_id}'
+            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -473,10 +533,15 @@ def get_employee_by_employer_id(request, employer_id):
 
 
 @api_view(['GET'])
-def get_Tax_details(request, employer_id):
+def get_Tax_details(request, employer_id,self):
     employees=Tax_details.objects.filter(employer_id=employer_id)
+    instance = self.get_object()
     if employees.exists():
         try:
+            LogEntry.objects.create(
+            action='GET Tax details',
+            details=f'Tax details GET successfully with Emplloyee ID {instance.tax_id}'
+            )
             serializer = TaxSerializer(employees, many=True)
             response_data = {
                     'success': True,
@@ -485,15 +550,16 @@ def get_Tax_details(request, employer_id):
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
 
-
         except Tax_details.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
 
+
 @api_view(['GET'])
-def get_Location_details(request, employer_id):
+def get_Location_details(self,request, employer_id):
     employees=Location.objects.filter(employer_id=employer_id)
+    instance = self.get_object()
     if employees.exists():
         try:
             serializer = LocationSerializer(employees, many=True)
@@ -504,11 +570,11 @@ def get_Location_details(request, employer_id):
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
 
-
         except Tax_details.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
+
 
 @api_view(['GET'])
 def get_Department_details(request, employer_id):
@@ -516,6 +582,11 @@ def get_Department_details(request, employer_id):
     if employees.exists():
         try:
             serializer = DepartmentSerializer(employees, many=True)
+
+            LogEntry.objects.create(
+                action='Employer details added',
+                details=f'Employer details with ID {employee.employer_id}'
+            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -549,7 +620,6 @@ def get_employee_by_employer_id(request, employer_id):
             return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status':status.HTTP_404_NOT_FOUND})
-
 
 
 #Get Employer Details from employer ID
@@ -694,6 +764,7 @@ class EmployeeDeleteAPIView(DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
+        
         response_data = {
                 'success': True,
                 'message': 'Data Deleted successfully',
@@ -857,25 +928,6 @@ def Gcalculations(request, employee_id, employer_id):
         return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-
-
-
-    # if employee.exists():
-    #     try:
-    #         serializer = GetEmployerDetailsSerializer(employee, many=True)
-
-
-    #         response_data = {
-    #                 'success': True,
-    #                 'message': 'Data Get successfully',
-    #                 'Code': status.HTTP_200_OK}
-    #         response_data['data'] = serializer.data
-    #         return JsonResponse(response_data)
-    #     except Employer_Profile.DoesNotExist:
-    #         return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
-    # else:
-    #     return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
 
 
 
