@@ -16,9 +16,9 @@ from rest_framework.response import Response
 import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView
-from rest_framework import viewsets
+from rest_framework import viewsets ,generics
 from rest_framework.generics import RetrieveUpdateAPIView
-from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer
+from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -216,8 +216,7 @@ def EmployeeDetails(request):
             
             # if Employee_Details.objects.filter(employee_id=data['employee_id']).exists():
             #     return JsonResponse({'error': 'Employee ID already exists', 'status_code':status.HTTP_400_BAD_REQUEST})
-
-            
+ 
             user=Employee_Details.objects.create(**data)
             user.save()
 
@@ -266,19 +265,14 @@ def TaxDetails(request):
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return JsonResponse({'message': 'Please use POST method ', 'status_code':status.HTTP_400_BAD_REQUEST})
-    
+
+
 @api_view(['GET'])
 def get_Location_Deatils(request, employer_id):
     employees=LocationSerializer.objects.filter(employer_id=employer_id)
     if employees.exists():
         try:
             serializer = LocationSerializer(employees, many=True)
-
-            employee = get_object_or_404(Location, location_id=serializer.location_id)
-            LogEntry.objects.create(
-                action='Location details added',
-                details=f'Location details have been successfully added for Location ID {employees.location_id}'
-            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -295,7 +289,6 @@ def get_Location_Deatils(request, employer_id):
 
 
 #for Updating the Employer Profile data
-
 class EmployerProfileEditView(RetrieveUpdateAPIView):
     queryset = Employer_Profile.objects.all()
     serializer_class = EmployerProfileSerializer
@@ -382,8 +375,8 @@ class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         LogEntry.objects.create(
-        action='Employee details added',
-        details=f'Employee details have been successfully added for Employee ID {instance.employee_id}'
+        action='Employee details Updated',
+        details=f'Employee details have been successfully Updated for Employee ID {instance.employee_id}'
             )
         response_data = {
                 'success': True,
@@ -494,8 +487,8 @@ def upload_pdf(request):
             pdf_record.save()
             employee = get_object_or_404(PDFFile, id=pdf_record.id)
             LogEntry.objects.create(
-            action='Department details Updated',
-            details=f'Department details Updated successfully with ID {employee.id}')
+            action='PDF Uploaded',
+            details=f'PDF successfully Uploaded with ID {employee.id}')
         
             return HttpResponse("File uploaded successfully.")
     else:
@@ -513,10 +506,6 @@ def get_employee_by_employer_id(self, employer_id):
     if employees.exists():
         try:
             serializer = EmployeeDetailsSerializer(employees, many=True)
-            LogEntry.objects.create(
-            action='employee details GET',
-            details=f'Employee details GET successfully with Emplloyee ID {instance.employee_id}'
-            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -538,10 +527,6 @@ def get_Tax_details(request, employer_id,self):
     instance = self.get_object()
     if employees.exists():
         try:
-            LogEntry.objects.create(
-            action='GET Tax details',
-            details=f'Tax details GET successfully with Emplloyee ID {instance.tax_id}'
-            )
             serializer = TaxSerializer(employees, many=True)
             response_data = {
                     'success': True,
@@ -557,9 +542,8 @@ def get_Tax_details(request, employer_id,self):
 
 
 @api_view(['GET'])
-def get_Location_details(self,request, employer_id):
+def get_Location_details(request, employer_id):
     employees=Location.objects.filter(employer_id=employer_id)
-    instance = self.get_object()
     if employees.exists():
         try:
             serializer = LocationSerializer(employees, many=True)
@@ -582,11 +566,6 @@ def get_Department_details(request, employer_id):
     if employees.exists():
         try:
             serializer = DepartmentSerializer(employees, many=True)
-
-            LogEntry.objects.create(
-                action='Employer details added',
-                details=f'Employer details with ID {employee.employer_id}'
-            )
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
@@ -663,6 +642,10 @@ def insert_iwo_detail(request):
                 IWO_Status=IWO_Status
             )
             iwo_detail.save()
+            # LogEntry.objects.create(
+            # action='Location details Updated',
+            # details=f'LOcation details have been Updated successfully added for Location ID{instance.location_id}'
+            # )
 
             return JsonResponse({'message': 'IWO detail inserted successfully', 'code' :status.HTTP_201_CREATED})
 
@@ -755,7 +738,7 @@ def LocationViewSet(request):
 
 
 
-# For Deleting the Employer Profile data
+# For Deleting the Employee Details
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDeleteAPIView(DestroyAPIView):
     queryset = Employee_Details.objects.all()
@@ -764,12 +747,76 @@ class EmployeeDeleteAPIView(DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        
+        LogEntry.objects.create(
+        action='Employee details Deleted',
+        details=f'Employee details Deleted successfully with ID {instance.employee_id}'
+            ) 
         response_data = {
                 'success': True,
                 'message': 'Data Deleted successfully',
                 'Code': status.HTTP_200_OK}
         return JsonResponse(response_data)
+    
+# For Deleting the Tax Details
+@method_decorator(csrf_exempt, name='dispatch')
+class TaxDeleteAPIView(DestroyAPIView):
+    queryset = Tax_details.objects.all()
+    lookup_field = 'tax_id' 
+    @csrf_exempt
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        LogEntry.objects.create(
+        action='Tax details Deleted',
+        details=f'Tax details Deleted successfully with ID {instance.tax_id}'
+            ) 
+        response_data = {
+                'success': True,
+                'message': 'Tax Data Deleted successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+    
+
+# For Deleting the Location Details
+@method_decorator(csrf_exempt, name='dispatch')
+class LocationDeleteAPIView(DestroyAPIView):
+    queryset = Location.objects.all()
+    lookup_field = 'location_id' 
+    @csrf_exempt
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        LogEntry.objects.create(
+        action='Location details Deleted',
+        details=f'Location details Deleted successfully with ID {instance.location_id}'
+            ) 
+        response_data = {
+                'success': True,
+                'message': 'Location Data Deleted successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+
+
+
+# For Deleting the Department Details
+@method_decorator(csrf_exempt, name='dispatch')
+class DepartmentDeleteAPIView(DestroyAPIView):
+    queryset = Department.objects.all()
+    lookup_field = 'department_id' 
+    @csrf_exempt
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        LogEntry.objects.create(
+        action='Department details Deleted',
+        details=f'Department details Deleted successfully with ID {instance.department_id}'
+            ) 
+        response_data = {
+                'success': True,
+                'message': 'Department Data Deleted successfully',
+                'Code': status.HTTP_200_OK}
+        return JsonResponse(response_data)
+    
     
 
 
@@ -806,10 +853,10 @@ def export_employee_data(request, employer_id):
 
 
 
+#Import employee details using the Excel file
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):
-        # Ensure the employer exists
-        #employer = get_object_or_404(Employee_Details, id=employer_id)
+        employer = get_object_or_404(Employee_Details, id=employer_id)
         if 'file' not in request.FILES:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -839,13 +886,18 @@ class EmployeeImportView(APIView):
             serializer = EmployeeDetailsSerializer(data=employee_data)
             if serializer.is_valid():
                 employees.append(serializer.save())
+                LogEntry.objects.create(
+                action='Employee details Imported',
+                details=f'Employee details Imported successfully using excel file with ID {employer.employee_id}'
+            )   
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         
         return Response({"message": "File processed successfully"}, status=status.HTTP_201_CREATED)
 
 
-
+#Post API Taking the Calculation data
 @csrf_exempt
 def CalculationDataView(request):
     if request.method == 'POST':
@@ -856,6 +908,11 @@ def CalculationDataView(request):
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)         
             user = Garcalculation_data.objects.create(**data)
+            table = get_object_or_404(Garcalculation_data, id=user.id)
+            LogEntry.objects.create(
+            action='Employee details Deleted',
+            details=f'Employee details Deleted successfully with ID {table.id}'
+            )  
             return JsonResponse({'message': 'Calculations Details Successfully Registered'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
@@ -915,7 +972,7 @@ def Gcalculations(request, employee_id, employer_id):
         CalculationResult.objects.create(
         employee_id=employee_id,
         employer_id=employer_id,
-        result=allowed_amount_for_other_garnishment)    
+        result=allowed_amount_for_other_garnishment)     
         return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
     
     except Employee_Details.DoesNotExist:
@@ -927,8 +984,18 @@ def Gcalculations(request, employee_id, employer_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
-
-
+#Extracting the Last Five record from the Log Table
+class LastFiveLogsView(APIView):
+    def get(self, request, format=None):
+        logs = LogEntry.objects.order_by('-timestamp')[:5]
+        serializer = LogSerializer(logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
+class EmployerProfileList(generics.ListAPIView):
+    queryset = Employer_Profile.objects.all()
+    serializer_class = EmployerProfileSerializer
+
+class EmployeeDetailsList(generics.ListAPIView):
+    queryset = Employee_Details.objects.all()
+    serializer_class = EmployeeDetailsSerializer
+

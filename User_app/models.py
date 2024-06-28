@@ -67,7 +67,7 @@ class Employee_Details(models.Model):
     department = models.CharField(max_length=255)
     net_pay = models.FloatField()
     minimun_wages = models.FloatField()  
-    pay_cycle = models.FloatField()
+    pay_cycle = models.CharField()
     number_of_garnishment = models.IntegerField()
     location = models.CharField(max_length=255)
     def __str__(self):
@@ -112,9 +112,9 @@ class Location(models.Model):
 class Garcalculation_data(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
-    earning = models.FloatField()
     garnishment_fees = models.FloatField()
     arrears_greater_than_12_weeks = models.BooleanField()
+    support_second_family = models.BooleanField()
     total_amount_to_withhold = models.FloatField()
     have_any_arrears = models.BooleanField()
     arrears_amt = models.FloatField()
