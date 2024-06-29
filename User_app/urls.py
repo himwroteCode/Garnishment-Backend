@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList
+from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList
 from django.urls import include, path
 from rest_framework import routers
 
@@ -40,8 +40,13 @@ urlpatterns = [
     path('CalculationDataView', views.CalculationDataView, name='Calculation Data'),
     path('Gcalculations/<int:employer_id>/<int:employee_id>/', views.Gcalculations, name=' Garnishment Calculation'),
     path('logdata', LastFiveLogsView.as_view(), name=' Garnishment Calculation'),
-    path('Getallemployerdetail', EmployerProfileList.as_view(), name='employer-profile-list'),
+    path('GetAllemployerdetail', EmployerProfileList.as_view(), name='employer-profile-list'),
     path('GetAllEmplloyeeDetail', EmployeeDetailsList.as_view(), name='employer-profile-list'),
+    path('GetAllTaxDetail', TaxDetailsList.as_view(), name='employer-profile-list'),
+    path('GetAllDepartmentDetail', DepartmentDetailsList.as_view(), name='employer-profile-list'),
+    path('GetAllLocationDetail', LocationDetailsList.as_view(), name='employer-profile-list')
+
+
 ]
 
 

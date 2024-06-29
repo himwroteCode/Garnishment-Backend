@@ -999,3 +999,15 @@ class EmployeeDetailsList(generics.ListAPIView):
     queryset = Employee_Details.objects.all()
     serializer_class = EmployeeDetailsSerializer
 
+class TaxDetailsList(generics.ListAPIView):
+    queryset = Tax_details.objects.all()
+    serializer_class = TaxSerializer
+
+class LocationDetailsList(generics.ListAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+class DepartmentDetailsList(generics.ListAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+

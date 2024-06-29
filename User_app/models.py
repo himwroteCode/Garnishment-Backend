@@ -1,5 +1,5 @@
 # models.py
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser ,AbstractBaseUser ,BaseUserManager
 from django.db import models
 
 
@@ -32,10 +32,6 @@ class Profile(models.Model):
 
 
 # Employer_Profile details
-
-
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.db import models
 
 class Employer_Profile(AbstractBaseUser):
     employer_id = models.AutoField(primary_key=True)
