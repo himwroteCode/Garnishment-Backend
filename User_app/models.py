@@ -61,8 +61,6 @@ class Employee_Details(models.Model):
     employer_id = models.IntegerField()
     employee_name = models.CharField(max_length=255)
     department = models.CharField(max_length=255)
-    net_pay = models.FloatField()
-    minimun_wages = models.FloatField()  
     pay_cycle = models.CharField()
     number_of_garnishment = models.IntegerField()
     location = models.CharField(max_length=255)
@@ -79,6 +77,7 @@ class Tax_details(models.Model):
 
 
 class PDFFile(models.Model):
+    # pdf_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     data = models.BinaryField()
 
@@ -102,7 +101,6 @@ class Location(models.Model):
     state=models.CharField(max_length=250)
     city=models.CharField(max_length=250)
     # street=models.CharField(max_length=250)
-
 
 
 class Garcalculation_data(models.Model):

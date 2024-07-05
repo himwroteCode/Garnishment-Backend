@@ -208,7 +208,7 @@ def EmployeeDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_name','department', 'net_pay', 'minimun_wages', 'pay_cycle', 'number_of_garnishment', 'location']
+            required_fields = ['employee_name','department', 'pay_cycle', 'number_of_garnishment', 'location']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
@@ -989,7 +989,8 @@ class LastFiveLogsView(APIView):
     def get(self, request, format=None):
         logs = LogEntry.objects.order_by('-timestamp')[:5]
         serializer = LogSerializer(logs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse({"Data":serializer.data, "status":status.HTTP_200_OK})
+
     
 class EmployerProfileList(generics.ListAPIView):
     queryset = Employer_Profile.objects.all()
