@@ -106,12 +106,16 @@ class Location(models.Model):
 class Garcalculation_data(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
+    employee_name=models.CharField()
     garnishment_fees = models.FloatField()
+    minimum_wages = models.FloatField()
+    state=models.CharField()
     arrears_greater_than_12_weeks = models.BooleanField()
     support_second_family = models.BooleanField()
     total_amount_to_withhold = models.FloatField()
     have_any_arrears = models.BooleanField()
     arrears_amt = models.FloatField()
+    order_id=models.IntegerField()
 
 class CalculationResult(models.Model):
     employee_id = models.IntegerField()

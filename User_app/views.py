@@ -522,9 +522,8 @@ def get_employee_by_employer_id(self, employer_id):
 
 
 @api_view(['GET'])
-def get_Tax_details(request, employer_id,self):
+def get_Tax_details(request,employer_id):
     employees=Tax_details.objects.filter(employer_id=employer_id)
-    instance = self.get_object()
     if employees.exists():
         try:
             serializer = TaxSerializer(employees, many=True)
@@ -720,6 +719,7 @@ def DepartmentViewSet(request):
     else:
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
 
+
 @csrf_exempt
 def LocationViewSet(request):
     if request.method == 'POST':
@@ -737,38 +737,51 @@ def LocationViewSet(request):
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
 
 
-
-# For Deleting the Employee Details
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDeleteAPIView(DestroyAPIView):
     queryset = Employee_Details.objects.all()
-    lookup_field = 'employee_id' 
+    lookup_field = 'employee_id'
+
+    def get_object(self):
+        employee_id = self.kwargs.get('employee_id')
+        employer_id = self.kwargs.get('employer_id')
+        return Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
+    
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
-        action='Employee details Deleted',
-        details=f'Employee details Deleted successfully with ID {instance.employee_id}'
-            ) 
+            action='Location details Deleted',
+            details=f'Location details Deleted successfully with Location ID {instance.employee_id} and Employer ID {instance.employer_id}'
+        )
         response_data = {
-                'success': True,
-                'message': 'Data Deleted successfully',
-                'Code': status.HTTP_200_OK}
+            'success': True,
+            'message': 'Location Data Deleted successfully',
+            'Code': status.HTTP_200_OK
+        }
         return JsonResponse(response_data)
-    
+
+        
+   
 # For Deleting the Tax Details
 @method_decorator(csrf_exempt, name='dispatch')
 class TaxDeleteAPIView(DestroyAPIView):
     queryset = Tax_details.objects.all()
-    lookup_field = 'tax_id' 
+    lookup_field = 'tax_id'
+    @csrf_exempt
+    def get_object(self):
+        tax_id = self.kwargs.get('tax_id')
+        employer_id = self.kwargs.get('employer_id')
+        return Tax_details.objects.get(tax_id=tax_id, employer_id=employer_id)
+    
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
         action='Tax details Deleted',
-        details=f'Tax details Deleted successfully with ID {instance.tax_id}'
+        details=f'Tax details Deleted successfully with ID {instance.tax_id} and Employer ID {instance.employer_id}'
             ) 
         response_data = {
                 'success': True,
@@ -777,25 +790,33 @@ class TaxDeleteAPIView(DestroyAPIView):
         return JsonResponse(response_data)
     
 
+    
+
 # For Deleting the Location Details
 @method_decorator(csrf_exempt, name='dispatch')
 class LocationDeleteAPIView(DestroyAPIView):
     queryset = Location.objects.all()
-    lookup_field = 'location_id' 
+    lookup_field = 'location_id'
+    @csrf_exempt
+    def get_object(self):
+        location_id = self.kwargs.get('location_id')
+        employer_id = self.kwargs.get('employer_id')  
+        return self.queryset.filter(location_id=location_id, employer_id=employer_id).first()  
+
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
-        action='Location details Deleted',
-        details=f'Location details Deleted successfully with ID {instance.location_id}'
-            ) 
+            action='Location details Deleted',
+            details=f'Location details Deleted successfully with ID {instance.location_id} and Employer ID {instance.employer_id}'
+        )
         response_data = {
-                'success': True,
-                'message': 'Location Data Deleted successfully',
-                'Code': status.HTTP_200_OK}
+            'success': True,
+            'message': 'Location Data Deleted successfully',
+            'Code': status.HTTP_200_OK
+        }
         return JsonResponse(response_data)
-
 
 
 # For Deleting the Department Details
@@ -803,13 +824,19 @@ class LocationDeleteAPIView(DestroyAPIView):
 class DepartmentDeleteAPIView(DestroyAPIView):
     queryset = Department.objects.all()
     lookup_field = 'department_id' 
+
+    def get_object(self):
+        department_id = self.kwargs.get('department_id')
+        employer_id = self.kwargs.get('employer_id')  
+        return self.queryset.filter(department_id=department_id, employer_id=employer_id).first()  
+    
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
         action='Department details Deleted',
-        details=f'Department details Deleted successfully with ID {instance.department_id}'
+        details=f'Department details Deleted successfully with ID {instance.department_id} and Employer ID {instance.employer_id}'
             ) 
         response_data = {
                 'success': True,
@@ -856,7 +883,7 @@ def export_employee_data(request, employer_id):
 #Import employee details using the Excel file
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):
-        employer = get_object_or_404(Employee_Details, id=employer_id)
+        #employer = get_object_or_404(Employee_Details, employer_id=employer_id)
         if 'file' not in request.FILES:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -876,23 +903,22 @@ class EmployeeImportView(APIView):
             employee_data={
             'employee_name':row['employee_name'],
             'department':row['department'],
-            'net_pay':row['net_pay'],
-            'minimun_wages':row['minimun_wages'],
             'pay_cycle':row['pay_cycle'],
             'number_of_garnishment':row['number_of_garnishment'],
             'location':row['location'],
             'employer_id': row['employer_id'] 
             }
+            # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
+
             serializer = EmployeeDetailsSerializer(data=employee_data)
             if serializer.is_valid():
-                employees.append(serializer.save())
-                LogEntry.objects.create(
-                action='Employee details Imported',
-                details=f'Employee details Imported successfully using excel file with ID {employer.employee_id}'
-            )   
+                employees.append(serializer.save())   
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
+        LogEntry.objects.create(
+        action='Employee details Imported',
+        details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
         
         return Response({"message": "File processed successfully"}, status=status.HTTP_201_CREATED)
 

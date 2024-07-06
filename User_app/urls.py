@@ -28,10 +28,10 @@ urlpatterns = [
     path('GetTaxDetails/<int:employer_id>/',views.get_Tax_details, name='GetTaxDetails'),  
     path('GetDepartmentDetails/<int:employer_id>/',views.get_Department_details, name='GetDepartmentDetails'), 
     path('GetLocationDetails/<int:employer_id>/',views.get_Location_details, name='Get-Location-Details'),    
-    path('EmployeeDelete/<int:employee_id>/',EmployeeDeleteAPIView.as_view(), name='Employee-Delete-APIView'),
-    path('TaxDelete/<int:tax_id>/',TaxDeleteAPIView.as_view(), name='Tax-Delete-APIView'),
-    path('DepartmentDelete/<int:department_id>/',DepartmentDeleteAPIView.as_view(), name='Department-Delete-APIView'),
-    path('LocationDelete/<int:location_id>/',LocationDeleteAPIView.as_view(), name='Department-Delete-APIView'),
+    path('EmployeeDelete/<int:employee_id>/<int:employer_id>/',EmployeeDeleteAPIView.as_view(), name='Employee-Delete-APIView'),
+    path('TaxDelete/<int:tax_id>/<int:employer_id>/',TaxDeleteAPIView.as_view(), name='Tax-Delete-APIView'),
+    path('DepartmentDelete/<int:department_id>/<int:employer_id>/',DepartmentDeleteAPIView.as_view(), name='Department-Delete-APIView'),
+    path('LocationDelete/<int:location_id>/<int:employer_id>/',LocationDeleteAPIView.as_view(), name='Department-Delete-APIView'),
     path('ExportEmployees/<int:employer_id>/', views.export_employee_data, name='export-employee-data'),
     path('EmployeeImportView/<int:employer_id>/', EmployeeImportView.as_view(), name='Employee-Import-View'),
     path('TaxDetailsUpdate/<int:tax_id>/', TaxDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
@@ -45,7 +45,6 @@ urlpatterns = [
     path('GetAllTaxDetail', TaxDetailsList.as_view(), name='employer-profile-list'),
     path('GetAllDepartmentDetail', DepartmentDetailsList.as_view(), name='employer-profile-list'),
     path('GetAllLocationDetail', LocationDetailsList.as_view(), name='employer-profile-list')
-
 
 ]
 
