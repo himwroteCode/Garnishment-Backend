@@ -76,19 +76,23 @@ class Tax_details(models.Model):
     state_taxes =models.FloatField()
 
 
-class PDFFile(models.Model):
-    # pdf_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    data = models.BinaryField()
+class IWO_PDF_Files_Data(models.Model):
+    pdf_id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=100)
+    pdf = models.FileField(upload_to='pdfs/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    employer_id=models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return self.title
+    
 
 class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
     employer_id=models.IntegerField()
     employee_id=models.IntegerField()
     IWO_Status =models.CharField(max_length=250)
+
 
 class Department(models.Model):
     department_id = models.AutoField(primary_key=True)
@@ -109,11 +113,11 @@ class Garcalculation_data(models.Model):
     employee_name=models.CharField()
     garnishment_fees = models.FloatField()
     minimum_wages = models.FloatField()
-    state=models.CharField()
+    state = models.CharField()
+    earnings = models.FloatField()
     arrears_greater_than_12_weeks = models.BooleanField()
     support_second_family = models.BooleanField()
-    total_amount_to_withhold = models.FloatField()
-    have_any_arrears = models.BooleanField()
+    amount_to_withhold = models.FloatField()
     arrears_amt = models.FloatField()
     order_id=models.IntegerField()
 

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_Details_PDF,Department,Location,PDFFile,Garcalculation_data,CalculationResult,LogEntry
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_PDF_Files_Data,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -12,13 +12,14 @@ from django.contrib.auth import logout
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 import json
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView
 from rest_framework import viewsets ,generics
 from rest_framework.generics import RetrieveUpdateAPIView
-from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer
+from .serializers import UserUpdateSerializer,EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -242,7 +243,7 @@ def TaxDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
+            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
@@ -325,42 +326,6 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
             'message': 'Data Updated successfully',
             'Code': status.HTTP_200_OK
         }
-        return JsonResponse(response_data)
-
-
-
-
-#For updating the Registor details
-
-class UserUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = UserUpdateSerializer
-    lookup_field = 'username'  
-    @csrf_exempt
-    def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        response_data = {
-                'success': True,
-                'message': 'Data Updated successfully',
-                'Code': status.HTTP_200_OK}
-        return JsonResponse(response_data)
-    
-
-#Delete User Deatils
-class UserDeleteAPIView(DestroyAPIView):
-    queryset = CustomUser.objects.all()
-    lookup_field = 'username' 
-    @csrf_exempt
-    def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        response_data = {
-                'success': True,
-                'message': 'Data Deleted successfully',
-                'Code': status.HTTP_204_NO_CONTENT}
         return JsonResponse(response_data)
     
 #update employee Details
@@ -451,50 +416,132 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
         return JsonResponse(response_data)
 
 
-
-# For Deleting the Employer Profile data
-@method_decorator(csrf_exempt, name='dispatch')
-class UserDeleteAPIView(DestroyAPIView):
-    queryset = CustomUser.objects.all()
-    lookup_field = 'username' 
-    @csrf_exempt
-    def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        LogEntry.objects.create(
-        action='Department details Updated',
-        details=f'Department details Updated successfully with ID {instance.department_id}'
-            )
-        response_data = {
-                'success': True,
-                'message': 'Data Deleted successfully',
-                'Code': status.HTTP_200_OK}
-        return JsonResponse(response_data)
     
 
 #PDF upload view
-@transaction.atomic
-def upload_pdf(request):
-    if request.method == 'POST':
-        form = PDFUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            pdf_file = form.cleaned_data['pdf_file']
-            pdf_name = pdf_file.name
-            pdf_data = pdf_file.read()
+# @transaction.atomic
+# def upload_pdf(request):
+#     if request.method == 'POST':
+#         form = PDFUploadForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             pdf_file = form.cleaned_data['pdf_file']
+#             pdf_name = pdf_file.name
+#             pdf_data = pdf_file.read()
             
-            # Store PDF file data in the database
-            pdf_record = PDFFile(name=pdf_name, data=pdf_data)
-            pdf_record.save()
-            employee = get_object_or_404(PDFFile, id=pdf_record.id)
-            LogEntry.objects.create(
-            action='PDF Uploaded',
-            details=f'PDF successfully Uploaded with ID {employee.id}')
+#             # Store PDF file data in the database
+#             pdf_record = PDFFile(name=pdf_name, data=pdf_data)
+#             pdf_record.save()
+#             employee = get_object_or_404(PDFFile, id=pdf_record.id)
+#             LogEntry.objects.create(
+#             action='PDF Uploaded',
+#             details=f'IWO PDF successfully Uploaded with ID {employee.id}')
+#             response_data = {
+#                 'success': True,
+#                 'message': 'IWO PDF successfully Uploaded',
+#                 'Code': status.HTTP_200_OK}
         
-            return HttpResponse("File uploaded successfully.")
-    else:
-        form = PDFUploadForm()
+#             return JsonResponse(response_data)
+#     else:
+#         form = PDFUploadForm()
 
-    return render(request, 'upload_pdf.html', {'form': form})
+#     return render(request, 'upload_pdf.html', {'form': form})
+
+
+    
+
+
+# @transaction.atomic
+# def upload_pdf(request):
+#     if request.method == 'POST':
+#         # Check if the necessary data is in the request
+#         if 'pdf_file' in request.FILES and 'employer_id' in request.POST:
+#             pdf_file = request.FILES['pdf_file']
+#             employer_id = request.POST['employer_id']
+#             pdf_name = pdf_file.name
+#             pdf_data = pdf_file.read()
+            
+#             # Store PDF file data in the database
+#             pdf_record = IWO_PDF_File(name=pdf_name, data=pdf_data, employer_id=employer_id)
+#             pdf_record.save()
+
+#             employee = get_object_or_404(IWO_PDF_File, id=pdf_record.id)
+#             LogEntry.objects.create(
+#                 action='PDF Uploaded',
+#                 details=f'IWO PDF successfully uploaded with ID {employee.id} and Employer ID {employer_id}'
+#             )
+            
+#             response_data = {
+#                 'success': True,
+#                 'message': 'IWO PDF successfully uploaded',
+#                 'Code': status.HTTP_200_OK
+#             }
+#             return JsonResponse(response_data)
+#         else:
+#             response_data = {
+#                 'success': False,
+#                 'message': 'Missing file or employer ID',
+#                 'Code': status.HTTP_400_BAD_REQUEST
+#             }
+#             return JsonResponse(response_data)
+#     return render(request, 'upload_pdf.html')
+
+
+
+# @transaction.atomic
+# def upload_pdf(request):
+#     if request.method == 'POST':
+#         # Check if the necessary data is in the request
+#         if 'pdf' in request.FILES and 'employer_id' in request.POST:
+#             pdf_file = request.FILES['pdf']
+#             employer_id = request.POST['employer_id']
+#             pdf_name = pdf_file.title
+#             pdf_data = pdf_file.read()
+
+#             # Ensure binary data is handled correctly
+#             if isinstance(pdf_data, str):
+#                 pdf_data = pdf_data.encode()
+
+#             # Store PDF file data in the database
+#             pdf_record = IWO_PDF_Files_Data(name=pdf_name, data=pdf_data, employer_id=employer_id)
+#             pdf_record.save()
+
+#             employee = get_object_or_404(IWO_PDF_Files_Data, id=pdf_record.id)
+#             LogEntry.objects.create(
+#                 action='PDF Uploaded',
+#                 details=f'IWO PDF successfully uploaded with ID {employee.id} and Employer ID {employer_id}'
+#             )
+            
+#             response_data = {
+#                 'success': True,
+#                 'message': 'IWO PDF successfully uploaded',
+#                 'Code': status.HTTP_200_OK
+#             }
+#             return JsonResponse(response_data)
+#         else:
+#             response_data = {
+#                 'success': False,
+#                 'message': 'Missing file or employer ID',
+#                 'Code': status.HTTP_400_BAD_REQUEST
+#             }
+#             return JsonResponse(response_data)
+#     return render(request, 'upload_pdf.html')
+
+
+from rest_framework.parsers import MultiPartParser, FormParser
+
+
+from .serializers import PDFFileSerializer
+
+class upload_pdf(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file_serializer = PDFFileSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -641,11 +688,6 @@ def insert_iwo_detail(request):
                 IWO_Status=IWO_Status
             )
             iwo_detail.save()
-            # LogEntry.objects.create(
-            # action='Location details Updated',
-            # details=f'LOcation details have been Updated successfully added for Location ID{instance.location_id}'
-            # )
-
             return JsonResponse({'message': 'IWO detail inserted successfully', 'code' :status.HTTP_201_CREATED})
 
         except json.JSONDecodeError:
@@ -929,7 +971,7 @@ def CalculationDataView(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            required_fields = ['earning', 'have_any_arrears' ,'garnishment_fees', 'arrears_greater_than_12_weeks', 'arrears_amt' , 'total_amount_to_withhold']
+            required_fields = ['earnings', 'employee_name' ,'garnishment_fees','minimum_wages','state','earnings', 'arrears_greater_than_12_weeks', 'support_second_family','amount_to_withhold', 'arrears_amt' ,'order_id' ]
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)         
@@ -958,18 +1000,29 @@ def Gcalculations(request, employee_id, employer_id):
         gdata=Garcalculation_data.objects.get(employee_id=employee_id, employer_id=employer_id)
         
         # Calculate the various taxes
-        federal_income_tax = employee.net_pay * tax.fedral_income_tax / 100
-        social_tax = employee.net_pay * tax.social_and_security / 100
-        medicare_tax = employee.net_pay * tax.medicare_tax / 100
-        state_tax = employee.net_pay * tax.state_taxes / 100
+        federal_income_tax = gdata.earnings * tax.fedral_income_tax / 100
+        social_tax = gdata.earnings * tax.social_and_security / 100
+        medicare_tax = gdata.earnings * tax.medicare_tax / 100
+        state_tax = gdata.earnings * tax.state_taxes / 100
         total_tax = federal_income_tax + social_tax + medicare_tax + state_tax
-        disposable_earnings = employee.net_pay - total_tax
+        disposable_earnings = gdata.earnings - total_tax
         
+
+        #Calculate ccpa_limit based on conditions
+        if gdata.support_second_family==1 and  gdata.amount_to_withhold ==1:
+            ccpa_limit= 0.55
+        elif gdata.support_second_family==0 and  gdata.amount_to_withhold ==0:
+            ccpa_limit= 0.60
+        elif gdata.support_second_family==0 and  gdata.amount_to_withhold ==1:
+            ccpa_limit= 0.65
+        else:
+            ccpa_limit= 0.50
+
         # Calculate allowable disposable earnings
         fmw = 30 * 7.5  # Federal Minimum Wage
-        ccpa_limit = 0.65  # Maximum CCPA limit (65%)
         allowable_disposable_earnings = disposable_earnings * (1 - ccpa_limit)
         withholding_available = allowable_disposable_earnings - gdata.garnishment_fees
+        
         # Determine the allowable garnishment amount
         if (allowable_disposable_earnings - fmw) < 0:
             allowable_garnishment_amount = 0
@@ -980,19 +1033,23 @@ def Gcalculations(request, employee_id, employer_id):
         else:
             allowed_amount_for_garnishment = withholding_available
         
+        other_garnishment_amount = disposable_earnings * 0.25
+
         # Determine allocation method for garnishment
         if employer.state in ["Texas", "Washington"]:
             allocation_method_for_garnishment = "Divide Equally"
         else:
             allocation_method_for_garnishment = "Prorate"
+
         # Calculate the amount left for arrears
-        allowed_child_support_arrear = gdata.arrears_amt
-        amount_left_for_arrears = allowed_amount_for_garnishment - gdata.arrears_amt
+
+        amount_left_for_arrears = allowed_amount_for_garnishment - gdata.amount_to_withhold
         
-        if gdata.have_any_arrears:
-            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment - allowed_child_support_arrear
+        allowed_child_support_arrear = gdata.arrears_amt
+        if gdata.arrears_greater_than_12_weeks ==True:
+            allowed_amount_for_other_garnishment = amount_left_for_arrears - allowed_child_support_arrear
         else:
-            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment - allowed_child_support_arrear
+            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment
         
         # Save the calculation result to the database
         CalculationResult.objects.create(
@@ -1017,23 +1074,29 @@ class LastFiveLogsView(APIView):
         serializer = LogSerializer(logs, many=True)
         return JsonResponse({"Data":serializer.data, "status":status.HTTP_200_OK})
 
-    
+
+#Extracting the ALL Employer Detials  
 class EmployerProfileList(generics.ListAPIView):
     queryset = Employer_Profile.objects.all()
     serializer_class = EmployerProfileSerializer
 
+#Extracting the ALL Employee Details 
 class EmployeeDetailsList(generics.ListAPIView):
     queryset = Employee_Details.objects.all()
     serializer_class = EmployeeDetailsSerializer
 
+#Extracting the ALL Tax Details
 class TaxDetailsList(generics.ListAPIView):
     queryset = Tax_details.objects.all()
     serializer_class = TaxSerializer
 
+#Extracting the ALL Location Details
 class LocationDetailsList(generics.ListAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
+
+#Extracting the ALL Department Details
 class DepartmentDetailsList(generics.ListAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer

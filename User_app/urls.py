@@ -1,10 +1,8 @@
 from django.urls import path
 from . import views
-from .views import UserUpdateAPIView,EmployerProfileEditView,UserDeleteAPIView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList
+from .views import EmployerProfileEditView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,upload_pdf
 from django.urls import include, path
 from rest_framework import routers
-
-
 
 
 
@@ -15,10 +13,8 @@ urlpatterns = [
     path('TaxDetails/', views.TaxDetails, name='Tax_details'),
     path('employee_details/', views.EmployeeDetails, name='employee_details'),
     path('employee_details/<int:employee_id>/',EmployeeDetailsUpdateAPIView.as_view(), name='Employee_Details_UpdateAPIView'),
-    path('<str:username>/', UserUpdateAPIView.as_view(),name='User-Update-API-View'),
     path('employer-profile/<int:employer_id>/',EmployerProfileEditView.as_view(),name='Employer_Profile_UpdateAPIView'),
-    path('delete/<str:username>/', UserDeleteAPIView.as_view(), name='user-delete'),
-    path('upload', views.upload_pdf, name='upload_pdf'),
+    path('upload', upload_pdf.as_view(), name='upload_pdf'),
     path('getemployeedetails/<int:employer_id>/', views.get_employee_by_employer_id, name='employee-by-employer-id'),
     path('getemployerdetails/<int:employer_id>/', views.get_employer_details, name='employer-detail-by-employer-id'),
     path('DashboardData',views.get_dashboard_data, name='iwo_dashboard'),

@@ -1,13 +1,17 @@
+<!-- templates/upload_pdf.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Upload PDF</title>
 </head>
 <body>
-    <h2>Upload PDF File</h2>
+    <h1>Upload PDF</h1>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
+        <label for="pdf_file">PDF File:</label>
+        <input type="file" name="pdf_file" id="pdf_file" required><br><br>
+        <label for="employer_id">Employer ID:</label>
+        <input type="number" name="employer_id" id="employer_id" required><br><br>
         <button type="submit">Upload</button>
     </form>
 </body>
