@@ -525,23 +525,44 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
 #             }
 #             return JsonResponse(response_data)
 #     return render(request, 'upload_pdf.html')
-
-
-from rest_framework.parsers import MultiPartParser, FormParser
-
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated  # Optional authentication
 from .serializers import PDFFileSerializer
+import os
 
-class upload_pdf(APIView):
-    parser_classes = (MultiPartParser, FormParser)
+class PdfUploadView(APIView):
+    permission_classes = [IsAuthenticated] 
 
-    def post(self, request, *args, **kwargs):
-        file_serializer = PDFFileSerializer(data=request.data)
-        if file_serializer.is_valid():
-            file_serializer.save()
-            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        serializer = PDFFileSerializer(data=request.data)
+        if serializer.is_valid():
+            # Extract PDF name in the view (if necessary)
+            if 'pdf_file' in request.FILES:
+                pdf_file = request.FILES['pdf_file']
+                pdf_name = os.path.splitext(pdf_file.name)[0]  # Extract filename without extension
+                serializer.validated_data['pdf_name'] = pdf_name
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+# from .serializers import PDFFileSerializer
+
+# class upload_pdf(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def post(self, request, *args, **kwargs):
+#         file_serializer = PDFFileSerializer(data=request.data)
+#         if file_serializer.is_valid():
+#             file_serializer.save()
+#             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+#         else:
+#             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -1072,7 +1093,12 @@ class LastFiveLogsView(APIView):
     def get(self, request, format=None):
         logs = LogEntry.objects.order_by('-timestamp')[:5]
         serializer = LogSerializer(logs, many=True)
-        return JsonResponse({"Data":serializer.data, "status":status.HTTP_200_OK})
+        response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+        response_data['data'] = serializer.data
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 
 #Extracting the ALL Employer Detials  

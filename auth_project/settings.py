@@ -108,7 +108,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'auth_project.wsgi.app'
 
 
 # REST_FRAMEWORK = {
