@@ -76,15 +76,14 @@ class Tax_details(models.Model):
     state_taxes =models.FloatField()
 
 
-class IWO_PDF_Files_Data(models.Model):
-    pdf_id = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=100)
-    pdf = models.FileField(upload_to='pdfs/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    employer_id=models.IntegerField()
 
-    def __str__(self):
-        return self.title
+
+class IWOPDFFile(models.Model):
+    pdf_name = models.CharField(max_length=100)
+    pdf = models.FileField(upload_to='pdfs/')
+    employer_id=models.IntegerField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
     
 
 class IWO_Details_PDF(models.Model):

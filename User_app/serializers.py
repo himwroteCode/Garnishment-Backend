@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department, Location,Tax_details,LogEntry,IWO_PDF_Files_Data
+from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department, Location,Tax_details,LogEntry,IWOPDFFile
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -32,7 +32,7 @@ class GetEmployerDetailsSerializer(serializers.ModelSerializer):
 
 class PDFFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IWO_PDF_Files_Data
+        model = IWOPDFFile
         fields = '__all__'
 
 # class IWODetailsPDFSerializer(serializers.ModelSerializer):

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,IWO_PDF_Files_Data,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF
+from .models import CustomUser,Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -407,7 +407,7 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
         serializer.save()
         LogEntry.objects.create(
         action='Department details Updated',
-        details=f'Department details have been successfully added for Loaction ID{instance.department_id}'
+        details=f'Department details Updated successfully for Department ID{instance.department_id}'
             )
         response_data = {
                 'success': True,
@@ -525,30 +525,29 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
 #             }
 #             return JsonResponse(response_data)
 #     return render(request, 'upload_pdf.html')
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated  # Optional authentication
-from .serializers import PDFFileSerializer
-import os
-
-class PdfUploadView(APIView):
-    permission_classes = [IsAuthenticated] 
-
-    def post(self, request):
-        serializer = PDFFileSerializer(data=request.data)
-        if serializer.is_valid():
-            # Extract PDF name in the view (if necessary)
-            if 'pdf_file' in request.FILES:
-                pdf_file = request.FILES['pdf_file']
-                pdf_name = os.path.splitext(pdf_file.name)[0]  # Extract filename without extension
-                serializer.validated_data['pdf_name'] = pdf_name
-
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
+
+#PDF upload view
+@transaction.atomic
+
+def PDFFileUploadView(request, employer_id):
+    if request.method == 'POST':
+        form = PDFUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            pdf_file = form.cleaned_data['pdf_file']
+            pdf_name = pdf_file.name
+
+            # Store PDF file data in the database with the correct model fields
+            pdf_record = IWOPDFFile(pdf_name=pdf_name, pdf=pdf_file, employer_id=employer_id)
+            pdf_record.save()
+
+            return HttpResponse("File uploaded successfully.")
+    else:
+        form = PDFUploadForm()
+
+    return render(request, 'upload_pdf.html', {'form': form})
 
 
 # from .serializers import PDFFileSerializer
@@ -752,6 +751,10 @@ def TaxDetails(request):
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
             
             Tax_details.objects.create(**data)
+            LogEntry.objects.create(
+            action='Tax details added',
+            details=f'Tax details added successfully for Tax ID{department_id}'
+            )
             return JsonResponse({'message': 'Tax Details Successfully Registered', 'status_code':status.HTTP_201_CREATED})
         
         except json.JSONDecodeError:
@@ -776,11 +779,93 @@ def DepartmentViewSet(request):
             if Department.objects.filter(department_name=data['department_name']).exists():
                  return JsonResponse({'error': 'Department already exists', 'status_code':status.HTTP_400_BAD_REQUEST})            
             user = Department.objects.create(**data)
+            LogEntry.objects.create(
+            action='Department details added',
+            details=f'Department details added successfully for Department ID{user.department_id}'
+            ) 
             return JsonResponse({'message': 'Department Details Successfully Registered'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
     else:
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
+
+#class Gcalculations(APIView):
+def Gcalculations(request, employee_id, employer_id):
+    try:
+        # Retrieve the employee, tax, and employer records
+        employee = Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
+        tax = Tax_details.objects.get(employer_id=employer_id)
+        employer = Employer_Profile.objects.get(employer_id=employer_id)
+        gdata=Garcalculation_data.objects.get(employee_id=employee_id, employer_id=employer_id)
+        
+        # Calculate the various taxes
+        federal_income_tax = gdata.earnings * tax.fedral_income_tax / 100
+        social_tax = gdata.earnings * tax.social_and_security / 100
+        medicare_tax = gdata.earnings * tax.medicare_tax / 100
+        state_tax = gdata.earnings * tax.state_taxes / 100
+        total_tax = federal_income_tax + social_tax + medicare_tax + state_tax
+        disposable_earnings = gdata.earnings - total_tax
+        
+
+        #Calculate ccpa_limit based on conditions
+        if gdata.support_second_family==True and  gdata.amount_to_withhold ==True:
+            ccpa_limit= 0.55
+        elif gdata.support_second_family==False and  gdata.amount_to_withhold ==False:
+            ccpa_limit= 0.60
+        elif gdata.support_second_family==False and  gdata.amount_to_withhold ==True:
+            ccpa_limit= 0.65
+        else:
+            ccpa_limit= 0.50
+
+        # Calculate allowable disposable earnings
+        fmw = 30 * 7.5  # Federal Minimum Wage
+        allowable_disposable_earnings = disposable_earnings * (1 - ccpa_limit)
+        withholding_available = allowable_disposable_earnings - gdata.garnishment_fees
+        
+        # Determine the allowable garnishment amount
+        if (allowable_disposable_earnings - fmw) < 0:
+            allowable_garnishment_amount = 0
+        else:
+            allowable_garnishment_amount = allowable_disposable_earnings - fmw
+        if allowable_garnishment_amount < withholding_available:
+            allowed_amount_for_garnishment = allowable_garnishment_amount
+        else:
+            allowed_amount_for_garnishment = withholding_available
+        
+        other_garnishment_amount = disposable_earnings * 0.25
+
+        # Determine allocation method for garnishment
+        if employer.state in ["Texas", "Washington"]:
+            allocation_method_for_garnishment = "Divide Equally"
+        else:
+            allocation_method_for_garnishment = "Prorate"
+
+        # Calculate the amount left for arrears
+
+        amount_left_for_arrears = allowed_amount_for_garnishment - gdata.amount_to_withhold
+        
+        allowed_child_support_arrear = gdata.arrears_amt
+        if gdata.arrears_greater_than_12_weeks ==True:
+            allowed_amount_for_other_garnishment = amount_left_for_arrears - allowed_child_support_arrear
+        else:
+            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment
+        
+        # Save the calculation result to the database
+        CalculationResult.objects.create(
+        employee_id=employee_id,
+        employer_id=employer_id,
+        result=allowed_amount_for_other_garnishment)     
+        return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
+    
+    except Employee_Details.DoesNotExist:
+        return JsonResponse({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Tax_details.DoesNotExist:
+        return JsonResponse({'error': 'Tax details not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Employer_Profile.DoesNotExist:
+        return JsonResponse({'error': 'Employer not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 
 @csrf_exempt
@@ -815,8 +900,8 @@ class EmployeeDeleteAPIView(DestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
-            action='Location details Deleted',
-            details=f'Location details Deleted successfully with Location ID {instance.employee_id} and Employer ID {instance.employer_id}'
+            action='Employee details Deleted',
+            details=f'Employee details Deleted successfully with Employee ID {instance.employee_id} and Employer ID {instance.employer_id}'
         )
         response_data = {
             'success': True,
@@ -931,7 +1016,7 @@ def export_employee_data(request, employer_id):
                 employee.get('employee_name', ''),
                 employee.get('department', ''),
                 employee.get('net_pay', ''),
-                employee.get('minimun_wages', ''),
+                employee.get('minimum_wages', ''),
                 employee.get('pay_cycle', ''),
                 employee.get('number_of_garnishment ', ''),
                 employee.get('location', '')
@@ -1011,82 +1096,6 @@ def CalculationDataView(request):
 
 
 
-#class Gcalculations(APIView):
-def Gcalculations(request, employee_id, employer_id):
-    try:
-        # Retrieve the employee, tax, and employer records
-        employee = Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
-        tax = Tax_details.objects.get(employer_id=employer_id)
-        employer = Employer_Profile.objects.get(employer_id=employer_id)
-        gdata=Garcalculation_data.objects.get(employee_id=employee_id, employer_id=employer_id)
-        
-        # Calculate the various taxes
-        federal_income_tax = gdata.earnings * tax.fedral_income_tax / 100
-        social_tax = gdata.earnings * tax.social_and_security / 100
-        medicare_tax = gdata.earnings * tax.medicare_tax / 100
-        state_tax = gdata.earnings * tax.state_taxes / 100
-        total_tax = federal_income_tax + social_tax + medicare_tax + state_tax
-        disposable_earnings = gdata.earnings - total_tax
-        
-
-        #Calculate ccpa_limit based on conditions
-        if gdata.support_second_family==1 and  gdata.amount_to_withhold ==1:
-            ccpa_limit= 0.55
-        elif gdata.support_second_family==0 and  gdata.amount_to_withhold ==0:
-            ccpa_limit= 0.60
-        elif gdata.support_second_family==0 and  gdata.amount_to_withhold ==1:
-            ccpa_limit= 0.65
-        else:
-            ccpa_limit= 0.50
-
-        # Calculate allowable disposable earnings
-        fmw = 30 * 7.5  # Federal Minimum Wage
-        allowable_disposable_earnings = disposable_earnings * (1 - ccpa_limit)
-        withholding_available = allowable_disposable_earnings - gdata.garnishment_fees
-        
-        # Determine the allowable garnishment amount
-        if (allowable_disposable_earnings - fmw) < 0:
-            allowable_garnishment_amount = 0
-        else:
-            allowable_garnishment_amount = allowable_disposable_earnings - fmw
-        if allowable_garnishment_amount < withholding_available:
-            allowed_amount_for_garnishment = allowable_garnishment_amount
-        else:
-            allowed_amount_for_garnishment = withholding_available
-        
-        other_garnishment_amount = disposable_earnings * 0.25
-
-        # Determine allocation method for garnishment
-        if employer.state in ["Texas", "Washington"]:
-            allocation_method_for_garnishment = "Divide Equally"
-        else:
-            allocation_method_for_garnishment = "Prorate"
-
-        # Calculate the amount left for arrears
-
-        amount_left_for_arrears = allowed_amount_for_garnishment - gdata.amount_to_withhold
-        
-        allowed_child_support_arrear = gdata.arrears_amt
-        if gdata.arrears_greater_than_12_weeks ==True:
-            allowed_amount_for_other_garnishment = amount_left_for_arrears - allowed_child_support_arrear
-        else:
-            allowed_amount_for_other_garnishment = allowed_amount_for_garnishment
-        
-        # Save the calculation result to the database
-        CalculationResult.objects.create(
-        employee_id=employee_id,
-        employer_id=employer_id,
-        result=allowed_amount_for_other_garnishment)     
-        return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
-    
-    except Employee_Details.DoesNotExist:
-        return JsonResponse({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
-    except Tax_details.DoesNotExist:
-        return JsonResponse({'error': 'Tax details not found'}, status=status.HTTP_404_NOT_FOUND)
-    except Employer_Profile.DoesNotExist:
-        return JsonResponse({'error': 'Employer not found'}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #Extracting the Last Five record from the Log Table
 class LastFiveLogsView(APIView):
@@ -1127,3 +1136,71 @@ class DepartmentDetailsList(generics.ListAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
 
+@api_view(['GET'])
+def get_single_employee_details(request, employer_id,employee_id):
+    employees=Employee_Details.objects.filter(employer_id=employer_id,employee_id=employee_id)
+    if employees.exists():
+        try:
+            serializer = EmployeeDetailsSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    
+@api_view(['GET'])
+def get_single_tax_details(request, employer_id,tax_id):
+    employees=Tax_details.objects.filter(employer_id=employer_id,tax_id=tax_id)
+    if employees.exists():
+        try:
+            serializer = TaxSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
+
+
+@api_view(['GET'])
+def get_single_location_details(request, employer_id,location_id):
+    employees=Location.objects.filter(employer_id=employer_id,location_id=location_id)
+    if employees.exists():
+        try:
+            serializer = LocationSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
+
+@api_view(['GET'])
+def get_single_department_details(request, employer_id,department_id):
+    employees=Department.objects.filter(employer_id=employer_id,department_id=department_id)
+    if employees.exists():
+        try:
+            serializer = DepartmentSerializer(employees, many=True)
+            response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'Code': status.HTTP_200_OK}
+            response_data['data'] = serializer.data
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code':status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})   
