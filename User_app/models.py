@@ -32,7 +32,6 @@ class Profile(models.Model):
 
 
 # Employer_Profile details
-
 class Employer_Profile(AbstractBaseUser):
     employer_id = models.AutoField(primary_key=True)
     employer_name = models.CharField(max_length=100)
@@ -69,13 +68,11 @@ class Employee_Details(models.Model):
   
 class Tax_details(models.Model):
     tax_id = models.AutoField(primary_key=True)
-    employer_id=models.IntegerField()
+    employer_id=models.IntegerField(unique=True)
     fedral_income_tax =models.FloatField()
     social_and_security =models.FloatField()
     medicare_tax= models.FloatField()
     state_taxes =models.FloatField()
-
-
 
 
 class IWOPDFFile(models.Model):
@@ -85,10 +82,10 @@ class IWOPDFFile(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     
-
+ 
 class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
-    employer_id=models.IntegerField()
+    employer_id=models.IntegerField(unique=True)
     employee_id=models.IntegerField()
     IWO_Status =models.CharField(max_length=250)
 
@@ -96,15 +93,14 @@ class IWO_Details_PDF(models.Model):
 class Department(models.Model):
     department_id = models.AutoField(primary_key=True)
     department_name=models.CharField(max_length=250)
-    employer_id=models.IntegerField()
+    employer_id=models.IntegerField(unique=True)
 
 class Location(models.Model):
     location_id = models.AutoField(primary_key=True)
-    employer_id=models.IntegerField()
+    employer_id=models.IntegerField(unique=True)
     state=models.CharField(max_length=250)
     city=models.CharField(max_length=250)
     # street=models.CharField(max_length=250)
-
 
 class Garcalculation_data(models.Model):
     employee_id = models.IntegerField()
@@ -119,12 +115,12 @@ class Garcalculation_data(models.Model):
     amount_to_withhold = models.FloatField()
     arrears_amt = models.FloatField()
     order_id=models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()   
-
 
 class LogEntry(models.Model):
     action = models.CharField(max_length=255)

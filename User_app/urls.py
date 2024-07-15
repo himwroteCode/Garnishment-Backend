@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import EmployerProfileEditView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView
+from .views import EmployerProfileEditView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
 from django.urls import include, path
 from rest_framework import routers
 
@@ -33,7 +33,7 @@ urlpatterns = [
     path('DepartmentDetailsUpdate/<int:department_id>/', DepartmentDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
     path('LocatiionDetailsUpdate/<int:location_id>/', LocatiionDetailsUpdateAPIView.as_view(), name='Department-Details-Update-APIView'),
     path('CalculationDataView', views.CalculationDataView, name='Calculation Data'),
-    path('Gcalculations/<int:employer_id>/<int:employee_id>/', views.Gcalculations, name=' Garnishment Calculation'),
+    path('Gcalculations/<int:employer_id>/<int:employee_id>/', Gcalculations.as_view(), name='Gcalculations'),
     path('logdata', LastFiveLogsView.as_view(), name=' Garnishment Calculation'),
     path('GetAllemployerdetail', EmployerProfileList.as_view(), name='employer-profile-list'),
     path('GetAllEmplloyeeDetail', EmployeeDetailsList.as_view(), name='employer-profile-list'),
@@ -43,7 +43,9 @@ urlpatterns = [
     path('GetSingleEmployee/<int:employer_id>/<int:employee_id>/', views.get_single_employee_details, name='get-single-employee-details'),
     path('GetSingleTax/<int:employer_id>/<int:tax_id>/', views.get_single_tax_details, name='get_single_tax_details'),
     path('GetSingleLocation/<int:employer_id>/<int:location_id>/', views.get_single_location_details, name='get_single_location_details'),
-    path('GetSingleDepartment/<int:employer_id>/<int:department_id>/', views.get_single_department_details, name='get_single_department_details')
+    path('GetSingleDepartment/<int:employer_id>/<int:department_id>/', views.get_single_department_details, name='get_single_department_details'),
+    path('password-reset', PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('password-reset-confirm/<str:token>/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 
 ]
 
