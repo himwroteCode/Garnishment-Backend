@@ -289,36 +289,39 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
     lookup_field = 'employer_id'
     @csrf_exempt
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        data = request.data
-
-        # Check for missing fields
-        required_fields = ['employer_name', 'street_name', 'federal_employer_identification_number', 'city', 'state', 'country', 'zipcode', 'email', 'number_of_employees', 'department', 'location']
-        missing_fields = [field for field in required_fields if field not in data or not data[field]]
-        if missing_fields:
-            return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
-
-        # Validate length of federal_employer_identification_number
-        if 'federal_employer_identification_number' in data and len(str(data['federal_employer_identification_number'])) != 9:
-            return JsonResponse({'error': 'Federal Employer Identification Number must be exactly 9 characters long', 'status_code':status.HTTP_400_BAD_REQUEST})
-
-        # Validate email if it's being updated
-        if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(employer_id=instance.employer_id).exists():
-            return JsonResponse({'error': 'Email already registered', 'status_code':status.HTTP_400_BAD_REQUEST})
-
-        serializer = self.get_serializer(instance, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        LogEntry.objects.create(
-                action='Employer details Updated',
-                details=f'Employer details Updated successfully with ID {instance.employer_id}'
-            )
-
-        response_data = {
-            'success': True,
-            'message': 'Data Updated successfully',
-            'Code': status.HTTP_200_OK
-        }
+        try:
+            instance = self.get_object()
+            data = request.data
+    
+            # Check for missing fields
+            required_fields = ['employer_name', 'street_name', 'federal_employer_identification_number', 'city', 'state', 'country', 'zipcode', 'email', 'number_of_employees', 'department', 'location']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
+    
+            # Validate length of federal_employer_identification_number
+            if 'federal_employer_identification_number' in data and len(str(data['federal_employer_identification_number'])) != 9:
+                return JsonResponse({'error': 'Federal Employer Identification Number must be exactly 9 characters long', 'status_code':status.HTTP_400_BAD_REQUEST})
+    
+            # Validate email if it's being updated
+            if 'email' in data and Employer_Profile.objects.filter(email=data['email']).exclude(employer_id=instance.employer_id).exists():
+                return JsonResponse({'error': 'Email already registered', 'status_code':status.HTTP_400_BAD_REQUEST})
+    
+            serializer = self.get_serializer(instance, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            LogEntry.objects.create(
+                    action='Employer details Updated',
+                    details=f'Employer details Updated successfully with ID {instance.employer_id}'
+                )
+    
+            response_data = {
+                'success': True,
+                'message': 'Data Updated successfully',
+                'Code': status.HTTP_200_OK
+            }
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         return JsonResponse(response_data)
     
 #update employee Details
@@ -328,18 +331,21 @@ class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = EmployeeDetailsSerializer
     lookup_field = 'employee_id'  
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        LogEntry.objects.create(
-        action='Employee details Updated',
-        details=f'Employee details Updated successfully for Employee ID {instance.employee_id}'
-            )
-        response_data = {
-                'success': True,
-                'message': 'Data Updated successfully',
-                'Code': status.HTTP_200_OK}
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            LogEntry.objects.create(
+            action='Employee details Updated',
+            details=f'Employee details Updated successfully for Employee ID {instance.employee_id}'
+                )
+            response_data = {
+                    'success': True,
+                    'message': 'Data Updated successfully',
+                    'Code': status.HTTP_200_OK}
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         return JsonResponse(response_data)
 
 
@@ -350,18 +356,21 @@ class TaxDetailsUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = TaxSerializer
     lookup_field = 'tax_id'  
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        response_data = {
-                'success': True,
-                'message': 'Data Updated successfully',
-                'Code': status.HTTP_200_OK}
-        LogEntry.objects.create(
-        action='Tax details Updated',
-        details=f'Tax details Updated successfully for tax ID {instance.tax_id}'
-            )
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            response_data = {
+                    'success': True,
+                    'message': 'Data Updated successfully',
+                    'Code': status.HTTP_200_OK}
+            LogEntry.objects.create(
+            action='Tax details Updated',
+            details=f'Tax details Updated successfully for tax ID {instance.tax_id}'
+                )
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         return JsonResponse(response_data)
 
 
@@ -372,18 +381,21 @@ class LocatiionDetailsUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = LocationSerializer
     lookup_field = 'location_id'  
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        LogEntry.objects.create(
-        action='Location details Updated',
-        details=f'LOcation details Updated successfully added for Location ID {instance.location_id}'
-            )
-        response_data = {
-                'success': True,
-                'message': 'Data Updated successfully',
-                'Code': status.HTTP_200_OK}
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            LogEntry.objects.create(
+            action='Location details Updated',
+            details=f'LOcation details Updated successfully added for Location ID {instance.location_id}'
+                )
+            response_data = {
+                    'success': True,
+                    'message': 'Data Updated successfully',
+                    'Code': status.HTTP_200_OK}
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         return JsonResponse(response_data)
     
 
@@ -394,39 +406,45 @@ class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = DepartmentSerializer
     lookup_field = 'department_id'  
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        LogEntry.objects.create(
-        action='Department details Updated',
-        details=f'Department details has been successfully Updated for Department ID {instance.department_id}')
-        response_data = {
-                'success': True,
-                'message': 'Data Updated successfully',
-                'Code': status.HTTP_200_OK}
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            LogEntry.objects.create(
+            action='Department details Updated',
+            details=f'Department details has been successfully Updated for Department ID {instance.department_id}')
+            response_data = {
+                    'success': True,
+                    'message': 'Data Updated successfully',
+                    'Code': status.HTTP_200_OK}
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         return JsonResponse(response_data)
 
 
 #PDF upload view
 @transaction.atomic
 def PDFFileUploadView(request, employer_id):
-    if request.method == 'POST':
-        form = PDFUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            pdf_file = form.cleaned_data['pdf_file']
-            pdf_name = pdf_file.name
-
-            # Store PDF file data in the database with the correct model fields
-            pdf_record = IWOPDFFile(pdf_name=pdf_name, pdf=pdf_file, employer_id=employer_id)
-            pdf_record.save()
-            LogEntry.objects.create(
-            action='IWO PDF file Uploaded',
-            details=f'IWO PDF file has been successfully Uploaded for Employer ID {employer_id}')
-            return HttpResponse("File uploaded successfully.")      
-    else:
-        form = PDFUploadForm()
-
+    try:
+        if request.method == 'POST':
+            form = PDFUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                pdf_file = form.cleaned_data['pdf_file']
+                pdf_name = pdf_file.name
+    
+                # Store PDF file data in the database with the correct model fields
+                pdf_record = IWOPDFFile(pdf_name=pdf_name, pdf=pdf_file, employer_id=employer_id)
+                pdf_record.save()
+                LogEntry.objects.create(
+                action='IWO PDF file Uploaded',
+                details=f'IWO PDF file has been successfully Uploaded for Employer ID {employer_id}')
+                return HttpResponse("File uploaded successfully.")      
+        else:
+            form = PDFUploadForm()
+    except Exception as e:
+        return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR})  
+    
     return render(request, 'upload_pdf.html', {'form': form})
 
 
@@ -581,20 +599,23 @@ def insert_iwo_detail(request):
 
 @csrf_exempt
 def get_dashboard_data(request):
-    total_iwo = IWO_Details_PDF.objects.count()
-
-    employees_with_single_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count=1).count()
-
-    employees_with_multiple_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count__gt=1).count()
-
-    active_employees = IWO_Details_PDF.objects.filter(IWO_Status='active').count()
-
-    data = {
-        'Total_IWO': total_iwo,
-        'Employees_with_Single_IWO': employees_with_single_iwo,
-        'Employees_with_Multiple_IWO': employees_with_multiple_iwo,
-        'Active_employees': active_employees,
-    }
+    try:
+        total_iwo = IWO_Details_PDF.objects.count()
+    
+        employees_with_single_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count=1).count()
+    
+        employees_with_multiple_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count__gt=1).count()
+    
+        active_employees = IWO_Details_PDF.objects.filter(IWO_Status='active').count()
+    
+        data = {
+            'Total_IWO': total_iwo,
+            'Employees_with_Single_IWO': employees_with_single_iwo,
+            'Employees_with_Multiple_IWO': employees_with_multiple_iwo,
+            'Active_employees': active_employees,
+        }
+    except Exception as e:
+        return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
     return JsonResponse({'data':data,'status_code':status.HTTP_200_OK})
 
 
@@ -1004,41 +1025,44 @@ def export_employee_data(request, employer_id):
 #Import employee details using the Excel file
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):
-        if 'file' not in request.FILES:
-            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        file = request.FILES['file']
-        file_name = file.name
-
-        # Check the file extension
-        if file_name.endswith('.csv'):
-            df = pd.read_csv(file)
-        elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-            df = pd.read_excel(file)
-        else:
-            return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
-        df['employer_id'] = employer_id        
-        employees = []
-        for _, row in df.iterrows():
-            employee_data={
-            'employee_name':row['employee_name'],
-            'department':row['department'],
-            'pay_cycle':row['pay_cycle'],
-            'number_of_garnishment':row['number_of_garnishment'],
-            'location':row['location'],
-            'employer_id': row['employer_id'] 
-            }
-            # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
-
-            serializer = EmployeeDetailsSerializer(data=employee_data)
-            if serializer.is_valid():
-                employees.append(serializer.save())   
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if 'file' not in request.FILES:
+                return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
             
-        LogEntry.objects.create(
-        action='Employee details Imported',
-        details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
+            file = request.FILES['file']
+            file_name = file.name
+    
+            # Check the file extension
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
+                df = pd.read_excel(file)
+            else:
+                return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
+            df['employer_id'] = employer_id        
+            employees = []
+            for _, row in df.iterrows():
+                employee_data={
+                'employee_name':row['employee_name'],
+                'department':row['department'],
+                'pay_cycle':row['pay_cycle'],
+                'number_of_garnishment':row['number_of_garnishment'],
+                'location':row['location'],
+                'employer_id': row['employer_id'] 
+                }
+                # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
+    
+                serializer = EmployeeDetailsSerializer(data=employee_data)
+                if serializer.is_valid():
+                    employees.append(serializer.save())   
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+            LogEntry.objects.create(
+            action='Employee details Imported',
+            details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         
         return Response({"message": "File processed successfully"}, status=status.HTTP_201_CREATED)
 
@@ -1196,7 +1220,7 @@ class PasswordResetRequestView(APIView):
 
         token = RefreshToken.for_user(user).access_token
         # Change this URL to point to your frontend
-        reset_url = f'http://localhost:5173/reset-password/{str(token)}'
+        reset_url = f'https://garnishment-react-main.vercel.app/reset-password/{str(token)}'
         send_mail(
             'Password Reset Request',
             f'Click the link to reset your password: {reset_url}',

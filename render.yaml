@@ -4,4 +4,4 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn auth_project.wsgi:application
-    runtime: python3.12.3  # Ensure this matches your `runtime.txt`
+    runtime: python3.12.3  
