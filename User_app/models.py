@@ -53,7 +53,28 @@ class Employer_Profile(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+    
 
+class Calculation_data_results(models.Model):
+    employee_id=models.IntegerField()
+    employer_id=models.IntegerField()
+    fedral_income_tax=models.FloatField()
+    social_and_security=models.FloatField()
+    medicare_tax=models.FloatField()
+    state_taxes=models.FloatField()
+    earnings= models.FloatField()
+    support_second_family=models.BooleanField()
+    amount_to_withhold =models.FloatField()
+    garnishment_fees=models.FloatField()
+    arrears_greater_than_12_weeks=models.BooleanField()
+    arrears_amt=models.FloatField()
+    allowable_disposable_earnings=models.FloatField()
+    withholding_available=models.FloatField()
+    allowed_amount_for_garnishment=models.FloatField()
+    other_garnishment_amount=models.FloatField()
+    allowable_garnishment_amount=models.FloatField()
+    amount_left_for_arrears=models.FloatField()
+    allowed_amount_for_other_garnishment=models.FloatField()
 
 class Employee_Details(models.Model):
     employee_id = models.AutoField(primary_key=True)
@@ -120,7 +141,13 @@ class Garcalculation_data(models.Model):
 class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
-    result = models.FloatField()   
+    result = models.FloatField()  
+
+class Activity(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    employer_name = models.CharField(max_length=100)
+    result = models.FloatField()    
 
 class LogEntry(models.Model):
     action = models.CharField(max_length=255)

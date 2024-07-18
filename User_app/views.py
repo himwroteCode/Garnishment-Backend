@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile
+from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -81,6 +81,7 @@ def login(request):
                     'user_data': user_data,
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'expire_time' : refresh.access_token.payload['exp'],
                     'status_code': status.HTTP_200_OK,
                 }
                 return JsonResponse(response_data)
@@ -159,7 +160,6 @@ def register(request):
             )
             user.save()
 
-            # Assuming your primary key is employer_id
             employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
             LogEntry.objects.create(
                 action='Employer Register',
@@ -819,6 +819,7 @@ class Gcalculations(APIView):
             #     "total_disposable_earnings": disposable_earnings,
             #     "allowable_disposable_earnings": allowable_disposable_earnings,
             #     "withholding_available": withholding_available,
+
             #     # Additional input data
             #     "employee_data": {
             #         "employee_id": employee.employee_id,
@@ -844,6 +845,29 @@ class Gcalculations(APIView):
             #         "arrears_amt": gdata.arrears_amt,
             #     }
             # }
+
+            Calculation_data_results.objects.create(
+            employee_id=employee_id,
+            employer_id=employer_id,
+            fedral_income_tax=tax.fedral_income_tax,
+            social_and_security=tax.social_and_security,
+            medicare_tax=tax.medicare_tax,
+            state_taxes=tax.state_taxes,
+            earnings= gdata.earnings,
+            support_second_family=gdata.support_second_family,
+            amount_to_withhold =gdata.amount_to_withhold,
+            garnishment_fees=gdata.garnishment_fees,
+            arrears_greater_than_12_weeks=gdata.arrears_greater_than_12_weeks,
+            arrears_amt=gdata.arrears_amt,
+            allowable_disposable_earnings=allowable_disposable_earnings,
+            withholding_available=withholding_available,
+            allowed_amount_for_garnishment=allowed_amount_for_garnishment,
+            other_garnishment_amount=other_garnishment_amount,
+            allowable_garnishment_amount=allowable_garnishment_amount,
+            amount_left_for_arrears=amount_left_for_arrears,
+            allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment)
+            
+            
             CalculationResult.objects.create(
             employee_id=employee_id,
             employer_id=employer_id,
@@ -989,7 +1013,7 @@ class DepartmentDeleteAPIView(DestroyAPIView):
         return JsonResponse(response_data)
     
 
-# Export employee details into the c
+# Export employee details into the csv
 @api_view(['GET'])
 def export_employee_data(request, employer_id):
     try:
