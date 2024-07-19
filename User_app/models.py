@@ -142,12 +142,7 @@ class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()  
-
-class Activity(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
-    employer_name = models.CharField(max_length=100)
-    result = models.FloatField()    
+ 
 
 class LogEntry(models.Model):
     action = models.CharField(max_length=255)
@@ -158,6 +153,13 @@ class LogEntry(models.Model):
 
     def __str__(self):
         return f'{self.timestamp} - {self.user} - {self.action}'
+    
+class application_activity(models.Model):
+    action = models.CharField(max_length=255)
+    details = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+   
+
 
 
 

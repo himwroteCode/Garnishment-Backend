@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results
+from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -70,10 +70,10 @@ def login(request):
             try:
                 refresh = RefreshToken.for_user(user)
 
-                employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
-                LogEntry.objects.create(
+                employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+                application_activity.objects.create(
                 action='Employer Login',
-                details=f'Employer Login Successfully with ID {employee.employer_id}'
+                details=f'Employer {employee.employer_name} Login successfully with ID {employee.employer_id}. '
             )
                 response_data = {
                     'success': True,
@@ -161,9 +161,9 @@ def register(request):
             user.save()
 
             employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
-            LogEntry.objects.create(
+            application_activity.objects.create(
                 action='Employer Register',
-                details=f'Employer Register Succesfully with employer ID {employee.employer_id}'
+                details=f'Employer {employee.employer_name} registered successfully with ID {employee.employer_id}.'
             )
             return JsonResponse({'message': 'Successfully registered', 'status_code': status.HTTP_201_CREATED})
         except Exception as e:
@@ -1236,7 +1236,7 @@ class PasswordResetRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-
+        
         try:
             user = Employer_Profile.objects.get(email=email)
         except Employer_Profile.DoesNotExist:
@@ -1251,6 +1251,7 @@ class PasswordResetRequestView(APIView):
             'your-email@example.com',
             [email],
         )
+
 
         return Response({"message": "Password reset link sent."}, status=status.HTTP_200_OK)
 
@@ -1271,6 +1272,10 @@ class PasswordResetConfirmView(APIView):
 
         user.set_password(new_password)
         user.save()
-
+        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+        application_activity.objects.create(
+            action='Forget Pasword',
+            details=f'Employer {employee.employer_name} successfully forget password with ID {employee.employer_id}. '
+        )
         return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
 
