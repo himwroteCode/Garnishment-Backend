@@ -144,7 +144,10 @@ class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()  
+<<<<<<< HEAD
     timestamp = models.DateTimeField(auto_now_add=True)
+=======
+>>>>>>> 7f103f643bda6a9a22d0a72679c386658fd9ebe7
  
 
 class LogEntry(models.Model):
@@ -161,9 +164,12 @@ class application_activity(models.Model):
     action = models.CharField(max_length=255)
     details = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 7f103f643bda6a9a22d0a72679c386658fd9ebe7
    
 
 
