@@ -135,6 +135,8 @@ class Garcalculation_data(models.Model):
     support_second_family = models.BooleanField()
     amount_to_withhold = models.FloatField()
     arrears_amt = models.FloatField()
+    # num_arrears =models.IntegerField()
+    # num_garnishments = models.IntegerField()
     order_id=models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -142,12 +144,8 @@ class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()  
-
-class Activity(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
-    employer_name = models.CharField(max_length=100)
-    result = models.FloatField()    
+    timestamp = models.DateTimeField(auto_now_add=True)
+ 
 
 class LogEntry(models.Model):
     action = models.CharField(max_length=255)
@@ -158,6 +156,16 @@ class LogEntry(models.Model):
 
     def __str__(self):
         return f'{self.timestamp} - {self.user} - {self.action}'
+    
+class application_activity(models.Model):
+    action = models.CharField(max_length=255)
+    details = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+
+   
+
 
 
 

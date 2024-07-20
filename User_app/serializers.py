@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department, Location,Tax_details,LogEntry,IWOPDFFile
+from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -77,3 +77,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['password'] != data['confirm_password']:
             raise serializers.ValidationError("Passwords do not match.")
         return data
+    
+class ResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalculationResult
+        fields = '__all__'

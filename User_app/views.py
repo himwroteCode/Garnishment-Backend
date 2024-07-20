@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results
+from .models import Employer_Profile,Employee_Details,Tax_details,Department,Location,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -16,7 +16,7 @@ import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer ,GetEmployerDetailsSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer ,GetEmployerDetailsSerializer,ResultSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -70,10 +70,10 @@ def login(request):
             try:
                 refresh = RefreshToken.for_user(user)
 
-                employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
-                LogEntry.objects.create(
+                employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+                application_activity.objects.create(
                 action='Employer Login',
-                details=f'Employer Login Successfully with ID {employee.employer_id}'
+                details=f'Employer {employee.employer_name} Login successfully with ID {employee.employer_id}. '
             )
                 response_data = {
                     'success': True,
@@ -161,9 +161,9 @@ def register(request):
             user.save()
 
             employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
-            LogEntry.objects.create(
+            application_activity.objects.create(
                 action='Employer Register',
-                details=f'Employer Register Succesfully with employer ID {employee.employer_id}'
+                details=f'Employer {employee.employer_name} registered successfully with ID {employee.employer_id}.'
             )
             return JsonResponse({'message': 'Successfully registered', 'status_code': status.HTTP_201_CREATED})
         except Exception as e:
@@ -750,6 +750,7 @@ def DepartmentViewSet(request):
 #         return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# 
 class Gcalculations(APIView):
     def get(self, request, employee_id, employer_id):
         try:
@@ -759,121 +760,100 @@ class Gcalculations(APIView):
             employer = Employer_Profile.objects.get(employer_id=employer_id)
             gdata = Garcalculation_data.objects.filter(employer_id=employer_id, employee_id=employee_id).order_by('-timestamp').first()
             
-            # Calculate the various taxes
-            federal_income_tax = gdata.earnings * tax.fedral_income_tax / 100
-            social_tax = gdata.earnings * tax.social_and_security / 100
-            medicare_tax = gdata.earnings * tax.medicare_tax / 100
-            state_tax = gdata.earnings * tax.state_taxes / 100
-            total_tax = federal_income_tax + social_tax + medicare_tax + state_tax
-            disposable_earnings = gdata.earnings - total_tax
+            # Extracting earnings and garnishment fees from gdata
+            earnings = gdata.earnings
+            garnishment_fees = gdata.garnishment_fees
+            amount_to_withhold = gdata.amount_to_withhold
+            arrears_amt = gdata.arrears_amt
+            arrears_greater_than_12_weeks = gdata.arrears_greater_than_12_weeks
+            support_second_family = gdata.support_second_family
             
+            # Calculate the various taxes
+            federal_income_tax_rate = tax.fedral_income_tax
+            social_tax_rate = tax.social_and_security
+            medicare_tax_rate = tax.medicare_tax
+            state_tax_rate = tax.state_taxes
+
+            total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
+            disposable_earnings = round(earnings - total_tax, 2)
+
             # Calculate ccpa_limit based on conditions
-            if gdata.support_second_family and gdata.amount_to_withhold:
+            if support_second_family and arrears_greater_than_12_weeks:
                 ccpa_limit = 0.55
-            elif not gdata.support_second_family and not gdata.amount_to_withhold:
+            elif not support_second_family and not arrears_greater_than_12_weeks:
                 ccpa_limit = 0.60
-            elif not gdata.support_second_family and gdata.amount_to_withhold:
+            elif not support_second_family and arrears_greater_than_12_weeks:
                 ccpa_limit = 0.65
             else:
                 ccpa_limit = 0.50
 
             # Calculate allowable disposable earnings
-            fmw = 30 * 7.5  # Federal Minimum Wage
-            allowable_disposable_earnings = disposable_earnings * (1 - ccpa_limit)
-            withholding_available = allowable_disposable_earnings - gdata.garnishment_fees
-            
+            allowable_disposable_earnings = round(disposable_earnings * ccpa_limit, 2)
+            withholding_available = round(allowable_disposable_earnings - garnishment_fees, 2)
+            other_garnishment_amount = round(disposable_earnings * 0.25, 2)
+
+            # Federal Minimum Wage calculation
+            fmw = 30 * 7.25
+            Disposable_Income_minus_Minimum_Wage_rule = round(earnings - fmw, 2)
+            Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
+
             # Determine the allowable garnishment amount
-            if (allowable_disposable_earnings - fmw) <= 0:
+            if Minimum_amt <= 0:
                 allowable_garnishment_amount = 0
             else:
-                allowable_garnishment_amount = allowable_disposable_earnings - fmw
-            if allowable_garnishment_amount < withholding_available:
+                allowable_garnishment_amount = Minimum_amt
+
+            if allowable_garnishment_amount <= 0:
+                allowed_amount_for_garnishment = 0
+            elif allowable_garnishment_amount > withholding_available:
                 allowed_amount_for_garnishment = allowable_garnishment_amount
             else:
                 allowed_amount_for_garnishment = withholding_available
-            
-            other_garnishment_amount = disposable_earnings * 0.25
-
-            # Determine allocation method for garnishment
-            if employer.state in ["Texas", "Washington"]:
-                allocation_method_for_garnishment = "Divide Equally"
-            else:
-                allocation_method_for_garnishment = "Prorate"
 
             # Calculate the amount left for arrears
-            amount_left_for_arrears = allowed_amount_for_garnishment - gdata.amount_to_withhold
-            allowed_child_support_garnishment = gdata.arrears_amt
-            if gdata.arrears_greater_than_12_weeks:
-                allowed_amount_for_other_garnishment = amount_left_for_arrears - gdata.arrears_amt
+            amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold, 2)
+            if amount_left_for_arrears < 0:
+                amount_left_for_arrears = 0
+
+            # Determine if arrears are greater than 12 weeks
+            allowed_child_support_arrear = arrears_amt
+            if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
+                allowed_amount_for_other_garnishment = 0
             else:
-                allowed_amount_for_other_garnishment = allowed_amount_for_garnishment
+                allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
 
-            # Prepare the response data
-            # data = {
-            #     "employee_id": employee_id,
-            #     "employer_id": employer_id,
-            #     "allowed_amount_for_garnishment": allowed_amount_for_garnishment,
-            #     "allowed_amount_for_other_garnishment": allowed_amount_for_other_garnishment,
-            #     "other_garnishment_amount": other_garnishment_amount,
-            #     "allocation_method_for_garnishment": allocation_method_for_garnishment,
-            #     "total_disposable_earnings": disposable_earnings,
-            #     "allowable_disposable_earnings": allowable_disposable_earnings,
-            #     "withholding_available": withholding_available,
-
-            #     # Additional input data
-            #     "employee_data": {
-            #         "employee_id": employee.employee_id,
-            #         "employer_id": employee.employer_id,
-            #     },
-            #     "tax_data": {
-            #         "fedral_income_tax": tax.fedral_income_tax,
-            #         "social_and_security": tax.social_and_security,
-            #         "medicare_tax": tax.medicare_tax,
-            #         "state_taxes": tax.state_taxes,
-            #     },
-            #     "employer_data": {
-            #         "employer_id": employer.employer_id,
-            #         "state": employer.state,
-
-            #     },
-            #     "garnishment_data": {
-            #         "earnings": gdata.earnings,
-            #         "support_second_family": gdata.support_second_family,
-            #         "amount_to_withhold": gdata.amount_to_withhold,
-            #         "garnishment_fees": gdata.garnishment_fees,
-            #         "arrears_greater_than_12_weeks": gdata.arrears_greater_than_12_weeks,
-            #         "arrears_amt": gdata.arrears_amt,
-            #     }
-            # }
-
+            # Create Calculation_data_results object
             Calculation_data_results.objects.create(
-            employee_id=employee_id,
-            employer_id=employer_id,
-            fedral_income_tax=tax.fedral_income_tax,
-            social_and_security=tax.social_and_security,
-            medicare_tax=tax.medicare_tax,
-            state_taxes=tax.state_taxes,
-            earnings= gdata.earnings,
-            support_second_family=gdata.support_second_family,
-            amount_to_withhold =gdata.amount_to_withhold,
-            garnishment_fees=gdata.garnishment_fees,
-            arrears_greater_than_12_weeks=gdata.arrears_greater_than_12_weeks,
-            arrears_amt=gdata.arrears_amt,
-            allowable_disposable_earnings=allowable_disposable_earnings,
-            withholding_available=withholding_available,
-            allowed_amount_for_garnishment=allowed_amount_for_garnishment,
-            other_garnishment_amount=other_garnishment_amount,
-            allowable_garnishment_amount=allowable_garnishment_amount,
-            amount_left_for_arrears=amount_left_for_arrears,
-            allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment)
-            
-            
+                employee_id=employee_id,
+                employer_id=employer_id,
+                fedral_income_tax=federal_income_tax_rate,
+                social_and_security=social_tax_rate,
+                medicare_tax=medicare_tax_rate,
+                state_taxes=state_tax_rate,
+                earnings=earnings,
+                support_second_family=support_second_family,
+                amount_to_withhold=amount_to_withhold,
+                garnishment_fees=garnishment_fees,
+                arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
+                arrears_amt=arrears_amt,
+                allowable_disposable_earnings=allowable_disposable_earnings,
+                withholding_available=withholding_available,
+                allowed_amount_for_garnishment=allowed_amount_for_garnishment,
+                other_garnishment_amount=other_garnishment_amount,
+                allowable_garnishment_amount=allowable_garnishment_amount,
+                amount_left_for_arrears=amount_left_for_arrears,
+                allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
+            )
+
+            # Create CalculationResult object
             CalculationResult.objects.create(
-            employee_id=employee_id,
-            employer_id=employer_id,
-            result=allowed_amount_for_other_garnishment)   
+                employee_id=employee_id,
+                employer_id=employer_id,
+                result=allowed_amount_for_other_garnishment
+            )
+
             return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
-        
+
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
         except Tax_details.DoesNotExist:
@@ -1208,6 +1188,7 @@ def get_single_location_details(request, employer_id,location_id):
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})
 
+
  #Get the singal Department details  
 @api_view(['GET'])
 def get_single_department_details(request, employer_id,department_id):
@@ -1227,7 +1208,24 @@ def get_single_department_details(request, employer_id,department_id):
         return JsonResponse({'message': 'Employer ID not found', 'status_code':status.HTTP_404_NOT_FOUND})   
     
 
-
+@api_view(['GET'])
+def get_single_result_details(request, employer_id):
+    employees = CalculationResult.objects.filter(employer_id=employer_id)
+    if employees.exists():
+        try:
+            employee = employees
+            serializer = ResultSerializer(employee)
+            response_data = {
+                'success': True,
+                'message': 'Data retrieved successfully',
+                'Code': status.HTTP_200_OK,
+                'data': serializer.data
+            }
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status_code': status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status_code': status.HTTP_404_NOT_FOUND})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1236,7 +1234,7 @@ class PasswordResetRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-
+        
         try:
             user = Employer_Profile.objects.get(email=email)
         except Employer_Profile.DoesNotExist:
@@ -1251,6 +1249,7 @@ class PasswordResetRequestView(APIView):
             'your-email@example.com',
             [email],
         )
+
 
         return Response({"message": "Password reset link sent."}, status=status.HTTP_200_OK)
 
@@ -1271,6 +1270,10 @@ class PasswordResetConfirmView(APIView):
 
         user.set_password(new_password)
         user.save()
-
+        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+        application_activity.objects.create(
+            action='Forget Pasword',
+            details=f'Employer {employee.employer_name} successfully forget password with ID {employee.employer_id}. '
+        )
         return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
 

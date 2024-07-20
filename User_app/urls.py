@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import EmployerProfileEditView,TaxDetails,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
+from .views import EmployerProfileEditView,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,Gcalculations,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
 from django.urls import include, path
 from rest_framework import routers
 
@@ -41,6 +41,7 @@ urlpatterns = [
     path('GetAllDepartmentDetail', DepartmentDetailsList.as_view(), name='employer-profile-list'),
     path('GetAllLocationDetail', LocationDetailsList.as_view(), name='employer-profile-list'),
     path('GetSingleEmployee/<int:employer_id>/<int:employee_id>/', views.get_single_employee_details, name='get-single-employee-details'),
+    path('GetResultDetails/<int:employer_id>/', views.get_single_result_details, name='get-single-employee-details'),
     path('GetSingleTax/<int:employer_id>/<int:tax_id>/', views.get_single_tax_details, name='get_single_tax_details'),
     path('GetSingleLocation/<int:employer_id>/<int:location_id>/', views.get_single_location_details, name='get_single_location_details'),
     path('GetSingleDepartment/<int:employer_id>/<int:department_id>/', views.get_single_department_details, name='get_single_department_details'),
