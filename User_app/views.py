@@ -799,20 +799,14 @@ class Gcalculations(APIView):
 
             # Determine the allowable garnishment amount
             if Minimum_amt <= 0:
-                allowable_garnishment_amount = 0
-            else:
-                allowable_garnishment_amount = Minimum_amt
-
-            if allowable_garnishment_amount <= 0:
                 allowed_amount_for_garnishment = 0
-            elif allowable_garnishment_amount > withholding_available:
-                allowed_amount_for_garnishment = allowable_garnishment_amount
             else:
-                allowed_amount_for_garnishment = withholding_available
+                allowed_amount_for_garnishment = Minimum_amt
 
             # Calculate the amount left for arrears
-            amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold, 2)
-            if amount_left_for_arrears < 0:
+            if (allowed_amount_for_garnishment>0) and (allowed_amount_for_garnishment- amount_to_withhold) >0 :
+                amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold,2)
+            else:
                 amount_left_for_arrears = 0
 
             # Determine if arrears are greater than 12 weeks
@@ -840,7 +834,6 @@ class Gcalculations(APIView):
                 withholding_available=withholding_available,
                 allowed_amount_for_garnishment=allowed_amount_for_garnishment,
                 other_garnishment_amount=other_garnishment_amount,
-                allowable_garnishment_amount=allowable_garnishment_amount,
                 amount_left_for_arrears=amount_left_for_arrears,
                 allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
             )
@@ -1078,7 +1071,7 @@ def CalculationDataView(request):
         try:
             data = json.loads(request.body)
             required_fields = ['earnings', 'employee_name' ,'garnishment_fees','minimum_wages','state','earnings', 'arrears_greater_than_12_weeks', 'support_second_family','amount_to_withhold', 'arrears_amt' ,'order_id' ]
-            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)         
             user = Garcalculation_data.objects.create(**data)
@@ -1210,11 +1203,11 @@ def get_single_department_details(request, employer_id,department_id):
 
 @api_view(['GET'])
 def get_single_result_details(request, employer_id):
-    employees = CalculationResult.objects.filter(employer_id=employer_id)
+    employees = CalculationResult.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
     if employees.exists():
         try:
             employee = employees
-            serializer = ResultSerializer(employee)
+            serializer = ResultSerializer(employees, many=True)
             response_data = {
                 'success': True,
                 'message': 'Data retrieved successfully',

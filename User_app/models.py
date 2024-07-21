@@ -72,7 +72,6 @@ class Calculation_data_results(models.Model):
     withholding_available=models.FloatField()
     allowed_amount_for_garnishment=models.FloatField()
     other_garnishment_amount=models.FloatField()
-    allowable_garnishment_amount=models.FloatField()
     amount_left_for_arrears=models.FloatField()
     allowed_amount_for_other_garnishment=models.FloatField()
 
