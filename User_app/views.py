@@ -763,17 +763,23 @@ class Gcalculations(APIView):
             # Extracting earnings and garnishment fees from gdata
             earnings = gdata.earnings
             garnishment_fees = gdata.garnishment_fees
-            amount_to_withhold = gdata.amount_to_withhold
-            arrears_amt = gdata.arrears_amt
+            amount_to_withhold_child1 = gdata.amount_to_withhold_child1
+            amount_to_withhold_child2 = gdata.amount_to_withhold_child2
+            amount_to_withhold_child3 = gdata.amount_to_withhold_child3
+            arrears_amt_Child1 = gdata.arrears_amt_Child1
+            arrears_amt_Child2 =gdata.arrears_amt_Child2
+            arrears_amt_Child3 =gdata.arrears_amt_Child3
             arrears_greater_than_12_weeks = gdata.arrears_greater_than_12_weeks
             support_second_family = gdata.support_second_family
-            
+            number_of_garnishment =employee.number_of_garnishment
+            allocation_method_for_garnishment=gdata.allocation_method_for_garnishment
+            number_of_arrears=gdata.number_of_arrears
+            allocation_method_for_arrears=gdata.allocation_method_for_arrears
             # Calculate the various taxes
             federal_income_tax_rate = tax.fedral_income_tax
             social_tax_rate = tax.social_and_security
             medicare_tax_rate = tax.medicare_tax
             state_tax_rate = tax.state_taxes
-
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
             disposable_earnings = round(earnings - total_tax, 2)
 
@@ -796,26 +802,91 @@ class Gcalculations(APIView):
             fmw = 30 * 7.25
             Disposable_Income_minus_Minimum_Wage_rule = round(earnings - fmw, 2)
             Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
-
+   
             # Determine the allowable garnishment amount
             if Minimum_amt <= 0:
                 allowed_amount_for_garnishment = 0
             else:
                 allowed_amount_for_garnishment = Minimum_amt
+            amount_to_withhold=amount_to_withhold_child1+amount_to_withhold_child2+amount_to_withhold_child3
 
+            
+            if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
+                amount_to_withhold_child1 = amount_to_withhold_child1
+            elif allocation_method_for_garnishment == "Pro Rate":
+                ratio=amount_to_withhold_child1/amount_to_withhold
+                amount_to_withhold_child1 = (allowed_amount_for_garnishment)*(ratio)
+            elif amount_to_withhold_child1>0:
+                amount_to_withhold_child1 = allowed_amount_for_garnishment/number_of_garnishment
+            else:
+                amount_to_withhold_child1 = 0
+            
+            if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
+                amount_to_withhold_child2 = amount_to_withhold_child2
+            elif allocation_method_for_garnishment == "Pro Rate":
+                ratio = amount_to_withhold_child2/amount_to_withhold
+                amount_to_withhold_child2 = (allowed_amount_for_garnishment)*(ratio)
+            elif amount_to_withhold_child2>0:
+                amount_to_withhold_child2 = allowed_amount_for_garnishment/number_of_garnishment
+            else:
+                amount_to_withhold_child2 = 0
+            
+            if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
+                amount_to_withhold_child3 = amount_to_withhold_child3
+            elif allocation_method_for_garnishment == "Pro Rate":
+                ratio =amount_to_withhold_child3/amount_to_withhold
+                amount_to_withhold_child3 = (allowed_amount_for_garnishment)*(ratio)
+            elif amount_to_withhold_child3>0:
+                amount_to_withhold_child3 = allowed_amount_for_garnishment/number_of_garnishment
+            else:
+                amount_to_withhold_child3 = 0
+            
+            amount_to_withhold=amount_to_withhold_child1+amount_to_withhold_child2+amount_to_withhold_child3
+            
             # Calculate the amount left for arrears
             if (allowed_amount_for_garnishment>0) and (allowed_amount_for_garnishment- amount_to_withhold) >0 :
                 amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold,2)
             else:
                 amount_left_for_arrears = 0
-
-            # Determine if arrears are greater than 12 weeks
-            allowed_child_support_arrear = arrears_amt
-            if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
+        
+           # Determine allowed amount for other garnishment
+            allowed_child_support_arrear = arrears_amt_Child1+arrears_amt_Child2+arrears_amt_Child3
+            
+            if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
+                arrears_amt_Child1 = arrears_amt_Child1
+            elif allocation_method_for_arrears == "Pro Rate":
+                ratio=arrears_amt_Child1/allowed_child_support_arrear
+                arrears_amt_Child1 = (amount_left_for_arrears)*(ratio)
+            elif amount_left_for_arrears>0:
+                amount_to_withhold_child1 = amount_left_for_arrears/number_of_arrears
+            else:
+                amount_to_withhold_child1 = 0
+            
+            if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
+                arrears_amt_Child2 = arrears_amt_Child2
+            elif allocation_method_for_arrears == "Pro Rate":
+                ratio=arrears_amt_Child2/allowed_child_support_arrear
+                arrears_amt_Child2 = (amount_left_for_arrears)*(ratio)
+            elif amount_left_for_arrears>0:
+                amount_to_withhold_child2 = amount_left_for_arrears/number_of_arrears
+            else:
+                amount_to_withhold_child2 = 0
+            
+            if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
+                arrears_amt_Child3 = arrears_amt_Child3
+            elif allocation_method_for_arrears == "Pro Rate":
+                ratio=arrears_amt_Child3/allowed_child_support_arrear
+                arrears_amt_Child3 = (amount_left_for_arrears)*(ratio)
+            elif amount_left_for_arrears>0:
+                amount_to_withhold_child3 = amount_left_for_arrears/number_of_arrears
+            else:
+                amount_to_withhold_child3 = 0
+            
+            
+            if (amount_left_for_arrears -allowed_child_support_arrear) <=0:
                 allowed_amount_for_other_garnishment = 0
             else:
-                allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
-
+                allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear,2)
             # Create Calculation_data_results object
             Calculation_data_results.objects.create(
                 employee_id=employee_id,
@@ -826,10 +897,17 @@ class Gcalculations(APIView):
                 state_taxes=state_tax_rate,
                 earnings=earnings,
                 support_second_family=support_second_family,
-                amount_to_withhold=amount_to_withhold,
                 garnishment_fees=garnishment_fees,
                 arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
-                arrears_amt=arrears_amt,
+                amount_to_withhold_child1=amount_to_withhold_child1,
+                amount_to_withhold_child2=amount_to_withhold_child2,
+                amount_to_withhold_child3=amount_to_withhold_child3,
+                arrears_amt_Child1=arrears_amt_Child1,
+                arrears_amt_Child2=arrears_amt_Child2,
+                arrears_amt_Child3=arrears_amt_Child3,
+                number_of_arrears=number_of_arrears,
+                allocation_method_for_garnishment=allocation_method_for_garnishment,
+                allocation_method_for_arrears=allocation_method_for_arrears,
                 allowable_disposable_earnings=allowable_disposable_earnings,
                 withholding_available=withholding_available,
                 allowed_amount_for_garnishment=allowed_amount_for_garnishment,
@@ -837,7 +915,6 @@ class Gcalculations(APIView):
                 amount_left_for_arrears=amount_left_for_arrears,
                 allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
             )
-
             # Create CalculationResult object
             CalculationResult.objects.create(
                 employee_id=employee_id,
@@ -855,7 +932,6 @@ class Gcalculations(APIView):
             return Response({"error": "Employer profile not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @csrf_exempt
 def LocationViewSet(request):
@@ -876,6 +952,8 @@ def LocationViewSet(request):
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
     else:
         return JsonResponse({'message': 'Please use POST method','status_code':status.HTTP_400_BAD_REQUEST})
+    
+
 
 # For  Deleting the Employee Details
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1070,7 +1148,7 @@ def CalculationDataView(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            required_fields = ['earnings', 'employee_name' ,'garnishment_fees','minimum_wages','state','earnings', 'arrears_greater_than_12_weeks', 'support_second_family','amount_to_withhold', 'arrears_amt' ,'order_id' ]
+            required_fields = ['earnings', 'employee_name' ,'garnishment_fees','minimum_wages','earnings', 'arrears_greater_than_12_weeks', 'support_second_family','amount_to_withhold_child1', 'amount_to_withhold_child2','amount_to_withhold_child3', 'arrears_amt_Child1','arrears_amt_Child2','arrears_amt_Child3','allocation_method_for_garnishment', 'allocation_method_for_arrears','number_of_arrears','order_id' ]
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)         
@@ -1227,7 +1305,6 @@ class PasswordResetRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-        
         try:
             user = Employer_Profile.objects.get(email=email)
         except Employer_Profile.DoesNotExist:
@@ -1242,8 +1319,6 @@ class PasswordResetRequestView(APIView):
             'your-email@example.com',
             [email],
         )
-
-
         return Response({"message": "Password reset link sent."}, status=status.HTTP_200_OK)
 
 
@@ -1260,7 +1335,6 @@ class PasswordResetConfirmView(APIView):
             user = Employer_Profile.objects.get(employer_id=user_id)
         except (Employer_Profile.DoesNotExist, TokenError) as e:
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
-
         user.set_password(new_password)
         user.save()
         employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
