@@ -4,33 +4,6 @@ from django.db import models
 
 
 
-class CustomUser(AbstractUser):
-    name = models.CharField(max_length=100)
-
-    # Remove the custom related_name and use the default ones
-    groups = models.ManyToManyField(
-        'auth.Group',
-        blank=True,
-        related_name='customuser_set',
-        verbose_name='groups',
-        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
-    )
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        blank=True,
-        related_name='customuser_set',
-        verbose_name='user permissions',
-        help_text='Specific permissions for this user.',
-    )
-
-class Profile(models.Model):
-    user = models.OneToOneField(CustomUser , on_delete=models.CASCADE)
-    forget_password_token = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
-
-
 # Employer_Profile details
 class Employer_Profile(AbstractBaseUser):
     employer_id = models.AutoField(primary_key=True)
@@ -61,6 +34,7 @@ class Calculation_data_results(models.Model):
     fedral_income_tax=models.FloatField()
     social_and_security=models.FloatField()
     medicare_tax=models.FloatField()
+    state=models.CharField(max_length=255)
     state_taxes=models.FloatField()
     earnings= models.FloatField()
     support_second_family=models.BooleanField()
@@ -72,12 +46,9 @@ class Calculation_data_results(models.Model):
     arrears_amt_Child1=models.FloatField()
     arrears_amt_Child2 =models.FloatField()
     arrears_amt_Child3 =models.FloatField()
-    allocation_method_for_arrears=models.CharField()
-    allocation_method_for_garnishment=models.CharField()
     number_of_arrears= models.IntegerField()
     allowable_disposable_earnings=models.FloatField()
     withholding_available=models.FloatField()
-    allowed_amount_for_garnishment=models.FloatField()
     other_garnishment_amount=models.FloatField()
     amount_left_for_arrears=models.FloatField()
     allowed_amount_for_other_garnishment=models.FloatField()
@@ -87,7 +58,7 @@ class Employee_Details(models.Model):
     employer_id = models.IntegerField()
     employee_name = models.CharField(max_length=255)
     department = models.CharField(max_length=255)
-    pay_cycle = models.CharField()
+    pay_cycle = models.CharField(max_length=255)
     number_of_garnishment = models.IntegerField()
     location = models.CharField(max_length=255)
     def __str__(self):
@@ -99,7 +70,7 @@ class Tax_details(models.Model):
     fedral_income_tax =models.FloatField()
     social_and_security =models.FloatField()
     medicare_tax= models.FloatField()
-    state_taxes =models.FloatField()
+    state_tax =models.FloatField()
 
 
 class IWOPDFFile(models.Model):
@@ -132,7 +103,7 @@ class Location(models.Model):
 class Garcalculation_data(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
-    employee_name=models.CharField()
+    employee_name=models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
     minimum_wages = models.FloatField()
     earnings = models.FloatField()
@@ -144,10 +115,9 @@ class Garcalculation_data(models.Model):
     arrears_amt_Child1=models.FloatField()
     arrears_amt_Child2 =models.FloatField()
     arrears_amt_Child3 =models.FloatField()
-    allocation_method_for_arrears=models.CharField()
-    allocation_method_for_garnishment=models.CharField()
     number_of_arrears= models.IntegerField()
     order_id=models.IntegerField()
+    state=models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):
