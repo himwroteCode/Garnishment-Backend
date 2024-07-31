@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
-from datetime import timedelta  
+from datetime import timedelta
+from .config import ccpa_limit
 
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'employer_id',
@@ -27,8 +28,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = os.path.join(BASE_DIR , 'templates')
 
 
-STATICFILES_DIRS = os.path.join(BASE_DIR, 'static'),
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
+# STATICFILES_DIRS = os.path.join(BASE_DIR, 'static'),
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,7 +38,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-4j-q2^gpu9&%imydt@@vq*h0i#9#(yv0)&q5ewvaftj(eocs2='
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# # SECURITY WARNING: don't run with debug turned on in production!
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
 DEBUG = os.environ.get('DEBUG','True')=="True"
 STATIC_URL = '/static/'
 ALLOWED_HOSTS = ['*']
@@ -84,10 +89,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://garnishment-backend.onrender.com", 
 ]
 
-# Static files settings
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+# # Static files settings
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ]
 
 # Other settings...
 
@@ -126,33 +131,32 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'gdb',
-#         'USER': 'gdb_w526_user',
-#         'PASSWORD': 'arpNVzso9Z63rYQVc4Z5tMGtRgpvQdHK',
-#         'HOST': 'dpg-cp7i5uu3e1ms73al0qk0-a',
-#         'PORT': '5432',
-#         'OPTIONS': {
-#             'connect_timeout': 10,
-#         },
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'garnishment-db',
+        'USER': 'garnish-dev@garnish-dev1',
+        'PASSWORD': 'G@rnish-D3v',
+        'HOST': 'garnish-dev1.database.windows.net',
+        'PORT': '1433',
 
-#     }
-# }
-#postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
+        "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",},
+
+    },
+}
+# postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
 
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-os.environ['DATABASE_URL'] = "postgres://default:hk3aESiOoL6d@ep-morning-boat-a13s3nr2.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+# os.environ['DATABASE_URL'] = "postgres://default:hk3aESiOoL6d@ep-morning-boat-a13s3nr2.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL')
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL')
+#     )
+# }
 
 
 FILE_UPLOAD_HANDLERS = [

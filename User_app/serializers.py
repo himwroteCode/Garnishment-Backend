@@ -1,11 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser ,Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile
-
-
-class UserUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['name', 'email']
+from .models import Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
