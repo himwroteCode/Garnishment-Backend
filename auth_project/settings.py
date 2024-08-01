@@ -139,24 +139,33 @@ DATABASES = {
         'PASSWORD': 'G@rnish-D3v',
         'HOST': 'garnish-dev1.database.windows.net',
         'PORT': '1433',
-
-        "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",},
+        "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",
+        'extra_params': 'TrustServerCertificate=yes;'},
 
     },
 }
+
 # postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
 
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=DATABASE_URL='mssql://garnish-dev:G@rnish-D3v@garnish-dev1.database.windows.net:1433/garnishment-db?encrypt=true&trustServerCertificate=false&connectionTimeout=30'
+#     )
+# }
 
-# os.environ['DATABASE_URL'] = "postgres://default:hk3aESiOoL6d@ep-morning-boat-a13s3nr2.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+
+# os.environ['DATABASE_URL'] = 'mssql://garnish-dev:G@rnish-D3v@garnish-dev1.database.windows.net:1433/garnishment-db?encrypt=true&trustServerCertificate=false&connectionTimeout=30'
 
 # DATABASES = {
 #     'default': dj_database_url.config(
 #         default=os.getenv('DATABASE_URL')
 #     )
 # }
+LANGUAGE_CODE = 'en-us'
+USE_I18N = False
 
 
 FILE_UPLOAD_HANDLERS = [
