@@ -71,6 +71,7 @@ class Tax_details(models.Model):
     social_and_security =models.FloatField()
     medicare_tax= models.FloatField()
     state_tax =models.FloatField()
+    SDI_tax=models.FloatField()
 
 
 class IWOPDFFile(models.Model):
@@ -143,4 +144,17 @@ class application_activity(models.Model):
     details = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+class student_loan_result(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    net_pay = models.FloatField()  
+    garnishment_amount= models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class student_loan_data(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    earnings = models.FloatField()  
+    garnishment_fees= models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
