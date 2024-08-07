@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile
+from .models import Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
@@ -72,7 +72,13 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("Passwords do not match.")
         return data
     
-class ResultSerializer(serializers.ModelSerializer):
+class MultipleStudentLoanSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CalculationResult
+        model = multiple_student_loan_result
+
+        fields = '__all__'
+
+class SingleStudentLoanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = single_student_loan_result
         fields = '__all__'

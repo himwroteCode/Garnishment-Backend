@@ -4,7 +4,7 @@ from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,Tax_details,Department,student_loan_data,Location,student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
+from .models import Employer_Profile,Employee_Details,ResultSerializer,Tax_details,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,7 +17,7 @@ import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer ,GetEmployerDetailsSerializer,ResultSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer ,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -1077,16 +1077,14 @@ def CalculationDataView(request):
             data = request.data
             required_fields = [
                 'earnings', 'employee_name', 'garnishment_fees', 'minimum_wages', 'earnings',
-                'arrears_greater_than_12_weeks', 'support_second_family', 'amount_to_withhold_child1',
-                'amount_to_withhold_child2', 'amount_to_withhold_child3', 'arrears_amt_Child1',
-                'arrears_amt_Child2', 'arrears_amt_Child3', 'state', 'number_of_arrears', 'order_id'
-            ]
+                'arrears_greater_than_12_weeks', 'support_second_family', 'amount_to_withhold_child1'
+                , 'arrears_amt_Child1'
+                , 'state', 'number_of_arrears', 'order_id' ]
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
             user = Garcalculation_data.objects.create(**data)
-            table = get_object_or_404(Garcalculation_data, id=user.id)
 
             # Retrieve the employee, tax, and employer records
             employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
@@ -1112,7 +1110,7 @@ def CalculationDataView(request):
             federal_income_tax_rate = tax.fedral_income_tax
             social_tax_rate = tax.social_and_security
             medicare_tax_rate = tax.medicare_tax
-            state_tax_rate = tax.state_taxes
+            state_tax_rate = tax.state_tax
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
             disposable_earnings = round(earnings - total_tax, 2)
 
@@ -1285,7 +1283,7 @@ def CalculationDataView(request):
 
 @csrf_exempt
 @api_view(['POST'])
-def CalculationDataView(request):
+def StudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
@@ -1297,7 +1295,6 @@ def CalculationDataView(request):
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
             user = student_loan_data.objects.create(**data)
-            table = get_object_or_404(student_loan_data, id=user.id)
 
             # Retrieve the employee, tax, and employer records
             employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
@@ -1317,11 +1314,11 @@ def CalculationDataView(request):
             SDI_tax=tax.state_tax
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax
             disposable_earnings = round(earnings - total_tax, 2)
-
-            fifteen_percent_of_eraning= disposable_earnings*.15
+            allowable_disposable_earning=disposable_earnings-garnishment_fees
+            fifteen_percent_of_eraning= allowable_disposable_earning*.15
             fmw=7.25*30
             difference=disposable_earnings-fmw
-            if disposable_earnings<fmw:
+            if allowable_disposable_earning<fmw:
                 garnishment_amount=0
             else:
                 garnishment_amount=fifteen_percent_of_eraning
@@ -1356,9 +1353,8 @@ def CalculationDataView(request):
             #     amount_left_for_arrears=amount_left_for_arrears,
             #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
             # )
-
             # Create CalculationResult object
-            student_loan_result.objects.create(
+            multiple_student_loan_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
                 net_pay=net_pay,
@@ -1370,6 +1366,109 @@ def CalculationDataView(request):
                 details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
             )
 
+            return Response({'message': 'Student Loan Calculation Details Registered Successfully', "status code":status.HTTP_200_OK})
+
+        except Employee_Details.DoesNotExist:
+            return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Tax_details.DoesNotExist:
+            return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
+        except Employer_Profile.DoesNotExist:
+            return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
+        except Exception as e:
+            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+    else:
+        return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
+
+
+@csrf_exempt
+@api_view(['POST'])
+def MiltipleStudentLoanCalculationData(request):
+    if request.method == 'POST':
+        try:
+            data = request.data
+            required_fields = [
+                'employee_name', 'garnishment_fees', 'minimum_wages', 'earnings','order_id'
+            ]
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = student_loan_data.objects.create(**data)
+            
+            # Retrieve the employee, tax, and employer records
+            employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
+            tax = Tax_details.objects.get(employer_id=data['employer_id'])
+            employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
+            gdata = student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+
+            # Extracting earnings and garnishment fees from gdata
+            earnings = gdata.earnings
+            garnishment_fees = gdata.garnishment_fees
+            
+            # Calculate the various taxes
+            federal_income_tax_rate = tax.fedral_income_tax
+            social_tax_rate = tax.social_and_security
+            medicare_tax_rate = tax.medicare_tax
+            state_tax_rate = tax.state_tax
+            SDI_tax=tax.state_tax
+            total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax
+            disposable_earnings = round(earnings - total_tax, 2)
+            allowable_disposable_earning=disposable_earnings-garnishment_fees
+            twentyfifth_percent_of_eraning= allowable_disposable_earning*.25
+            fmw=7.25*30
+            
+            if allowable_disposable_earning<fmw:
+                garnishment_amount=0
+            else:
+                garnishment_amount=twentyfifth_percent_of_eraning
+
+
+            studentloan1=allowable_disposable_earning*.15
+            studentloan2=allowable_disposable_earning*.10
+            studentloan3=allowable_disposable_earning*0
+
+            net_pay=disposable_earnings-garnishment_amount
+            
+            # # Create Calculation_data_results object
+            # Calculation_data_results.objects.create(
+            #     employee_id=data['employee_id'],
+            #     employer_id=data['employer_id'],
+            #     fedral_income_tax=federal_income_tax_rate,
+            #     social_and_security=social_tax_rate,
+            #     medicare_tax=medicare_tax_rate,
+            #     state_taxes=state_tax_rate,
+            #     earnings=earnings,
+            #     support_second_family=support_second_family,
+            #     garnishment_fees=garnishment_fees,
+            #     arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
+            #     amount_to_withhold_child1=amount_to_withhold_child1,
+            #     amount_to_withhold_child2=amount_to_withhold_child2,
+            #     amount_to_withhold_child3=amount_to_withhold_child3,
+            #     arrears_amt_Child1=arrears_amt_Child1,
+            #     arrears_amt_Child2=arrears_amt_Child2,
+            #     arrears_amt_Child3=arrears_amt_Child3,
+            #     number_of_arrears=number_of_arrears,
+            #     allocation_method_for_garnishment=allocation_method_for_garnishment,
+            #     allocation_method_for_arrears=allocation_method_for_arrears,
+            #     allowable_disposable_earnings=allowable_disposable_earnings,
+            #     withholding_available=withholding_available,
+            #     allowed_amount_for_garnishment=allowed_amount_for_garnishment,
+            #     other_garnishment_amount=other_garnishment_amount,
+            #     amount_left_for_arrears=amount_left_for_arrears,
+            #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
+            # )
+            # Create CalculationResult object
+            multiple_student_loan_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                garnishment_amount=twentyfifth_percent_of_eraning,
+                net_pay=net_pay
+            
+            )
+            LogEntry.objects.create(
+                action='Student Loan Calculation data Added',
+                details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+            )
             return Response({'message': 'Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
 
         except Employee_Details.DoesNotExist:
@@ -1382,6 +1481,8 @@ def CalculationDataView(request):
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
+
+
 
 #Extracting the Last Five record from the Log Table
 class LastFiveLogsView(APIView):
@@ -1516,7 +1617,7 @@ def get_single_employee_details(request, employer_id, employee_id):
 
     
 
- #Get the singal Tax details  
+#Get the singal Tax details  
 @api_view(['GET'])
 def get_single_tax_details(request, employer_id,tax_id):
     employees=Tax_details.objects.filter(employer_id=employer_id,tax_id=tax_id)
@@ -1534,7 +1635,7 @@ def get_single_tax_details(request, employer_id,tax_id):
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
- #Get the singal Location details  
+#Get the singal Location details  
 @api_view(['GET'])
 def get_single_location_details(request, employer_id,location_id):
     employees=Location.objects.filter(employer_id=employer_id,location_id=location_id)
@@ -1589,7 +1690,45 @@ def get_single_result_details(request, employer_id):
             return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-    
+
+
+@api_view(['GET'])
+def get_SingleStudentLoanResult(request, employer_id):
+    employees = single_student_loan_result.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
+    if employees.exists():
+        try:
+            serializer = SingleStudentLoanSerializer(employees, many=True)
+            response_data = {
+                'success': True,
+                'message': 'Data retrieved successfully',
+                'status code': status.HTTP_200_OK,
+                'data': serializer.data
+            }
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})    
+
+
+@api_view(['GET'])
+def get_MultipleStudentLoanResult(request, employer_id):
+    employees = multiple_student_loan_result.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
+    if employees.exists():
+        try:
+            serializer = MultipleStudentLoanSerializer(employees, many=True)
+            response_data = {
+                'success': True,
+                'message': 'Data retrieved successfully',
+                'status code': status.HTTP_200_OK,
+                'data': serializer.data
+            }
+            return JsonResponse(response_data)
+        except Employer_Profile.DoesNotExist:
+            return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+    else:
+        return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})    
+
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1613,8 +1752,6 @@ class PasswordResetRequestView(APIView):
             [email],
         )
         return Response({"message": "Password reset link sent.", "status code":status.HTTP_200_OK})
-
-
 
 
 

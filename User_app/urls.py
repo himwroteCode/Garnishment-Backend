@@ -48,7 +48,9 @@ urlpatterns = [
     path('password-reset', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('password-reset-confirm/<str:token>/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('setting/',views.Setting, name='Get Setting'),
-    
+    path('StudentLoanCalculationData/',views.StudentLoanCalculationData, name='Student-Loan-Calculation-Data'),
+    path('MiltipleStudentLoanCalculationData/',views.MiltipleStudentLoanCalculationData, name='Miltiple-Student-Loan-Calculation-Data'),
+
 
 ]
 
