@@ -140,11 +140,11 @@ DATABASES = {
         'PASSWORD': 'G@rnish-D3v',
         'HOST': 'garnish-dev1.database.windows.net',
         'PORT': '1433',
-        "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",
+        # "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",
         'extra_params': 'TrustServerCertificate=yes;'},
 
-    },
-}
+    }
+
 
 # postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'
 

@@ -75,10 +75,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class MultipleStudentLoanSerializer(serializers.ModelSerializer):
     class Meta:
         model = multiple_student_loan_result
-
         fields = '__all__'
 
 class SingleStudentLoanSerializer(serializers.ModelSerializer):
     class Meta:
         model = single_student_loan_result
+        fields = '__all__'
+
+class TaxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tax_details
+        fields = '__all__'
+
+class ResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalculationResult
         fields = '__all__'

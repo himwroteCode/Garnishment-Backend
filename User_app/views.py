@@ -4,7 +4,7 @@ from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,ResultSerializer,Tax_details,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
+from .models import Employer_Profile,Employee_Details,Tax_details,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,7 +17,7 @@ import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer ,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer ,ResultSerializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -236,7 +236,7 @@ def TaxDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
+            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_tax']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
@@ -244,7 +244,6 @@ def TaxDetails(request):
             
             user=Tax_details.objects.create(**data)
             user.save()
-
             # employee = get_object_or_404(Tax_details, tax_id=user.tax_id)
             LogEntry.objects.create(
                 action='Tax details added',
@@ -1354,7 +1353,7 @@ def StudentLoanCalculationData(request):
             #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
             # )
             # Create CalculationResult object
-            multiple_student_loan_result.objects.create(
+            single_student_loan_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
                 net_pay=net_pay,

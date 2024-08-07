@@ -79,10 +79,7 @@ class IWOPDFFile(models.Model):
     pdf = models.FileField(upload_to='pdfs/')
     employer_id=models.IntegerField()
     uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    
-
-    
+ 
  
 class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
