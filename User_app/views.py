@@ -236,7 +236,7 @@ def TaxDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_tax']
+            required_fields = ['state_tax','employer_id','fedral_income_tax','social_and_security','medicare_tax']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
@@ -622,31 +622,7 @@ def get_dashboard_data(request):
     return JsonResponse(response_data)
 
 
-@csrf_exempt
-def TaxDetails(request):
-    if request.method == 'POST' :
-        try:
-            data = json.loads(request.body)
-            required_fields = ['employer_id','fedral_income_tax','social_and_security','medicare_tax','state_taxes']
-            missing_fields = [field for field in required_fields if field not in data or not data[field]]
-            
-            if missing_fields:
-                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
-            
-            user=Tax_details.objects.create(**data)
-            LogEntry.objects.create(
-            action='Tax details added',
-            details=f'Tax details added successfully for Tax ID{user.tax_id}'
-            )
-            return JsonResponse({'message': 'Tax Details Successfully Registered', 'status code':status.HTTP_201_CREATED})
-        
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON format','status code':status.HTTP_400_BAD_REQUEST})
-        
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR})
-    else:
-        return JsonResponse({'message': 'Please use POST method ', 'status code':status.HTTP_400_BAD_REQUEST})
+
   
 
 
@@ -1113,16 +1089,16 @@ def CalculationDataView(request):
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
             disposable_earnings = round(earnings - total_tax, 2)
 
-            ccpa_limit=ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
-            # # Calculate ccpa_limit based on conditions
-            # if support_second_family and arrears_greater_than_12_weeks:
-            #     ccpa_limit = 0.55
-            # elif not support_second_family and not arrears_greater_than_12_weeks:
-            #     ccpa_limit = 0.60
-            # elif not support_second_family and arrears_greater_than_12_weeks:
-            #     ccpa_limit = 0.65
-            # else:
-            #     ccpa_limit = 0.50
+            # ccpa_limit=ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
+            # Calculate ccpa_limit based on conditions
+            if support_second_family and arrears_greater_than_12_weeks:
+                ccpa_limit = 0.55
+            elif not support_second_family and not arrears_greater_than_12_weeks:
+                ccpa_limit = 0.60
+            elif not support_second_family and arrears_greater_than_12_weeks:
+                ccpa_limit = 0.65
+            else:
+                ccpa_limit = 0.50
 
             # Calculate allowable disposable earnings
             allowable_disposable_earnings = round(disposable_earnings * ccpa_limit, 2)
@@ -1243,11 +1219,8 @@ def CalculationDataView(request):
                 arrears_amt_Child2=arrears_amt_Child2,
                 arrears_amt_Child3=arrears_amt_Child3,
                 number_of_arrears=number_of_arrears,
-                allocation_method_for_garnishment=allocation_method_for_garnishment,
-                allocation_method_for_arrears=allocation_method_for_arrears,
                 allowable_disposable_earnings=allowable_disposable_earnings,
                 withholding_available=withholding_available,
-                allowed_amount_for_garnishment=allowed_amount_for_garnishment,
                 other_garnishment_amount=other_garnishment_amount,
                 amount_left_for_arrears=amount_left_for_arrears,
                 allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
