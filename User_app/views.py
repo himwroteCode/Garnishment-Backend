@@ -1607,6 +1607,7 @@ def get_single_tax_details(request, employer_id,tax_id):
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
+
 #Get the singal Location details  
 @api_view(['GET'])
 def get_single_location_details(request, employer_id,location_id):
