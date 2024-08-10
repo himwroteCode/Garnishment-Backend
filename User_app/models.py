@@ -72,6 +72,11 @@ class Tax_details(models.Model):
     medicare_tax= models.FloatField()
     state_tax =models.FloatField()
     SDI_tax=models.FloatField()
+    mexico_tax=models.FloatField()
+    workers_compensation=models.FloatField()
+    medical_insurance=models.FloatField()
+    contribution=models.FloatField()
+    united_way_contribution=models.FloatField()
 
 
 class IWOPDFFile(models.Model):
@@ -145,14 +150,14 @@ class single_student_loan_result(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     net_pay = models.FloatField()  
-    garnishment_amount= models.IntegerField()
+    garnishment_amount= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_result(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     net_pay = models.FloatField()  
-    garnishment_amount= models.IntegerField()
+    garnishment_amount= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class student_loan_data(models.Model):
@@ -161,4 +166,65 @@ class student_loan_data(models.Model):
     earnings = models.FloatField()  
     garnishment_fees= models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class federal_loan_case_data(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    employee_name=models.CharField(max_length=255)
+    earnings = models.FloatField()  
+    garnishment_fees= models.IntegerField()
+    pay_period = models.CharField(max_length=255)
+    filing_status = models.CharField(max_length=255)
+    no_of_exception = models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class federal_case_result(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    net_pay = models.FloatField()  
+    result= models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class single_filing_status(models.Model):
+    pay_period = models.CharField(max_length=255) 
+    exemptions_1= models.FloatField() 
+    exemptions_2= models.FloatField()  
+    exemptions_3= models.FloatField()  
+    exemptions_4= models.FloatField()  
+    exemptions_5= models.FloatField()   
+    exemptions_6= models.FloatField()   
+    morethan6= models.CharField(max_length=255)
+
+class head_of_household(models.Model):
+    pay_period = models.CharField(max_length=255)
+    exemptions_1= models.FloatField() 
+    exemptions_2= models.FloatField()  
+    exemptions_3= models.FloatField()  
+    exemptions_4= models.FloatField()  
+    exemptions_5= models.FloatField()   
+    exemptions_6= models.FloatField()   
+    morethan6= models.CharField(max_length=255)
+
+
+class married_filing_joint_return(models.Model):
+    pay_period = models.CharField(max_length=255) 
+    exemptions_1= models.FloatField() 
+    exemptions_2= models.FloatField()  
+    exemptions_3= models.FloatField()  
+    exemptions_4= models.FloatField()  
+    exemptions_5= models.FloatField()  
+    exemptions_6= models.FloatField()    
+    morethan6= models.CharField(max_length=255)
+
+class married_filing_sepearte_return(models.Model):
+    pay_period = models.CharField(max_length=255)
+    exemptions_1= models.FloatField() 
+    exemptions_2= models.FloatField()  
+    exemptions_3= models.FloatField()  
+    exemptions_4= models.FloatField()  
+    exemptions_5= models.FloatField() 
+    exemptions_6= models.FloatField()     
+    morethan6= models.CharField(max_length=255)
+
+
 

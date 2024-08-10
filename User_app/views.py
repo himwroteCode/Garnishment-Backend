@@ -4,7 +4,7 @@ from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,Employee_Details,Tax_details,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
+from .models import Employer_Profile,federal_case_result,Employee_Details,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Tax_details,single_filing_status,federal_loan_case_data,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,7 +17,7 @@ import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer ,ResultSerializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer ,ResultSerializer,federal_case_result_Serializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -594,7 +594,6 @@ def insert_iwo_detail(request):
     return JsonResponse({'error': 'Invalid request method', 'status code': status.HTTP_405_METHOD_NOT_ALLOWED})
 
 
-
 @csrf_exempt
 def get_dashboard_data(request):
     try:
@@ -622,10 +621,6 @@ def get_dashboard_data(request):
     return JsonResponse(response_data)
 
 
-
-  
-
-
 @csrf_exempt
 def DepartmentViewSet(request):
     if request.method == 'POST':
@@ -649,190 +644,6 @@ def DepartmentViewSet(request):
         return JsonResponse({'message': 'Please use POST method','status code':status.HTTP_400_BAD_REQUEST})
 
 
-
-
-# 
-# class Gcalculations(APIView):
-#     def get(self, request, employee_id, employer_id):
-#         try:
-#             # Retrieve the employee, tax, and employer records
-#             employee = Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
-#             tax = Tax_details.objects.get(employer_id=employer_id)
-#             employer = Employer_Profile.objects.get(employer_id=employer_id)
-#             gdata = Garcalculation_data.objects.filter(employer_id=employer_id, employee_id=employee_id).order_by('-timestamp').first()
-            
-#             # Extracting earnings and garnishment fees from gdata
-#             earnings = gdata.earnings
-#             garnishment_fees = gdata.garnishment_fees
-#             amount_to_withhold_child1 = gdata.amount_to_withhold_child1
-#             amount_to_withhold_child2 = gdata.amount_to_withhold_child2
-#             amount_to_withhold_child3 = gdata.amount_to_withhold_child3
-#             arrears_amt_Child1 = gdata.arrears_amt_Child1
-#             arrears_amt_Child2 =gdata.arrears_amt_Child2
-#             arrears_amt_Child3 =gdata.arrears_amt_Child3
-#             arrears_greater_than_12_weeks = gdata.arrears_greater_than_12_weeks
-#             support_second_family = gdata.support_second_family
-#             number_of_garnishment =employee.number_of_garnishment
-#             allocation_method_for_garnishment=gdata.allocation_method_for_garnishment
-#             number_of_arrears=gdata.number_of_arrears
-#             allocation_method_for_arrears=gdata.allocation_method_for_arrears
-#             # Calculate the various taxes
-#             federal_income_tax_rate = tax.fedral_income_tax
-#             social_tax_rate = tax.social_and_security
-#             medicare_tax_rate = tax.medicare_tax
-#             state_tax_rate = tax.state_taxes
-#             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
-#             disposable_earnings = round(earnings - total_tax, 2)
-
-#             # Calculate ccpa_limit based on conditions
-#             if support_second_family and arrears_greater_than_12_weeks:
-#                 ccpa_limit = 0.55
-#             elif not support_second_family and not arrears_greater_than_12_weeks:
-#                 ccpa_limit = 0.60
-#             elif not support_second_family and arrears_greater_than_12_weeks:
-#                 ccpa_limit = 0.65
-#             else:
-#                 ccpa_limit = 0.50
-
-#             # Calculate allowable disposable earnings
-#             allowable_disposable_earnings = round(disposable_earnings * ccpa_limit, 2)
-#             withholding_available = round(allowable_disposable_earnings - garnishment_fees, 2)
-#             other_garnishment_amount = round(disposable_earnings * 0.25, 2)
-
-#             # Federal Minimum Wage calculation
-#             fmw = 30 * 7.25
-#             Disposable_Income_minus_Minimum_Wage_rule = round(earnings - fmw, 2)
-#             Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
-   
-#             # Determine the allowable garnishment amount
-#             if Minimum_amt <= 0:
-#                 allowed_amount_for_garnishment = 0
-#             else:
-#                 allowed_amount_for_garnishment = Minimum_amt
-#             amount_to_withhold=amount_to_withhold_child1+amount_to_withhold_child2+amount_to_withhold_child3
-
-            
-#             if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
-#                 amount_to_withhold_child1 = amount_to_withhold_child1
-#             elif allocation_method_for_garnishment == "Pro Rate":
-#                 ratio=amount_to_withhold_child1/amount_to_withhold
-#                 amount_to_withhold_child1 = (allowed_amount_for_garnishment)*(ratio)
-#             elif amount_to_withhold_child1>0:
-#                 amount_to_withhold_child1 = allowed_amount_for_garnishment/number_of_garnishment
-#             else:
-#                 amount_to_withhold_child1 = 0
-            
-#             if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
-#                 amount_to_withhold_child2 = amount_to_withhold_child2
-#             elif allocation_method_for_garnishment == "Pro Rate":
-#                 ratio = amount_to_withhold_child2/amount_to_withhold
-#                 amount_to_withhold_child2 = (allowed_amount_for_garnishment)*(ratio)
-#             elif amount_to_withhold_child2>0:
-#                 amount_to_withhold_child2 = allowed_amount_for_garnishment/number_of_garnishment
-#             else:
-#                 amount_to_withhold_child2 = 0
-            
-#             if (allowed_amount_for_garnishment-amount_to_withhold)>=0:
-#                 amount_to_withhold_child3 = amount_to_withhold_child3
-#             elif allocation_method_for_garnishment == "Pro Rate":
-#                 ratio =amount_to_withhold_child3/amount_to_withhold
-#                 amount_to_withhold_child3 = (allowed_amount_for_garnishment)*(ratio)
-#             elif amount_to_withhold_child3>0:
-#                 amount_to_withhold_child3 = allowed_amount_for_garnishment/number_of_garnishment
-#             else:
-#                 amount_to_withhold_child3 = 0
-            
-#             amount_to_withhold=amount_to_withhold_child1+amount_to_withhold_child2+amount_to_withhold_child3
-            
-#             # Calculate the amount left for arrears
-#             if (allowed_amount_for_garnishment>0) and (allowed_amount_for_garnishment- amount_to_withhold) >0 :
-#                 amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold,2)
-#             else:
-#                 amount_left_for_arrears = 0
-        
-#            # Determine allowed amount for other garnishment
-#             allowed_child_support_arrear = arrears_amt_Child1+arrears_amt_Child2+arrears_amt_Child3
-            
-#             if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
-#                 arrears_amt_Child1 = arrears_amt_Child1
-#             elif allocation_method_for_arrears == "Pro Rate":
-#                 ratio=arrears_amt_Child1/allowed_child_support_arrear
-#                 arrears_amt_Child1 = (amount_left_for_arrears)*(ratio)
-#             elif amount_left_for_arrears>0:
-#                 amount_to_withhold_child1 = amount_left_for_arrears/number_of_arrears
-#             else:
-#                 amount_to_withhold_child1 = 0
-            
-#             if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
-#                 arrears_amt_Child2 = arrears_amt_Child2
-#             elif allocation_method_for_arrears == "Pro Rate":
-#                 ratio=arrears_amt_Child2/allowed_child_support_arrear
-#                 arrears_amt_Child2 = (amount_left_for_arrears)*(ratio)
-#             elif amount_left_for_arrears>0:
-#                 amount_to_withhold_child2 = amount_left_for_arrears/number_of_arrears
-#             else:
-#                 amount_to_withhold_child2 = 0
-            
-#             if (amount_left_for_arrears-allowed_child_support_arrear)>=0:
-#                 arrears_amt_Child3 = arrears_amt_Child3
-#             elif allocation_method_for_arrears == "Pro Rate":
-#                 ratio=arrears_amt_Child3/allowed_child_support_arrear
-#                 arrears_amt_Child3 = (amount_left_for_arrears)*(ratio)
-#             elif amount_left_for_arrears>0:
-#                 amount_to_withhold_child3 = amount_left_for_arrears/number_of_arrears
-#             else:
-#                 amount_to_withhold_child3 = 0
-            
-            
-#             if (amount_left_for_arrears -allowed_child_support_arrear) <=0:
-#                 allowed_amount_for_other_garnishment = 0
-#             else:
-#                 allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear,2)
-#             # Create Calculation_data_results object
-#             Calculation_data_results.objects.create(
-#                 employee_id=employee_id,
-#                 employer_id=employer_id,
-#                 fedral_income_tax=federal_income_tax_rate,
-#                 social_and_security=social_tax_rate,
-#                 medicare_tax=medicare_tax_rate,
-#                 state_taxes=state_tax_rate,
-#                 earnings=earnings,
-#                 support_second_family=support_second_family,
-#                 garnishment_fees=garnishment_fees,
-#                 arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
-#                 amount_to_withhold_child1=amount_to_withhold_child1,
-#                 amount_to_withhold_child2=amount_to_withhold_child2,
-#                 amount_to_withhold_child3=amount_to_withhold_child3,
-#                 arrears_amt_Child1=arrears_amt_Child1,
-#                 arrears_amt_Child2=arrears_amt_Child2,
-#                 arrears_amt_Child3=arrears_amt_Child3,
-#                 number_of_arrears=number_of_arrears,
-#                 allocation_method_for_garnishment=allocation_method_for_garnishment,
-#                 allocation_method_for_arrears=allocation_method_for_arrears,
-#                 allowable_disposable_earnings=allowable_disposable_earnings,
-#                 withholding_available=withholding_available,
-#                 allowed_amount_for_garnishment=allowed_amount_for_garnishment,
-#                 other_garnishment_amount=other_garnishment_amount,
-#                 amount_left_for_arrears=amount_left_for_arrears,
-#                 allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
-#             )
-#             # Create CalculationResult object
-#             CalculationResult.objects.create(
-#                 employee_id=employee_id,
-#                 employer_id=employer_id,
-#                 result=allowed_amount_for_other_garnishment
-#             )
-
-#             return JsonResponse({'Garnishment Amount': allowed_amount_for_other_garnishment}, status=status.HTTP_200_OK)
-
-#         except Employee_Details.DoesNotExist:
-#             return Response({"error": "Employee details not found", "status code":status.HTTP_404_NOT_FOUND})
-#         except Tax_details.DoesNotExist:
-#             return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
-#         except Employer_Profile.DoesNotExist:
-#             return Response({"error": "Employer profile not found", "status code": status.HTTP_404_NOT_FOUND})
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @csrf_exempt
 def LocationViewSet(request):
@@ -1553,7 +1364,7 @@ class DepartmentDetailsList(generics.ListAPIView):
 # Get the single employee details
 @api_view(['GET'])
 def get_single_calculation_details(request, employer_id, employee_id):
-    employees = CalculationResult.objects.filter(employer_id=employer_id, employee_id=employee_id)
+    employees = CalculationResult.objects.filter(employer_id=employer_id, employee_id=employee_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             employee = employees.order_by('-timestamp')[0]
@@ -1648,7 +1459,7 @@ def get_single_department_details(request, employer_id,department_id):
 
 @api_view(['GET'])
 def get_single_result_details(request, employer_id):
-    employees = CalculationResult.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
+    employees = CalculationResult.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = ResultSerializer(employees, many=True)
@@ -1667,7 +1478,7 @@ def get_single_result_details(request, employer_id):
 
 @api_view(['GET'])
 def get_SingleStudentLoanResult(request, employer_id):
-    employees = single_student_loan_result.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
+    employees = single_student_loan_result.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = SingleStudentLoanSerializer(employees, many=True)
@@ -1686,7 +1497,7 @@ def get_SingleStudentLoanResult(request, employer_id):
 
 @api_view(['GET'])
 def get_MultipleStudentLoanResult(request, employer_id):
-    employees = multiple_student_loan_result.objects.filter(employer_id=employer_id).distinct('employee_id', 'result')
+    employees = multiple_student_loan_result.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = MultipleStudentLoanSerializer(employees, many=True)
@@ -1748,7 +1559,150 @@ class PasswordResetConfirmView(APIView):
             details=f'Employer {employee.employer_name} successfully forget password with ID {employee.employer_id}. '
         )
         return Response({"message": "Password reset successful.", "status code":status.HTTP_200_OK})
- 
+
+
+
+@csrf_exempt
+@api_view(['POST'])
+def federal_case(request):
+    if request.method == 'POST':
+        try:
+            data = request.data
+            required_fields = [ 'garnishment_fees','employee_name','no_of_exception','filing_status','pay_period', 'earnings']
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)           
+            user = federal_loan_case_data.objects.create(**data)
+
+            # Retrieve the employee, tax, and employer records
+            employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
+            tax = Tax_details.objects.get(employer_id=data['employer_id'])
+            employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
+
+            # Extracting earnings and garnishment fees from gdata
+            earnings = data['earnings']
+            garnishment_fees = data['garnishment_fees']
+            
+            # Calculate the various taxes
+            federal_income_tax_rate = tax.fedral_income_tax
+            social_tax_rate = tax.social_and_security
+            medicare_tax_rate = tax.medicare_tax
+            state_tax_rate = tax.state_tax
+            mexico_tax=tax.mexico_tax
+            workers_compensation=tax.workers_compensation
+            medical_insurance=tax.medical_insurance
+            contribution=tax.contribution
+            united_way_contribution=tax.united_way_contribution
+            filing_status=data['filing_status']
+            no_of_exception=data['no_of_exception']
+            pay_period=data['pay_period']
+            total_tax = federal_income_tax_rate+social_tax_rate+mexico_tax+medicare_tax_rate+state_tax_rate+workers_compensation+medical_insurance+contribution+united_way_contribution
+            # print("total_tax:",total_tax)
+
+            disposable_earnings = round(earnings - total_tax, 2)
+            # print("disposable_earnings:",disposable_earnings)
+            # allowable_disposable_earning=disposable_earnings-garnishment_fees
+            
+
+            if filing_status.lower() == "single":
+                queryset = single_filing_status.objects.filter(pay_period=pay_period)
+                obj = queryset.first()
+                if obj is None:
+                    return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
+                fields = single_filing_status._meta.get_fields()
+                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                if not column_name:
+                    return JsonResponse({"error": "Column not found"}, status=404)
+                column_value = getattr(obj, column_name)
+
+            elif filing_status.lower() == "married filing sepearte return":
+                queryset = married_filing_sepearte_return.objects.filter(pay_period=pay_period)
+                obj = queryset.first()
+
+                if obj is None:
+                    return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
+                fields = single_filing_status._meta.get_fields()
+                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                if not column_name:
+                    return JsonResponse({"error": "Column not found"}, status=404)
+                column_value = getattr(obj, column_name)
+
+  
+            elif filing_status.lower() == "married filing joint return":
+                queryset = married_filing_joint_return.objects.filter(pay_period=pay_period)
+                obj = queryset.first()
+                if obj is None:
+                    return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
+                fields = single_filing_status._meta.get_fields()
+                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                if not column_name:
+                    return JsonResponse({"error": "Column not found"}, status=404)
+                column_value = getattr(obj, column_name)
+            elif filing_status.lower() == "head of household":
+                fields = head_of_household._meta.get_fields()
+
+                queryset = head_of_household.objects.filter(pay_period=pay_period)
+                obj = queryset.first()
+
+                if obj is None:
+                    return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
+                fields = head_of_household._meta.get_fields()
+                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                if not column_name:
+                    return JsonResponse({"error": "Column not found"}, status=404)
+                column_value = getattr(obj, column_name)
+                print(column_value)
+            else:
+                return JsonResponse({"error": "Invalid filing status"}, status=400)
+
+            amount_deduct=round(disposable_earnings-column_value,2)
+
+            net_pay=round(disposable_earnings-amount_deduct,2) 
+
+            # Create CalculationResult object
+            federal_case_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                result=amount_deduct,
+                net_pay=net_pay
+            
+            )
+            LogEntry.objects.create(
+                action='Student Loan Calculation data Added',
+                details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+            )
+            return Response({'message': 'Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
+
+        except Employee_Details.DoesNotExist:
+            return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Tax_details.DoesNotExist:
+            return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
+        except Employer_Profile.DoesNotExist:
+            return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
+        except Exception as e:
+            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+    else:
+        return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST}) 
+    
+
+
+class get_federal_case_result(APIView):
+    def get(self, request, employee_id):
+        employees = federal_case_result.objects.filter(employee_id=employee_id).order_by('-timestamp')[0:1]
+        if employees.exists():
+            try:
+                serializer = federal_case_result_Serializer(employees, many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except federal_case_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
 @csrf_exempt

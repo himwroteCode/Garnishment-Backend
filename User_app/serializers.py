@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,Employee_Details,IWO_Details_PDF,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result
+from .models import Employer_Profile,Employee_Details,IWO_Details_PDF,federal_case_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
@@ -90,4 +90,30 @@ class TaxSerializer(serializers.ModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = CalculationResult
+        fields = '__all__'
+
+class single_filing_status_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = single_filing_status
+        fields = '__all__'
+
+class head_of_household_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = head_of_household
+        fields = '__all__'
+
+class married_filing_joint_return_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = married_filing_joint_return
+        fields = '__all__'
+   
+
+class married_filing_sepearte_return_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = married_filing_sepearte_return
+        fields = '__all__'
+
+class federal_case_result_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = federal_case_result
         fields = '__all__'
