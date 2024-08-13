@@ -884,9 +884,13 @@ def CalculationDataView(request):
             amount_to_withhold_child1 = gdata.amount_to_withhold_child1
             amount_to_withhold_child2 = gdata.amount_to_withhold_child2
             amount_to_withhold_child3 = gdata.amount_to_withhold_child3
+            amount_to_withhold_child4 = gdata.amount_to_withhold_child4
+            amount_to_withhold_child5 = gdata.amount_to_withhold_child5
             arrears_amt_Child1 = gdata.arrears_amt_Child1
             arrears_amt_Child2 = gdata.arrears_amt_Child2
             arrears_amt_Child3 = gdata.arrears_amt_Child3
+            arrears_amt_Child3 = gdata.arrears_amt_Child4
+            arrears_amt_Child3 = gdata.arrears_amt_Child5
             arrears_greater_than_12_weeks = gdata.arrears_greater_than_12_weeks
             support_second_family = gdata.support_second_family
             number_of_garnishment = employee.number_of_garnishment
@@ -963,8 +967,28 @@ def CalculationDataView(request):
                 amount_to_withhold_child3 = allowed_amount_for_garnishment / number_of_garnishment
             else:
                 amount_to_withhold_child3 = 0
+            
+            if (allowed_amount_for_garnishment - amount_to_withhold) >= 0:
+                amount_to_withhold_child4 = amount_to_withhold_child3
+            elif allocation_method_for_garnishment == "Pro Rate":
+                ratio = amount_to_withhold_child4 / amount_to_withhold
+                amount_to_withhold_child4 = allowed_amount_for_garnishment * ratio
+            elif amount_to_withhold_child4 > 0:
+                amount_to_withhold_child4 = allowed_amount_for_garnishment / number_of_garnishment
+            else:
+                amount_to_withhold_child3 = 0
 
-            amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3
+            if (allowed_amount_for_garnishment - amount_to_withhold) >= 0:
+                amount_to_withhold_child5 = amount_to_withhold_child3
+            elif allocation_method_for_garnishment == "Pro Rate":
+                ratio = amount_to_withhold_child5/ amount_to_withhold
+                amount_to_withhold_child5 = allowed_amount_for_garnishment * ratio
+            elif amount_to_withhold_child5 > 0:
+                amount_to_withhold_child5= allowed_amount_for_garnishment / number_of_garnishment
+            else:
+                amount_to_withhold_child5 = 0
+
+            amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3+amount_to_withhold_child4+amount_to_withhold_child5
 
             # Calculate the amount left for arrears
             if allowed_amount_for_garnishment > 0 and (allowed_amount_for_garnishment - amount_to_withhold) > 0:
@@ -973,8 +997,9 @@ def CalculationDataView(request):
                 amount_left_for_arrears = 0
             
             allocation_method_for_arrears=allocation_method_for_garnishment
+            
             # Determine allowed amount for other garnishment
-            allowed_child_support_arrear = arrears_amt_Child1 + arrears_amt_Child2 + arrears_amt_Child3
+            allowed_child_support_arrear = arrears_amt_Child1 + arrears_amt_Child2 + arrears_amt_Child3+amount_to_withhold_child4+amount_to_withhold_child5
 
             if (amount_left_for_arrears - allowed_child_support_arrear) >= 0:
                 arrears_amt_Child1 = arrears_amt_Child1
@@ -1005,6 +1030,26 @@ def CalculationDataView(request):
                 arrears_amt_Child3 = amount_left_for_arrears / number_of_arrears
             else:
                 arrears_amt_Child3 = 0
+            
+            if (amount_left_for_arrears - allowed_child_support_arrear) >= 0:
+                arrears_amt_Child4 = arrears_amt_Child3
+            elif allocation_method_for_arrears == "Pro Rate":
+                ratio = arrears_amt_Child4 / allowed_child_support_arrear
+                arrears_amt_Child3 = amount_left_for_arrears * ratio
+            elif amount_left_for_arrears > 0:
+                arrears_amt_Child4 = amount_left_for_arrears / number_of_arrears
+            else:
+                arrears_amt_Child4 = 0
+
+            if (amount_left_for_arrears - allowed_child_support_arrear) >= 0:
+                arrears_amt_Child5 = arrears_amt_Child3
+            elif allocation_method_for_arrears == "Pro Rate":
+                ratio = arrears_amt_Child5 / allowed_child_support_arrear
+                arrears_amt_Child5 = amount_left_for_arrears * ratio
+            elif amount_left_for_arrears > 0:
+                arrears_amt_Child5 = amount_left_for_arrears / number_of_arrears
+            else:
+                arrears_amt_Child5 = 0
 
             if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
                 allowed_amount_for_other_garnishment = 0
@@ -1668,10 +1713,10 @@ def federal_case(request):
             
             )
             LogEntry.objects.create(
-                action='Student Loan Calculation data Added',
-                details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+                action='Federal Tax Calculation data Added',
+                details=f'Federal Tax Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
             )
-            return Response({'message': 'Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
+            return Response({'message': 'Federal Tax Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
 
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -1691,7 +1736,7 @@ class get_federal_case_result(APIView):
         employees = federal_case_result.objects.filter(employee_id=employee_id).order_by('-timestamp')[0:1]
         if employees.exists():
             try:
-                serializer = federal_case_result_Serializer(employees, many=True)
+                serializer = federal_case_result_Serializer(employees)
                 response_data = {
                     'success': True,
                     'message': 'Data retrieved successfully',
