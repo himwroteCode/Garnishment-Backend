@@ -4,7 +4,7 @@ from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,federal_case_result,Employee_Details,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Tax_details,single_filing_status,federal_loan_case_data,Department,student_loan_data,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
+from .models import Employer_Profile,federal_case_result,single_student_loan_data,federal_tax_data_and_result,Employee_Details,multiple_student_loan_data,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Tax_details,single_filing_status,federal_loan_case_data,Department,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -889,8 +889,8 @@ def CalculationDataView(request):
             arrears_amt_Child1 = gdata.arrears_amt_Child1
             arrears_amt_Child2 = gdata.arrears_amt_Child2
             arrears_amt_Child3 = gdata.arrears_amt_Child3
-            arrears_amt_Child3 = gdata.arrears_amt_Child4
-            arrears_amt_Child3 = gdata.arrears_amt_Child5
+            arrears_amt_Child4 = gdata.arrears_amt_Child4
+            arrears_amt_Child5 = gdata.arrears_amt_Child5
             arrears_greater_than_12_weeks = gdata.arrears_greater_than_12_weeks
             support_second_family = gdata.support_second_family
             number_of_garnishment = employee.number_of_garnishment
@@ -936,7 +936,7 @@ def CalculationDataView(request):
                 allowed_amount_for_garnishment = 0
             else:
                 allowed_amount_for_garnishment = Minimum_amt
-            amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3
+            amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3+amount_to_withhold_child4+amount_to_withhold_child5
 
             if (allowed_amount_for_garnishment - amount_to_withhold) >= 0:
                 amount_to_withhold_child1 = amount_to_withhold_child1
@@ -1115,25 +1115,22 @@ def StudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = [
-                'employee_name', 'garnishment_fees', 'minimum_wages', 'earnings','order_id'
-            ]
+            required_fields = ['employee_name', 'garnishment_fees', 'earnings','order_id']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
-            user = student_loan_data.objects.create(**data)
+            user = single_student_loan_data.objects.create(**data)
 
             # Retrieve the employee, tax, and employer records
             employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
             tax = Tax_details.objects.get(employer_id=data['employer_id'])
             employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            gdata = student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+            gdata = single_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
 
             # Extracting earnings and garnishment fees from gdata
             earnings = gdata.earnings
             garnishment_fees = gdata.garnishment_fees
-            
             # Calculate the various taxes
             federal_income_tax_rate = tax.fedral_income_tax
             social_tax_rate = tax.social_and_security
@@ -1214,20 +1211,18 @@ def MiltipleStudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = [
-                'employee_name', 'garnishment_fees', 'minimum_wages', 'earnings','order_id'
-            ]
+            required_fields = ['employee_name', 'garnishment_fees', 'earnings','order_id']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
-            user = student_loan_data.objects.create(**data)
+            user = multiple_student_loan_data.objects.create(**data)
             
             # Retrieve the employee, tax, and employer records
             employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
             tax = Tax_details.objects.get(employer_id=data['employer_id'])
             employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            gdata = student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+            gdata = multiple_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
 
             # Extracting earnings and garnishment fees from gdata
             earnings = gdata.earnings
@@ -1255,7 +1250,7 @@ def MiltipleStudentLoanCalculationData(request):
             studentloan2=allowable_disposable_earning*.10
             studentloan3=allowable_disposable_earning*0
 
-            net_pay=disposable_earnings-garnishment_amount
+            net_pay = disposable_earnings-garnishment_amount
             
             # # Create Calculation_data_results object
             # Calculation_data_results.objects.create(
@@ -1483,10 +1478,10 @@ def get_single_location_details(request, employer_id,location_id):
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
 
- #Get the singal Department details  
+#Get the singal Department details  
 @api_view(['GET'])
 def get_single_department_details(request, employer_id,department_id):
-    employees=Department.objects.filter(employer_id=employer_id,department_id=department_id)
+    employees=Department.objects.filter(employer_id=employer_id,department_id=department_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = DepartmentSerializer(employees, many=True)
@@ -1503,8 +1498,8 @@ def get_single_department_details(request, employer_id,department_id):
     
 
 @api_view(['GET'])
-def get_single_result_details(request, employer_id):
-    employees = CalculationResult.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
+def get_single_result_details(request, employer_id,employee_id):
+    employees = CalculationResult.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = ResultSerializer(employees, many=True)
@@ -1522,8 +1517,8 @@ def get_single_result_details(request, employer_id):
 
 
 @api_view(['GET'])
-def get_SingleStudentLoanResult(request, employer_id):
-    employees = single_student_loan_result.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
+def get_SingleStudentLoanResult(request, employee_id,employer_id):
+    employees = single_student_loan_result.objects.filter(employee_id=employee_id, employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = SingleStudentLoanSerializer(employees, many=True)
@@ -1541,8 +1536,8 @@ def get_SingleStudentLoanResult(request, employer_id):
 
 
 @api_view(['GET'])
-def get_MultipleStudentLoanResult(request, employer_id):
-    employees = multiple_student_loan_result.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
+def get_MultipleStudentLoanResult(request, employee_id,employer_id):
+    employees = multiple_student_loan_result.objects.filter(employee_id=employee_id,employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
             serializer = MultipleStudentLoanSerializer(employees, many=True)
@@ -1655,10 +1650,10 @@ def federal_case(request):
                 if obj is None:
                     return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
                 fields = single_filing_status._meta.get_fields()
-                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                exempt_amount = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
                 if not column_name:
                     return JsonResponse({"error": "Column not found"}, status=404)
-                column_value = getattr(obj, column_name)
+                exempt_amount = getattr(obj, column_name)
 
             elif filing_status.lower() == "married filing sepearte return":
                 queryset = married_filing_sepearte_return.objects.filter(pay_period=pay_period)
@@ -1667,10 +1662,10 @@ def federal_case(request):
                 if obj is None:
                     return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
                 fields = single_filing_status._meta.get_fields()
-                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                exempt_amount = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
                 if not column_name:
                     return JsonResponse({"error": "Column not found"}, status=404)
-                column_value = getattr(obj, column_name)
+                exempt_amount = getattr(obj, column_name)
 
   
             elif filing_status.lower() == "married filing joint return":
@@ -1679,10 +1674,10 @@ def federal_case(request):
                 if obj is None:
                     return JsonResponse({"error": "No matching records found for the given pay period"}, status=404)
                 fields = single_filing_status._meta.get_fields()
-                column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
+                exempt_amount = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
                 if not column_name:
                     return JsonResponse({"error": "Column not found"}, status=404)
-                column_value = getattr(obj, column_name)
+                exempt_amount = getattr(obj, column_name)
             elif filing_status.lower() == "head of household":
                 fields = head_of_household._meta.get_fields()
 
@@ -1695,12 +1690,12 @@ def federal_case(request):
                 column_name = next((field.name for field in fields if field.name.endswith(str(no_of_exception))), None)
                 if not column_name:
                     return JsonResponse({"error": "Column not found"}, status=404)
-                column_value = getattr(obj, column_name)
-                print(column_value)
+                exempt_amount = getattr(obj, column_name)
+                # print(exempt_amount)
             else:
                 return JsonResponse({"error": "Invalid filing status"}, status=400)
 
-            amount_deduct=round(disposable_earnings-column_value,2)
+            amount_deduct=round(disposable_earnings-exempt_amount,2)
 
             net_pay=round(disposable_earnings-amount_deduct,2) 
 
@@ -1711,6 +1706,29 @@ def federal_case(request):
                 result=amount_deduct,
                 net_pay=net_pay
             
+            )
+            federal_tax_data_and_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                fedral_income_tax=federal_income_tax_rate,
+                social_and_security=social_tax_rate,
+                medicare_tax=medicare_tax_rate,
+                state_taxes=state_tax_rate,
+                earnings=earnings,
+                garnishment_fees=garnishment_fees,
+                mexico_tax=mexico_tax,
+                workers_compensation=workers_compensation,
+                medical_insurance=medical_insurance,
+                contribution=contribution,
+                united_way_contribution=united_way_contribution,
+                filing_status=filing_status,
+                no_of_exception=no_of_exception,
+                pay_period=pay_period,
+                total_tax=total_tax,
+                disposable_earnings=disposable_earnings,
+                exempt_amount=exempt_amount,
+                amount_deduct=amount_deduct,
+                net_pay=net_pay
             )
             LogEntry.objects.create(
                 action='Federal Tax Calculation data Added',
@@ -1736,7 +1754,7 @@ class get_federal_case_result(APIView):
         employees = federal_case_result.objects.filter(employee_id=employee_id).order_by('-timestamp')[0:1]
         if employees.exists():
             try:
-                serializer = federal_case_result_Serializer(employees)
+                serializer = federal_case_result_Serializer(employees,many=True)
                 response_data = {
                     'success': True,
                     'message': 'Data retrieved successfully',

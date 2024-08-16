@@ -52,6 +52,9 @@ urlpatterns = [
     path('MiltipleStudentLoanCalculationData/',views.MiltipleStudentLoanCalculationData, name='Miltiple-Student-Loan-Calculation-Data'),
     path('FederalCaseData',views.federal_case, name='federal_case_data'),
     path('FederalCaseResult/<int:employee_id>/',get_federal_case_result.as_view(), name='Federal_Case_Result'),
+    path('GetSingleStudentLoanResult/<int:employee_id>/<int:employer_id>/',views.get_SingleStudentLoanResult, name='Get_Single_Student_Loan_Result'),
+    path('GetMultipleStudentLoanResult/<int:employee_id>/<int:employer_id>/',views.get_MultipleStudentLoanResult, name='get_MultipleStudentLoanResult'),
+ 
 ]
 
 
