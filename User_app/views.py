@@ -4,7 +4,7 @@ from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Employer_Profile,federal_case_result,single_student_loan_data,federal_tax_data_and_result,Employee_Details,multiple_student_loan_data,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Tax_details,single_filing_status,federal_loan_case_data,Department,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
+from .models import Employer_Profile,setting,multiple_student_loan_data_and_result,single_student_loan_data_and_result,federal_case_result,single_student_loan_data,federal_tax_data_and_result,Employee_Details,multiple_student_loan_data,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Tax_details,single_filing_status,federal_loan_case_data,Department,Location,single_student_loan_result,multiple_student_loan_result,Garcalculation_data,CalculationResult,LogEntry,IWO_Details_PDF,IWOPDFFile,Calculation_data_results,application_activity
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -1131,53 +1131,47 @@ def StudentLoanCalculationData(request):
             # Extracting earnings and garnishment fees from gdata
             earnings = gdata.earnings
             garnishment_fees = gdata.garnishment_fees
+           
             # Calculate the various taxes
             federal_income_tax_rate = tax.fedral_income_tax
             social_tax_rate = tax.social_and_security
             medicare_tax_rate = tax.medicare_tax
             state_tax_rate = tax.state_tax
-            SDI_tax=tax.state_tax
+            SDI_tax=tax.SDI_tax
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax
             disposable_earnings = round(earnings - total_tax, 2)
-            allowable_disposable_earning=disposable_earnings-garnishment_fees
-            fifteen_percent_of_eraning= allowable_disposable_earning*.15
+            allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
+            fifteen_percent_of_eraning= round(allowable_disposable_earning*.15,2)
             fmw=7.25*30
-            difference=disposable_earnings-fmw
+            difference=round(disposable_earnings-fmw,2)
             if allowable_disposable_earning<fmw:
                 garnishment_amount=0
             else:
                 garnishment_amount=fifteen_percent_of_eraning
 
-            net_pay=disposable_earnings-garnishment_amount
+            net_pay=round(disposable_earnings-garnishment_amount,2)
             
-            # # Create Calculation_data_results object
-            # Calculation_data_results.objects.create(
-            #     employee_id=data['employee_id'],
-            #     employer_id=data['employer_id'],
-            #     fedral_income_tax=federal_income_tax_rate,
-            #     social_and_security=social_tax_rate,
-            #     medicare_tax=medicare_tax_rate,
-            #     state_taxes=state_tax_rate,
-            #     earnings=earnings,
-            #     support_second_family=support_second_family,
-            #     garnishment_fees=garnishment_fees,
-            #     arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
-            #     amount_to_withhold_child1=amount_to_withhold_child1,
-            #     amount_to_withhold_child2=amount_to_withhold_child2,
-            #     amount_to_withhold_child3=amount_to_withhold_child3,
-            #     arrears_amt_Child1=arrears_amt_Child1,
-            #     arrears_amt_Child2=arrears_amt_Child2,
-            #     arrears_amt_Child3=arrears_amt_Child3,
-            #     number_of_arrears=number_of_arrears,
-            #     allocation_method_for_garnishment=allocation_method_for_garnishment,
-            #     allocation_method_for_arrears=allocation_method_for_arrears,
-            #     allowable_disposable_earnings=allowable_disposable_earnings,
-            #     withholding_available=withholding_available,
-            #     allowed_amount_for_garnishment=allowed_amount_for_garnishment,
-            #     other_garnishment_amount=other_garnishment_amount,
-            #     amount_left_for_arrears=amount_left_for_arrears,
-            #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
-            # )
+            # Create Calculation_data_results object
+            single_student_loan_data_and_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                federal_income_tax=federal_income_tax_rate,
+                social_and_security_tax=social_tax_rate,
+                medicare_tax=medicare_tax_rate,
+                state_tax=state_tax_rate,
+                SDI_tax=SDI_tax,
+                earnings=earnings,
+                garnishment_fees=garnishment_fees,
+                total_tax=total_tax,
+                disposable_earnings=disposable_earnings,
+                allowable_disposable_earning=allowable_disposable_earning,
+                fifteen_percent_of_eraning=fifteen_percent_of_eraning,
+                fmw=fmw,
+                garnishment_amount=garnishment_amount,
+                difference=difference,
+                net_pay=net_pay
+            )
+
             # Create CalculationResult object
             single_student_loan_result.objects.create(
                 employee_id=data['employee_id'],
@@ -1187,11 +1181,11 @@ def StudentLoanCalculationData(request):
             )
 
             LogEntry.objects.create(
-                action='Student Loan Calculation data Added',
-                details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+                action='Single Student Loan Calculation data Added',
+                details=f'Single Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
             )
 
-            return Response({'message': 'Student Loan Calculation Details Registered Successfully', "status code":status.HTTP_200_OK})
+            return Response({'message': 'Single Student Loan Calculation Details Registered Successfully', "status code":status.HTTP_200_OK})
 
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -1233,18 +1227,17 @@ def MiltipleStudentLoanCalculationData(request):
             social_tax_rate = tax.social_and_security
             medicare_tax_rate = tax.medicare_tax
             state_tax_rate = tax.state_tax
-            SDI_tax=tax.state_tax
+            SDI_tax=tax.SDI_tax
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax
             disposable_earnings = round(earnings - total_tax, 2)
             allowable_disposable_earning=disposable_earnings-garnishment_fees
-            twentyfifth_percent_of_eraning= allowable_disposable_earning*.25
+            twentyfive_percent_of_earning= allowable_disposable_earning*.25
             fmw=7.25*30
             
             if allowable_disposable_earning<fmw:
                 garnishment_amount=0
             else:
-                garnishment_amount=twentyfifth_percent_of_eraning
-
+                garnishment_amount=twentyfive_percent_of_earning
 
             studentloan1=allowable_disposable_earning*.15
             studentloan2=allowable_disposable_earning*.10
@@ -1252,48 +1245,42 @@ def MiltipleStudentLoanCalculationData(request):
 
             net_pay = disposable_earnings-garnishment_amount
             
-            # # Create Calculation_data_results object
-            # Calculation_data_results.objects.create(
-            #     employee_id=data['employee_id'],
-            #     employer_id=data['employer_id'],
-            #     fedral_income_tax=federal_income_tax_rate,
-            #     social_and_security=social_tax_rate,
-            #     medicare_tax=medicare_tax_rate,
-            #     state_taxes=state_tax_rate,
-            #     earnings=earnings,
-            #     support_second_family=support_second_family,
-            #     garnishment_fees=garnishment_fees,
-            #     arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
-            #     amount_to_withhold_child1=amount_to_withhold_child1,
-            #     amount_to_withhold_child2=amount_to_withhold_child2,
-            #     amount_to_withhold_child3=amount_to_withhold_child3,
-            #     arrears_amt_Child1=arrears_amt_Child1,
-            #     arrears_amt_Child2=arrears_amt_Child2,
-            #     arrears_amt_Child3=arrears_amt_Child3,
-            #     number_of_arrears=number_of_arrears,
-            #     allocation_method_for_garnishment=allocation_method_for_garnishment,
-            #     allocation_method_for_arrears=allocation_method_for_arrears,
-            #     allowable_disposable_earnings=allowable_disposable_earnings,
-            #     withholding_available=withholding_available,
-            #     allowed_amount_for_garnishment=allowed_amount_for_garnishment,
-            #     other_garnishment_amount=other_garnishment_amount,
-            #     amount_left_for_arrears=amount_left_for_arrears,
-            #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
-            # )
+            # Create Calculation_data_results object
+            multiple_student_loan_data_and_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                federal_income_tax=federal_income_tax_rate,
+                social_and_security_tax=social_tax_rate,
+                medicare_tax=medicare_tax_rate,
+                state_tax=state_tax_rate,
+                SDI_tax=SDI_tax,
+                earnings=earnings,
+                garnishment_fees=garnishment_fees,
+                total_tax=total_tax,
+                disposable_earnings=disposable_earnings,
+                allowable_disposable_earning=allowable_disposable_earning,
+                twentyfive_percent_of_earning=twentyfive_percent_of_earning,
+                fmw=fmw,
+                garnishment_amount=garnishment_amount,
+                studentloan1=studentloan1,
+                studentloan2=studentloan2,
+                studentloan3=studentloan3,
+                net_pay=net_pay
+            )
+
             # Create CalculationResult object
             multiple_student_loan_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
-                garnishment_amount=twentyfifth_percent_of_eraning,
-                net_pay=net_pay
-            
+                garnishment_amount=twentyfive_percent_of_earning,
+                net_pay=net_pay            
             )
-            LogEntry.objects.create(
-                action='Student Loan Calculation data Added',
-                details=f'Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
-            )
-            return Response({'message': 'Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
 
+            LogEntry.objects.create(
+                action='Multiple Student Loan Calculation data Added',
+                details=f'Multiple Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+            )
+            return Response({'message': 'Multiple Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
         except Tax_details.DoesNotExist:
@@ -1324,23 +1311,24 @@ class LastFiveLogsView(APIView):
 
 
 #Extracting the ALL Employer Detials  
-class EmployerProfileList(generics.ListAPIView):
+class EmployerProfileList(APIView):
     def get(self, request, format=None):
         try:
             employees = Employer_Profile.objects.all()
             serializer = EmployerProfileSerializer(employees, many=True)
             response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
+                'success': True,
+                'message': 'Data retrieved successfully',
+                'status_code': status.HTTP_200_OK,
+                'data': serializer.data
+            }
             return JsonResponse(response_data)
         except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+            return Response({"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
 #Extracting the ALL Employee Details 
-class EmployeeDetailsList(generics.ListAPIView):
+class EmployeeDetailsList(APIView):
     def get(self, request, format=None):
         try:
             employees = Employee_Details.objects.all()
@@ -1355,7 +1343,7 @@ class EmployeeDetailsList(generics.ListAPIView):
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 #Extracting the ALL Tax Details
-class TaxDetailsList(generics.ListAPIView):
+class TaxDetailsList(APIView):
     def get(self, request, format=None):
         try:
             queryset = Tax_details.objects.all()
@@ -1371,7 +1359,7 @@ class TaxDetailsList(generics.ListAPIView):
     
 
 #Extracting the ALL Location Details
-class LocationDetailsList(generics.ListAPIView):
+class LocationDetailsList(APIView):
     def get(self, request, format=None):
         try:
             queryset = Location.objects.all()
@@ -1387,7 +1375,7 @@ class LocationDetailsList(generics.ListAPIView):
 
 
 #Extracting the ALL Department Details
-class DepartmentDetailsList(generics.ListAPIView):
+class DepartmentDetailsList(APIView):
     def get(self, request, format=None):
         try:
             queryset = Department.objects.all()
@@ -1746,7 +1734,30 @@ def federal_case(request):
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST}) 
-    
+
+
+
+@csrf_exempt
+def SettingPostAPI(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            required_fields = ['setting1','setting2','employer_id']
+            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            if missing_fields:
+                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}','status_code':status.HTTP_400_BAD_REQUEST})
+            
+            user = setting.objects.create(**data)
+            LogEntry.objects.create(
+            action='setting details added',
+            details=f'setting details added successfully'
+            ) 
+            return JsonResponse({'message': 'Setting Details Successfully Registered', "status code" :status.HTTP_201_CREATED})
+        except Exception as e:
+            return JsonResponse({'error': str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR}) 
+    else:
+        return JsonResponse({'message': 'Please use POST method','status code':status.HTTP_400_BAD_REQUEST})
+     
 
 
 class get_federal_case_result(APIView):
@@ -1768,19 +1779,23 @@ class get_federal_case_result(APIView):
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
-@csrf_exempt
-def Setting(request):
-    try:  
-        data = {
-            'Setting1': False,
-            'Setting2': False 
-        }
-    except Exception as e:
-        return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-    response_data = {
-        'success': True,
-        'message': 'Data Get successfully',
-        'status code': status.HTTP_200_OK,
-        'data' : data}
-    return JsonResponse(response_data)
+
+class GETSettingDetails(APIView):
+    def get(self, request, employer_id):
+        employees = setting.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
+        if employees.exists():
+            try:
+                serializer = setting(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data Get successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data' : serializer.data}
+                return JsonResponse(response_data)
+            except setting.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+
+
 

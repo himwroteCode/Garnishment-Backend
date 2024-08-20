@@ -166,7 +166,6 @@ class multiple_student_loan_result(models.Model):
     employer_id = models.IntegerField()
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
-    order_id=models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class single_student_loan_data(models.Model):
@@ -183,8 +182,52 @@ class multiple_student_loan_data(models.Model):
     employer_id = models.IntegerField()
     employee_name=models.CharField(max_length=255)
     earnings = models.FloatField()  
-    garnishment_fees= models.IntegerField()
+    garnishment_fees= models.FloatField()
     order_id=models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class multiple_student_loan_data_and_result(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    employee_name=models.CharField(max_length=255)
+    earnings = models.FloatField()  
+    federal_income_tax= models.FloatField()
+    social_and_security_tax= models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax= models.FloatField()
+    SDI_tax= models.FloatField()
+    total_tax=models.FloatField()
+    garnishment_fees= models.FloatField()
+    disposable_earnings= models.FloatField()
+    allowable_disposable_earning= models.FloatField()
+    twentyfive_percent_of_earning= models.FloatField()
+    fmw= models.FloatField()
+    garnishment_amount= models.FloatField()
+    studentloan1= models.FloatField()
+    studentloan2= models.FloatField()
+    studentloan3= models.FloatField()
+    net_pay= models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class single_student_loan_data_and_result(models.Model):
+    employee_id = models.IntegerField()
+    employer_id = models.IntegerField()
+    employee_name=models.CharField(max_length=255)
+    earnings = models.FloatField()  
+    federal_income_tax= models.FloatField()
+    social_and_security_tax= models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax= models.FloatField()
+    SDI_tax= models.FloatField()
+    total_tax=models.FloatField()
+    garnishment_fees= models.FloatField()
+    disposable_earnings= models.FloatField()
+    allowable_disposable_earning= models.FloatField()
+    fifteen_percent_of_eraning= models.FloatField()
+    fmw= models.FloatField()
+    difference=models.FloatField()
+    garnishment_amount= models.FloatField()
+    net_pay= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_loan_case_data(models.Model):
@@ -192,7 +235,7 @@ class federal_loan_case_data(models.Model):
     employer_id = models.IntegerField()
     employee_name=models.CharField(max_length=255)
     earnings = models.FloatField()  
-    garnishment_fees= models.IntegerField()
+    garnishment_fees= models.FloatField()
     pay_period = models.CharField(max_length=255)
     filing_status = models.CharField(max_length=255)
     no_of_exception = models.IntegerField()
@@ -271,6 +314,13 @@ class married_filing_sepearte_return(models.Model):
     exemptions_5= models.FloatField() 
     exemptions_6= models.FloatField()     
     morethan6= models.CharField(max_length=255)
+
+class setting(models.Model):
+    employer_id=models.IntegerField()
+    setting1=models.BooleanField()
+    setting2=models.BooleanField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 
 
 

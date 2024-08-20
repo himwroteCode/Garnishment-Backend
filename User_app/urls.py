@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import EmployerProfileEditView,get_federal_case_result,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
+from .views import EmployerProfileEditView,get_federal_case_result,GETSettingDetails,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
 from django.urls import include, path
 from rest_framework import routers
 
@@ -47,7 +47,8 @@ urlpatterns = [
     path('GetSingleDepartment/<int:employer_id>/<int:department_id>/', views.get_single_department_details, name='get_single_department_details'),
     path('password-reset', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('password-reset-confirm/<str:token>/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-    path('setting/',views.Setting, name='Get Setting'),
+    path('setting/<int:employer_id>/',GETSettingDetails.as_view(), name='Get Setting'),
+    path('POSTsetting/',views.SettingPostAPI, name='POST Setting'),
     path('StudentLoanCalculationData/',views.StudentLoanCalculationData, name='Student-Loan-Calculation-Data'),
     path('MiltipleStudentLoanCalculationData/',views.MiltipleStudentLoanCalculationData, name='Miltiple-Student-Loan-Calculation-Data'),
     path('FederalCaseData',views.federal_case, name='federal_case_data'),
