@@ -220,7 +220,7 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-WSGI_APPLICATION = 'auth_project.wsgi.application'
+WSGI_APPLICATION = 'auth_project.wsgi.app'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
