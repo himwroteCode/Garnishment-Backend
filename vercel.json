@@ -27,5 +27,4 @@
             "dest": "auth_project/wsgi.py"
         }
     ]
-
 }
