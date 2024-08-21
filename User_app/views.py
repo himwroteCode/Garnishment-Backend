@@ -17,7 +17,7 @@ import pandas as pd
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer ,ResultSerializer,federal_case_result_Serializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer,single_student_loan_data_and_result_Serializer,federal_case_result_and_data_Serializer,setting_Serializer,ResultSerializer,federal_case_result_Serializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -1134,10 +1134,15 @@ def StudentLoanCalculationData(request):
            
             # Calculate the various taxes
             federal_income_tax_rate = tax.fedral_income_tax
+            print(federal_income_tax_rate)
             social_tax_rate = tax.social_and_security
+            print(social_tax_rate)
             medicare_tax_rate = tax.medicare_tax
+            print(medicare_tax_rate)
             state_tax_rate = tax.state_tax
+            print(state_tax_rate)
             SDI_tax=tax.SDI_tax
+            print(SDI_tax)
             total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax
             disposable_earnings = round(earnings - total_tax, 2)
             allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
@@ -1148,8 +1153,9 @@ def StudentLoanCalculationData(request):
                 garnishment_amount=0
             else:
                 garnishment_amount=fifteen_percent_of_eraning
-
+            print(garnishment_amount)
             net_pay=round(disposable_earnings-garnishment_amount,2)
+            print(net_pay)
             
             # Create Calculation_data_results object
             single_student_loan_data_and_result.objects.create(
@@ -1522,13 +1528,31 @@ def get_SingleStudentLoanResult(request, employee_id,employer_id):
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})    
 
+class get_single_student_loan_data_and_result(APIView):
+    def get(self, request, employer_id,employee_id):
+        employees = single_student_loan_data_and_result.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
+        if employees.exists():
+            try:
+                serializer = single_student_loan_data_and_result_Serializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except single_student_loan_data_and_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+
 
 @api_view(['GET'])
 def get_MultipleStudentLoanResult(request, employee_id,employer_id):
     employees = multiple_student_loan_result.objects.filter(employee_id=employee_id,employer_id=employer_id).order_by('-timestamp')[0:1]
     if employees.exists():
         try:
-            serializer = MultipleStudentLoanSerializer(employees, many=True)
+            serializer = MultipleStudentLoanSerializer(employees, many=False)
             response_data = {
                 'success': True,
                 'message': 'Data retrieved successfully',
@@ -1626,12 +1650,9 @@ def federal_case(request):
             pay_period=data['pay_period']
             total_tax = federal_income_tax_rate+social_tax_rate+mexico_tax+medicare_tax_rate+state_tax_rate+workers_compensation+medical_insurance+contribution+united_way_contribution
             # print("total_tax:",total_tax)
-
-            disposable_earnings = round(earnings - total_tax, 2)
-            # print("disposable_earnings:",disposable_earnings)
-            # allowable_disposable_earning=disposable_earnings-garnishment_fees
             
-
+            disposable_earnings = round(earnings - total_tax, 2)
+            
             if filing_status.lower() == "single":
                 queryset = single_filing_status.objects.filter(pay_period=pay_period)
                 obj = queryset.first()
@@ -1701,7 +1722,7 @@ def federal_case(request):
                 fedral_income_tax=federal_income_tax_rate,
                 social_and_security=social_tax_rate,
                 medicare_tax=medicare_tax_rate,
-                state_taxes=state_tax_rate,
+                state_tax=state_tax_rate,
                 earnings=earnings,
                 garnishment_fees=garnishment_fees,
                 mexico_tax=mexico_tax,
@@ -1761,8 +1782,8 @@ def SettingPostAPI(request):
 
 
 class get_federal_case_result(APIView):
-    def get(self, request, employee_id):
-        employees = federal_case_result.objects.filter(employee_id=employee_id).order_by('-timestamp')[0:1]
+    def get(self, request, employer_id,employee_id):
+        employees = federal_case_result.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
         if employees.exists():
             try:
                 serializer = federal_case_result_Serializer(employees,many=True)
@@ -1778,24 +1799,43 @@ class get_federal_case_result(APIView):
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
+class get_federal_case_data_and_result(APIView):
+    def get(self, request, employer_id,employee_id):
+        employees = federal_tax_data_and_result.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
+        if employees.exists():
+            try:
+                serializer = federal_case_result_and_data_Serializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except federal_tax_data_and_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
 class GETSettingDetails(APIView):
     def get(self, request, employer_id):
-        employees = setting.objects.filter(employer_id=employer_id).order_by('-timestamp')[0:1]
+        employees = setting.objects.filter(employer_id=employer_id)
         if employees.exists():
             try:
-                serializer = setting(employees,many=True)
+                employee = employees.first() 
+                serializer = setting_Serializer(employee)
                 response_data = {
                     'success': True,
-                    'message': 'Data Get successfully',
+                    'message': 'Data retrieved successfully',
                     'status code': status.HTTP_200_OK,
-                    'data' : serializer.data}
+                    'data' : serializer.data
+                    }
                 return JsonResponse(response_data)
             except setting.DoesNotExist:
                 return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-
+    
 
 
