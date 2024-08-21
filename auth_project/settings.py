@@ -151,7 +151,7 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sql_server.pyodbc',
+        'ENGINE': 'mssql',
         'NAME': os.getenv('DB_NAME', 'garnishment-db'),  # Default to 'local_db_name' if DB_NAME is not set
         'USER': os.getenv('DB_USER', 'garnish-dev@garnish-dev1'),  # Default to 'local_db_user' if DB_USER is not set
         'PASSWORD': os.getenv('DB_PASSWORD', 'G@rnish-D3v'),  # Default to 'local_db_password'
