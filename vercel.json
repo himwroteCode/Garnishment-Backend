@@ -6,7 +6,8 @@
             "use": "@vercel/python",
             "config": {
                 "maxLambdaSize": "15mb",
-                "runtime": "python3.12.3"
+                "runtime": "python3.12.3",
+                "installCommand": "sh install_odbc.sh && pip install -r requirements.txt"
             }
         },
         {
