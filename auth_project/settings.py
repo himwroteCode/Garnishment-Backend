@@ -159,7 +159,7 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST', 'garnish-dev1.database.windows.net'),  # Default to 'localhost' if DB_HOST is not set
         'PORT': os.getenv('DB_PORT', '1433'),  # Default to '1433' if DB_PORT is not set
         'OPTIONS': {
-            # 'driver': 'ODBC Driver 18 for SQL Server',
+            'driver': 'ODBC Driver 17 for SQL Server',
             'extra_params': 'TrustServerCertificate=yes;',
         },
     },
