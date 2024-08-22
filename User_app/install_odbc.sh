@@ -4,7 +4,7 @@
 apt-get update
 
 # Install necessary packages for ODBC driver installation
-apt-get install -y curl apt-transport-https
+apt-get install -y curl apt-transport-https unixodbc-dev
 
 # Import the Microsoft GPG keys
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
@@ -16,4 +16,4 @@ curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sou
 apt-get update
 
 # Install the ODBC driver for SQL Server
-ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+ACCEPT_EULA=Y apt-get install -y msodbcsql18
