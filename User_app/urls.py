@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-from .views import EmployerProfileEditView,get_single_student_loan_data_and_result,get_federal_case_data_and_result,get_federal_case_result,GETSettingDetails,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,EmployeeImportView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
+from .views import EmployerProfileEditView,get_single_student_loan_data_and_result,get_federal_case_data_and_result,get_federal_case_result,GETSettingDetails,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
+# ,EmployeeImportView
 from django.urls import include, path
 from rest_framework import routers
 
@@ -28,7 +29,7 @@ urlpatterns = [
     path('DepartmentDelete/<int:department_id>/<int:employer_id>/',DepartmentDeleteAPIView.as_view(), name='Department-Delete-APIView'),
     path('LocationDelete/<int:location_id>/<int:employer_id>/',LocationDeleteAPIView.as_view(), name='Department-Delete-APIView'),
     path('ExportEmployees/<int:employer_id>/', views.export_employee_data, name='export-employee-data'),
-    path('EmployeeImportView/<int:employer_id>/', EmployeeImportView.as_view(), name='Employee-Import-View'),
+    # path('EmployeeImportView/<int:employer_id>/', EmployeeImportView.as_view(), name='Employee-Import-View'),
     path('TaxDetailsUpdate/<int:tax_id>/', TaxDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
     path('DepartmentDetailsUpdate/<int:department_id>/', DepartmentDetailsUpdateAPIView.as_view(), name='Tax-Details-Update-APIView'),
     path('LocatiionDetailsUpdate/<int:location_id>/', LocatiionDetailsUpdateAPIView.as_view(), name='Department-Details-Update-APIView'),
