@@ -2,8 +2,18 @@ services:
   - type: web
     name: my-django-app
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      sudo apt-get update
+      sudo apt-get install -y curl apt-transport-https gnupg
+      curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+      curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+      sudo apt-get update
+      sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+      pip install -r requirements.txt
+      python manage.py collectstatic --no-input
     startCommand: gunicorn auth_project.wsgi:application
+
+
     runtime: python3.12.3  
     envVars:
       - key: DEBUG
