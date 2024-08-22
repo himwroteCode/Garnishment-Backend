@@ -197,9 +197,6 @@ FILE_UPLOAD_HANDLERS = [
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 
-STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
