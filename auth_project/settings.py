@@ -152,13 +152,14 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
+
         'NAME': os.getenv('DB_NAME', 'garnishment-db'),  # Default to 'local_db_name' if DB_NAME is not set
         'USER': os.getenv('DB_USER', 'garnish-dev@garnish-dev1'),  # Default to 'local_db_user' if DB_USER is not set
         'PASSWORD': os.getenv('DB_PASSWORD', 'G@rnish-D3v'),  # Default to 'local_db_password'
         'HOST': os.getenv('DB_HOST', 'garnish-dev1.database.windows.net'),  # Default to 'localhost' if DB_HOST is not set
         'PORT': os.getenv('DB_PORT', '1433'),  # Default to '1433' if DB_PORT is not set
         'OPTIONS': {
-            'driver': 'ODBC Driver 18 for SQL Server',
+            # 'driver': 'ODBC Driver 18 for SQL Server',
             'extra_params': 'TrustServerCertificate=yes;',
         },
     },
@@ -196,7 +197,8 @@ FILE_UPLOAD_HANDLERS = [
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 
-
+STATIC_URL = '/static/'
+STATIC_ROOT = 'static'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

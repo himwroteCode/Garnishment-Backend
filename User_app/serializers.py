@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,setting,Employee_Details,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
+from .models import Employer_Profile,setting,Employee_Details,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
@@ -102,6 +102,10 @@ class single_student_loan_data_and_result_Serializer(serializers.ModelSerializer
         model = single_student_loan_data_and_result
         fields = '__all__'
         
+class multiple_student_loan_data_and_result_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = multiple_student_loan_data_and_result
+        fields = '__all__'
 class head_of_household_Serializer(serializers.ModelSerializer):
     class Meta:
         model = head_of_household

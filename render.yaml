@@ -5,3 +5,16 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn auth_project.wsgi:application
     runtime: python3.12.3  
+    envVars:
+      - key: DEBUG
+        value: 'False'
+      - key: DB_USER
+        value: garnish-dev@garnish-dev1
+      - key: DB_PASSWORD
+        value: G@rnish-D3v
+      - key: DB_HOST
+        value: garnish-dev1.database.windows.net
+      - key: DB_NAME
+        value: garnishment-db
+      - key: DB_PORT
+        value: 1433
