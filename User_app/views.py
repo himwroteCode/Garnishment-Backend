@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
 from rest_framework import viewsets ,generics
-from .serializers import EmployerProfileSerializer,multiple_student_loan_data_and_result_Serializer,single_student_loan_data_and_result_Serializer,federal_case_result_and_data_Serializer,setting_Serializer,ResultSerializer,federal_case_result_Serializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
+from .serializers import EmployerProfileSerializer,Calculation_data_results_Serializer,multiple_student_loan_data_and_result_Serializer,single_student_loan_data_and_result_Serializer,federal_case_result_and_data_Serializer,setting_Serializer,ResultSerializer,federal_case_result_Serializer,GetEmployerDetailsSerializer,SingleStudentLoanSerializer,MultipleStudentLoanSerializer,EmployeeDetailsSerializer,DepartmentSerializer, LocationSerializer,TaxSerializer,LogSerializer,PDFFileSerializer,PasswordResetConfirmSerializer,PasswordResetRequestSerializer
 from django.http import HttpResponse
 from .forms import PDFUploadForm
 from django.db import transaction
@@ -1830,6 +1830,83 @@ class get_federal_case_data_and_result(APIView):
                 }
                 return JsonResponse(response_data)
             except federal_tax_data_and_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+
+
+class get_child_garnishment_case_data_and_result(APIView):
+    def get(self, request, employer_id,employee_id):
+        employees = Calculation_data_results.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
+        if employees.exists():
+            try:
+                serializer = Calculation_data_results_Serializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Garnishment Result Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except federal_tax_data_and_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+
+
+class get_all_federal_tax_result(APIView):
+    def get(self, request, employer_id):
+        employees = federal_case_result.objects.filter(employer_id=employer_id,)
+        if employees.exists():
+            try:
+                serializer = federal_case_result_Serializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Federal Case Result Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except federal_case_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+        
+
+        
+class get_all_Single_Student_loan_result(APIView):
+    def get(self, request, employer_id):
+        employees = single_student_loan_result.objects.filter(employer_id=employer_id,)
+        if employees.exists():
+            try:
+                serializer = SingleStudentLoanSerializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Single Student Loan Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except single_student_loan_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+
+        
+class get_all_multiple_student_loan_result(APIView):
+    def get(self, request, employer_id):
+        employees = multiple_student_loan_result.objects.filter(employer_id=employer_id,)
+        if employees.exists():
+            try:
+                serializer = MultipleStudentLoanSerializer(employees,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Multiple Student Loan Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except multiple_student_loan_result.DoesNotExist:
                 return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import EmployerProfileEditView,get_multiple_student_loan_data_and_result,get_single_student_loan_data_and_result,get_federal_case_data_and_result,get_federal_case_result,GETSettingDetails,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
+from .views import EmployerProfileEditView,get_all_Single_Student_loan_result,get_all_multiple_student_loan_result,get_all_federal_tax_result,get_multiple_student_loan_data_and_result,get_single_student_loan_data_and_result,get_federal_case_data_and_result,get_federal_case_result,GETSettingDetails,TaxDetails,get_single_result_details,EmployeeDetailsUpdateAPIView,DepartmentViewSet,get_Tax_details,EmployeeDeleteAPIView,TaxDetailsUpdateAPIView,LocatiionDetailsUpdateAPIView,DepartmentDetailsUpdateAPIView,LastFiveLogsView,TaxDeleteAPIView,LocationDeleteAPIView,DepartmentDeleteAPIView,EmployerProfileList,EmployeeDetailsList,TaxDetailsList,DepartmentDetailsList,LocationDetailsList,PDFFileUploadView,PasswordResetRequestView,PasswordResetConfirmView
 # ,EmployeeImportView
 from django.urls import include, path
 from rest_framework import routers
@@ -52,15 +52,18 @@ urlpatterns = [
     path('POSTsetting/',views.SettingPostAPI, name='POST Setting'),
     path('StudentLoanCalculationData/',views.StudentLoanCalculationData, name='Student-Loan-Calculation-Data'),
     path('SingleStudentLoanDataAndResult/<int:employer_id>/<int:employee_id>/',get_single_student_loan_data_and_result.as_view(), name='Student-Loan-Calculation-Data-And-Result'),
+    path('SingleStudentLoanDataAndResult/<int:employer_id>/<int:employee_id>/',get_single_student_loan_data_and_result.as_view(), name='Student-Loan-Calculation-Data-And-Result'),
     path('MultipleStudentLoanDataAndResult/<int:employer_id>/<int:employee_id>/',get_multiple_student_loan_data_and_result.as_view(), name='Multiple_Student_Loan_Data_and_Result'),
     path('MiltipleStudentLoanCalculationData/',views.MiltipleStudentLoanCalculationData, name='Miltiple-Student-Loan-Calculation-Data'),
     path('FederalCaseData',views.federal_case, name='federal_case_data'),
-    path('FederalCaseResult/<int:employer_id>/<int:employee_id>/',get_federal_case_result.as_view(), name='Federal_Case_Result'),
+    path('GetAllFederalTaxResult/<int:employer_id>/',get_all_federal_tax_result.as_view(), name='federal_case_data'),
+    path('GetAllSingleStudentLoanResult/<int:employer_id>/',get_all_Single_Student_loan_result.as_view(), name='GetAllSingleStudentLoanResult'),
+    path('GetAllMultipleStudentLoanResult/<int:employer_id>/',get_all_multiple_student_loan_result.as_view(), name='GetAllSingleStudentLoanResult'),
+    path('FederalCaseResult/<int:employer_id>/<int:employee_id>/',get_federal_case_result.as_view(), name='Get-All-Single-Student-Loan-Result'),
     path('FederalCaseDataAndResult/<int:employer_id>/<int:employee_id>/',get_federal_case_data_and_result.as_view(), name='Federal_Data-And_Result'),
     path('GetSingleStudentLoanResult/<int:employer_id>/<int:employee_id>/',views.get_SingleStudentLoanResult, name='Get_Single_Student_Loan_Result'),
     path('GetMultipleStudentLoanResult/<int:employer_id>/<int:employee_id>/',views.get_MultipleStudentLoanResult, name='get_MultipleStudentLoanResult'),
     
- 
 ]
 
 

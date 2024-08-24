@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,setting,Employee_Details,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
+from .models import Employer_Profile,Calculation_data_results,setting,Employee_Details,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
@@ -130,6 +130,12 @@ class federal_case_result_Serializer(serializers.ModelSerializer):
 class federal_case_result_and_data_Serializer(serializers.ModelSerializer):
     class Meta:
         model = federal_tax_data_and_result
+        fields = '__all__'
+
+
+class Calculation_data_results_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = Calculation_data_results
         fields = '__all__'
 
 
