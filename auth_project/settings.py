@@ -43,7 +43,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-DEBUG = os.environ.get('DEBUG','True')=="True"
+DEBUG = os.environ.get('DEBUG','False')=="False"
 STATIC_URL = '/static/'
 ALLOWED_HOSTS = ['*']
 # ALLOWED_HOSTS = ['.vercel.app', 'garnishment-backend.vercel.app','http://127.0.0.1:8000/','https://garnishment-backend.render.app']
@@ -71,13 +71,14 @@ AUTHENTICATION_BACKENDS=[
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'User_app.middleware.APICallLoggerMiddleware',
+    'django.middleware.security.SecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'auth_project.urls'
@@ -132,38 +133,34 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DATABASES ={
+    'default' :{
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME' : 'garnishmen_database',
+        'HOST' : 'database-garnishment.ctcyyq8ooo4x.eu-north-1.rds.amazonaws.com',
+        'USER' : 'admin',
+        'PASSWORD': 'se*eB83pG2',
+        'PORT': '3306',
+    }
+}
+
+# import os
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'mssql',
-#         'NAME': 'garnishment-db',
-#         'USER': 'garnish-dev@garnish-dev1',
-#         'PASSWORD': 'G@rnish-D3v',
-#         'HOST': 'garnish-dev1.database.windows.net',
-#         'PORT': '1433',
-#         "OPTIONS": {"driver": "ODBC Driver 18 for SQL Server",
-#         'extra_params': 'TrustServerCertificate=yes;'}},
 
-#     }
-
-
-
-import os
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-
-        'NAME': os.getenv('DB_NAME', 'garnishment-db'),  # Default to 'local_db_name' if DB_NAME is not set
-        'USER': os.getenv('DB_USER', 'garnish-dev@garnish-dev1'),  # Default to 'local_db_user' if DB_USER is not set
-        'PASSWORD': os.getenv('DB_PASSWORD', 'G@rnish-D3v'),  # Default to 'local_db_password'
-        'HOST': os.getenv('DB_HOST', 'garnish-dev1.database.windows.net'),  # Default to 'localhost' if DB_HOST is not set
-        'PORT': os.getenv('DB_PORT', '1433'),  # Default to '1433' if DB_PORT is not set
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes;',
-        },
-    },
-}
+#         'NAME': os.getenv('DB_NAME', 'garnishment-db'),  # Default to 'local_db_name' if DB_NAME is not set
+#         'USER': os.getenv('DB_USER', 'garnish-dev@garnish-dev1'),  # Default to 'local_db_user' if DB_USER is not set
+#         'PASSWORD': os.getenv('DB_PASSWORD', 'G@rnish-D3v'),  # Default to 'local_db_password'
+#         'HOST': os.getenv('DB_HOST', 'garnish-dev1.database.windows.net'),  # Default to 'localhost' if DB_HOST is not set
+#         'PORT': os.getenv('DB_PORT', '1433'),  # Default to '1433' if DB_PORT is not set
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 17 for SQL Server',
+#             'extra_params': 'TrustServerCertificate=yes;',
+#         },
+#     },
+# }
 
 
 # postgres://gdb_9usu_user:1WIRSGucNXebb5DcoSI1e2hp7RNSuRwn@dpg-cpa5u6dds78s73crqbag-a.singapore-postgres.render.com/gdb_9usu'

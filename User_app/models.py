@@ -40,17 +40,17 @@ class Calculation_data_results(models.Model):
     support_second_family=models.BooleanField()
     garnishment_fees=models.FloatField()
     arrears_greater_than_12_weeks=models.BooleanField()
-    amount_to_withhold_child1=models.FloatField()
-    amount_to_withhold_child2 =models.FloatField()
-    amount_to_withhold_child3=models.FloatField()
-    amount_to_withhold_child4=models.FloatField()
-    amount_to_withhold_child5=models.FloatField()
-    arrears_amt_Child1=models.FloatField()
-    arrears_amt_Child2 =models.FloatField()
-    arrears_amt_Child3 =models.FloatField()
-    arrears_amt_Child4 =models.FloatField()
-    arrears_amt_Child5 =models.FloatField()
-    number_of_arrears= models.IntegerField()
+    amount_to_withhold_child1=models.FloatField(null=True, blank=True)
+    amount_to_withhold_child2 =models.FloatField(null=True, blank=True)
+    amount_to_withhold_child3=models.FloatField(null=True, blank=True)
+    amount_to_withhold_child4=models.FloatField(null=True, blank=True)
+    amount_to_withhold_child5=models.FloatField(null=True, blank=True)
+    arrears_amt_Child1=models.FloatField(null=True, blank=True)
+    arrears_amt_Child2 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child3 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child4 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child5 =models.FloatField(null=True, blank=True)
+    number_of_arrears= models.IntegerField(null=True, blank=True)
     allowable_disposable_earnings=models.FloatField()
     withholding_available=models.FloatField()
     other_garnishment_amount=models.FloatField()
@@ -114,23 +114,26 @@ class Garcalculation_data(models.Model):
     employer_id = models.IntegerField()
     employee_name=models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
-    minimum_wages = models.FloatField()
     earnings = models.FloatField()
     support_second_family = models.BooleanField()
-    arrears_greater_than_12_weeks = models.BooleanField()
-    amount_to_withhold_child1=models.FloatField()
-    amount_to_withhold_child2 =models.FloatField()
-    amount_to_withhold_child3=models.FloatField()
-    amount_to_withhold_child4=models.FloatField()
-    amount_to_withhold_child5=models.FloatField()
-    arrears_amt_Child1=models.FloatField()
-    arrears_amt_Child2 =models.FloatField()
-    arrears_amt_Child3 =models.FloatField()
-    arrears_amt_Child4 =models.FloatField()
-    arrears_amt_Child5 =models.FloatField()
+    arrears_greater_than_12_weeks = models.BooleanField(null=True, blank=True)
+    amount_to_withhold_child1=models.FloatField(null=True, blank=True)
+    amount_to_withhold_child2 =models.FloatField(null=True, blank=True)
+    amount_to_withhold_child3=models.FloatField( null=True, blank=True)
+    amount_to_withhold_child4=models.FloatField(null=True, blank=True )
+    amount_to_withhold_child5=models.FloatField( null=True, blank=True)
+    arrears_amt_Child1=models.FloatField(null=True, blank=True)
+    arrears_amt_Child2 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child3 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child4 =models.FloatField(null=True, blank=True)
+    arrears_amt_Child5 =models.FloatField(null=True, blank=True)
     number_of_arrears= models.IntegerField()
     order_id=models.IntegerField()
     state=models.CharField(max_length=255)
+    federal_income_tax =models.FloatField()
+    social_tax =models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):
@@ -175,6 +178,11 @@ class single_student_loan_data(models.Model):
     earnings = models.FloatField()  
     garnishment_fees= models.IntegerField()
     order_id=models.IntegerField()
+    federal_income_tax= models.FloatField()
+    social_and_security_tax= models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax= models.FloatField()
+    SDI_tax= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_data(models.Model):
@@ -184,6 +192,11 @@ class multiple_student_loan_data(models.Model):
     earnings = models.FloatField()  
     garnishment_fees= models.FloatField()
     order_id=models.IntegerField()
+    federal_income_tax= models.FloatField()
+    social_and_security_tax= models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax= models.FloatField()
+    SDI_tax= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_data_and_result(models.Model):
@@ -239,6 +252,15 @@ class federal_loan_case_data(models.Model):
     pay_period = models.CharField(max_length=255)
     filing_status = models.CharField(max_length=255)
     no_of_exception = models.IntegerField()
+    federal_income_tax =models.FloatField()
+    local_tax =models.FloatField()
+    social_and_security =models.FloatField()
+    medicare_tax= models.FloatField()
+    state_tax =models.FloatField()
+    workers_compensation=models.FloatField()
+    medical_insurance=models.FloatField()
+    contribution=models.FloatField()
+    united_way_contribution=models.FloatField()
     order_id=models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -255,7 +277,7 @@ class federal_tax_data_and_result(models.Model):
     social_and_security =models.FloatField()
     medicare_tax= models.FloatField()
     state_tax =models.FloatField()
-    mexico_tax=models.FloatField()
+    local_tax =models.FloatField()
     workers_compensation=models.FloatField()
     medical_insurance=models.FloatField()
     contribution=models.FloatField()
@@ -282,7 +304,7 @@ class single_filing_status(models.Model):
     exemptions_4= models.FloatField()  
     exemptions_5= models.FloatField()   
     exemptions_6= models.FloatField()   
-    morethan6= models.CharField(max_length=255)
+    morethan7= models.CharField(max_length=255)
 
 class head_of_household(models.Model):
     pay_period = models.CharField(max_length=255)
@@ -292,7 +314,7 @@ class head_of_household(models.Model):
     exemptions_4= models.FloatField()  
     exemptions_5= models.FloatField()   
     exemptions_6= models.FloatField()   
-    morethan6= models.CharField(max_length=255)
+    morethan7= models.CharField(max_length=255)
 
 
 class married_filing_joint_return(models.Model):
@@ -303,7 +325,7 @@ class married_filing_joint_return(models.Model):
     exemptions_4= models.FloatField()  
     exemptions_5= models.FloatField()  
     exemptions_6= models.FloatField()    
-    morethan6= models.CharField(max_length=255)
+    morethan7= models.CharField(max_length=255)
 
 class married_filing_sepearte_return(models.Model):
     pay_period = models.CharField(max_length=255)
@@ -313,14 +335,28 @@ class married_filing_sepearte_return(models.Model):
     exemptions_4= models.FloatField()  
     exemptions_5= models.FloatField() 
     exemptions_6= models.FloatField()     
-    morethan6= models.CharField(max_length=255)
+    morethan7= models.CharField(max_length=255)
 
 class setting(models.Model):
     employer_id=models.IntegerField()
-    setting1=models.BooleanField()
-    setting2=models.BooleanField()
+    modes=models.BooleanField()
+    visibilitys=models.BooleanField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 
 
+class APICallLog(models.Model):
+    path = models.CharField(max_length=255)
+    method = models.CharField(max_length=10)
+    timestamp = models.DateTimeField()
 
+    def __str__(self):
+        return f'{self.path} - {self.method} - {self.timestamp}'
+
+# class APICallLog(models.Model):
+#     endpoint = models.CharField(max_length=255)
+#     date = models.DateField(auto_now_add=True)
+#     count = models.PositiveIntegerField(default=1)
+
+#     def __str__(self):
+#         return f'{self.endpoint} - {self.date} - {self.count}'

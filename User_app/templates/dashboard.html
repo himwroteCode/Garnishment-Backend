@@ -1,0 +1,9 @@
+{%csrf_token%}
+
+{% block content %}
+
+<h1>Dashboard : {{ request.user.username }}</h1>
+<a href="{% url 'login' %}" class="btn btn-dark">Logout</a>
+<a href="{% url 'employer_profile' %}" class="btn btn-success badge">Enter Employer Details</a><br>
+
+{% endblock %}

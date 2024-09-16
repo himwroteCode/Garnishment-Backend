@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Update Details</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script src='main.js'></script>
+</head>
+<body>
+    <form action="update" method="post" ,name="csrfmiddlewaretoken">
+         {% csrf_token %}
+        <input type="text" name="first_name" placeholder="First Name" ,value="{{ user.first_name}}"><br>
+        <input type="text" name="last_name" placeholder="Last Name",value="{{ user.last_name}}"><br>
+        <input type="text" name="username" placeholder="Username",value="{{ user.username}}"><br>
+        <input type="gender" name="gender" placeholder="gender",value="{{ user.gender}}"><br>
+        <input type="email" name="email" placeholder="email",value="{{ user.email}}"><br>
+        <input type="contact_number" name="contact_number" placeholder="contact number",value="{{ user.contact_number}}"><br>
+        <input type="Submit">
+ </form>
+
+    <div>
+        {% for message in messages %}
+        <h3> {{message}}  </h3>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
