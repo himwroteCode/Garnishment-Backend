@@ -293,10 +293,10 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
             data = request.data
     
             # Check for missing fields
-            required_fields = ['employer_name', 'street_name', 'federal_employer_identification_number', 'city', 'state', 'country', 'zipcode', 'email', 'number_of_employees', 'department', 'location']
-            missing_fields = [field for field in required_fields if field not in data or not data[field]]
-            if missing_fields:
-                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
+            # required_fields = ['employer_name', 'street_name', 'federal_employer_identification_number', 'city', 'state', 'country', 'zipcode', 'email', 'number_of_employees', 'department', 'location']
+            # missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            # if missing_fields:
+            #     return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
     
             # Validate length of federal_employer_identification_number
             if 'federal_employer_identification_number' in data and len(str(data['federal_employer_identification_number'])) != 9:
