@@ -136,11 +136,14 @@ TEMPLATES = [
 DATABASES ={
     'default' :{
         'ENGINE': 'django.db.backends.mysql',
-        'NAME' : 'garnishmen_database',
-        'HOST' : 'database-garnishment.ctcyyq8ooo4x.eu-north-1.rds.amazonaws.com',
+        'NAME' : 'granishmentdb',
+        'HOST' : 'database-1.ctcyyq8ooo4x.eu-north-1.rds.amazonaws.com',
         'USER' : 'admin',
-        'PASSWORD': 'se*eB83pG2',
+        'PASSWORD': 'Orang*#_0107-',
         'PORT': '3306',
+                'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
+        },
     }
 }
 
