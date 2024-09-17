@@ -119,11 +119,11 @@ def MultipleStudentLoanCalculationData(request):
             
             user = multiple_student_loan_data.objects.create(**data)
             
-            # Retrieve the employee, tax, and employer records
-            employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
-            tax = Tax_details.objects.get(employer_id=data['employer_id'])
-            employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            gdata = multiple_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+            # # Retrieve the employee, tax, and employer records
+            # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
+            # tax = Tax_details.objects.get(employer_id=data['employer_id'])
+            # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
+            # gdata = multiple_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
 
             # Extracting earnings and garnishment fees from gdata
             earnings = data['earnings']
@@ -200,8 +200,8 @@ def MultipleStudentLoanCalculationData(request):
             return Response({'message': 'Multiple Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Tax_details.DoesNotExist:
-            return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
+        # except Tax_details.DoesNotExist:
+        #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
         except Exception as e:
