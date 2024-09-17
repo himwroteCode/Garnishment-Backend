@@ -41,10 +41,10 @@ def federal_case(request):
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)           
             user = federal_loan_case_data.objects.create(**data)
 
-            # Retrieve the employee, tax, and employer records
-            employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
-            tax = Tax_details.objects.get(employer_id=data['employer_id'])
-            employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
+            # # Retrieve the employee, tax, and employer records
+            # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
+            # tax = Tax_details.objects.get(employer_id=data['employer_id'])
+            # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
 
             # Extracting earnings and garnishment fees from gdata
             earnings = data.get('earnings',0)
@@ -206,8 +206,8 @@ def federal_case(request):
 
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Tax_details.DoesNotExist:
-            return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
+        # except Tax_details.DoesNotExist:
+        #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
         except Exception as e:

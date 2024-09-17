@@ -54,7 +54,7 @@ def StudentLoanCalculationData(request):
             garnishment_fees = data.get('garnishment_fees',0)
            
             # Calculate the various taxes
-            federal_income_tax_rate = data.get('federal_income',0) 
+            federal_income_tax_rate = data.get('federal_income_tax',0) 
             social_tax_rate = data.get('social_and_security_tax',0)
             medicare_tax_rate = data.get('medicare_tax',0)
             state_tax_rate = data.get('state_tax',0) 

@@ -178,7 +178,7 @@ class single_student_loan_data(models.Model):
     earnings = models.FloatField()  
     garnishment_fees= models.IntegerField()
     order_id=models.IntegerField()
-    federal_income= models.FloatField()
+    federal_income_tax= models.FloatField()
     social_and_security_tax= models.FloatField()
     medicare_tax= models.FloatField()
     state_tax= models.FloatField()
