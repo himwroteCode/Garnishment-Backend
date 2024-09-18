@@ -129,7 +129,7 @@ class Garcalculation_data(models.Model):
     arrears_amt_Child4 =models.FloatField(null=True, blank=True)
     arrears_amt_Child5 =models.FloatField(null=True, blank=True)
     number_of_garnishment= models.IntegerField()
-    number_of_arrers= models.IntegerField()
+    number_of_arrear= models.IntegerField()
     order_id=models.IntegerField()
     state=models.CharField(max_length=255)
     federal_income_tax =models.FloatField()
