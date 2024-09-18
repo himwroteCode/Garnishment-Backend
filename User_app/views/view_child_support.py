@@ -32,7 +32,7 @@ def CalculationDataView(request):
             required_fields = ['employer_id','employee_id',
                 'earnings', 'employee_name', 'garnishment_fees',
                 'arrears_greater_than_12_weeks', 'support_second_family', 'amount_to_withhold_child1'
-                , 'state', 'number_of_arrears', 'order_id','federal_income_tax', 'social_tax','medicare_tax','state_tax']
+                , 'state', 'number_of_arrear', 'order_id','federal_income_tax', 'social_tax','medicare_tax','state_tax']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing_Done: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
