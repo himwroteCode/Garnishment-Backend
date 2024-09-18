@@ -118,7 +118,7 @@ def MultipleStudentLoanCalculationData(request):
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
             user = multiple_student_loan_data.objects.create(**data)
-                        
+
             # # Retrieve the employee, tax, and employer records
             # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
             # tax = Tax_details.objects.get(employer_id=data['employer_id'])
@@ -137,8 +137,10 @@ def MultipleStudentLoanCalculationData(request):
 
             SDI_tax=data.get('SDI_tax',0) 
             total_tax = round(federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax,2)
+            print("total_tax",total_tax)
             disposable_earnings = round(earnings - total_tax, 2)
             allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
+            print("allowable_disposable_earning",allowable_disposable_earning)
             twentyfive_percent_of_earning= round(allowable_disposable_earning*.25,2)
             fmw=7.25*30
             
@@ -161,7 +163,7 @@ def MultipleStudentLoanCalculationData(request):
             StudentLoanAmount3=round(allowable_disposable_earning*0,2)
 
             net_pay = round(disposable_earnings-garnishment_amount,2)
-            
+            print("net_pay",net_pay)
             # Create Calculation_data_results object
             multiple_student_loan_data_and_result.objects.create(
                 employee_id=data['employee_id'],
@@ -179,9 +181,9 @@ def MultipleStudentLoanCalculationData(request):
                 twentyfive_percent_of_earning=twentyfive_percent_of_earning,
                 fmw=fmw,
                 garnishment_amount=garnishment_amount,
-                studentloan1=StudentLoanAmount1,
-                studentloan2=StudentLoanAmount2,
-                studentloan3=StudentLoanAmount3,
+                StudentLoanAmount1=StudentLoanAmount1,
+                StudentLoanAmount2=StudentLoanAmount2,
+                StudentLoanAmount3=StudentLoanAmount3,
                 net_pay=net_pay
             )
 
@@ -190,9 +192,9 @@ def MultipleStudentLoanCalculationData(request):
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
                 garnishment_amount=garnishment_amount,
-                studentloan1=StudentLoanAmount1,
-                studentloan2=StudentLoanAmount2,
-                studentloan3=StudentLoanAmount3,
+                StudentLoanAmount1=StudentLoanAmount1,
+                StudentLoanAmount2=StudentLoanAmount2,
+                StudentLoanAmount3=StudentLoanAmount3,
                 net_pay=net_pay            
             )
             LogEntry.objects.create(

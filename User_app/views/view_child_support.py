@@ -247,7 +247,7 @@ def CalculationDataView(request):
                 arrears_amt_Child3=arrears_amt_Child3,
                 arrears_amt_Child4=arrears_amt_Child4,
                 arrears_amt_Child5=arrears_amt_Child5,
-                number_of_arrears=number_of_arrear,
+                number_of_arrear=number_of_arrear,
                 number_of_garnishment=number_of_garnishment,
                 allowable_disposable_earnings=allowable_disposable_earnings,
                 withholding_available=withholding_available,
@@ -274,8 +274,8 @@ def CalculationDataView(request):
         #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
-        except Exception as e:
-            return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+        # except Exception as e:
+        #     return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
 
