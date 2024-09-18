@@ -83,30 +83,30 @@ def StudentLoanCalculationData(request):
                 garnishment_amount=0
             else:
                 garnishment_amount=garnishment_amount
-            print("garnishment_amount :" ,garnishment_amount)
+            # print("garnishment_amount :" ,garnishment_amount)
             net_pay=round(disposable_earnings-garnishment_amount,2)
             # print("net_pay :" ,net_pay)
             
-            # # Create Calculation_data_results object
-            # single_student_loan_data_and_result.objects.create(
-            #     employee_id=data
-            #     employer_id=data.get('employer_id',0)
-            #     federal_income_tax=data.get('federal_income_tax',0)
-            #     social_and_security_tax=data.get('social_tax',0)
-            #     medicare_tax=data.get('medicare_tax',0)
-            #     state_tax=data.get('state_tax',0)
-            #     SDI_tax=data.get('SDI_tax',0)
-            #     earnings=data.get('earnings'),
-            #     garnishment_fees=data.get('garnishment_fees',0)
-            #     total_tax=data.get('total_tax',0)
-            #     disposable_earnings=data.get('disposable_earnings',0)
-            #     allowable_disposable_earning=data.get('allowable_disposable_earning',0)
-            #     fifteen_percent_of_eraning=datafifteen_percent_of_eraning,
-            #     fmw=fmw,
-            #     garnishment_amount=garnishment_amount,
-            #     difference=difference,
-            #     net_pay=net_pay
-            # )
+            # Create Calculation_data_results object
+            single_student_loan_data_and_result.objects.create(
+                employee_id=data['employee_id'],
+                employer_id=data['employer_id'],
+                federal_income_tax=federal_income_tax_rate,
+                social_and_security_tax=social_tax_rate,
+                medicare_tax=medicare_tax_rate,
+                state_tax=state_tax_rate,
+                SDI_tax=SDI_tax,
+                earnings=earnings,
+                garnishment_fees=garnishment_fees,
+                total_tax=total_tax,
+                disposable_earnings=disposable_earnings,
+                allowable_disposable_earning=allowable_disposable_earning,
+                fifteen_percent_of_eraning=fifteen_percent_of_eraning,
+                fmw=fmw,
+                garnishment_amount=garnishment_amount,
+                difference=difference,
+                net_pay=net_pay
+            )
 
             # Create CalculationResult object
             single_student_loan_result.objects.create(
@@ -122,7 +122,6 @@ def StudentLoanCalculationData(request):
             )
 
             return Response({'message': 'Single Student Loan Calculation Details Registered Successfully', "status code":status.HTTP_200_OK})
-
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
         except Employer_Profile.DoesNotExist:

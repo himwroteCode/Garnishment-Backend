@@ -118,7 +118,7 @@ def MultipleStudentLoanCalculationData(request):
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
             user = multiple_student_loan_data.objects.create(**data)
-            
+                        
             # # Retrieve the employee, tax, and employer records
             # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
             # tax = Tax_details.objects.get(employer_id=data['employer_id'])
@@ -156,9 +156,9 @@ def MultipleStudentLoanCalculationData(request):
             else:
                 garnishment_amount=garnishment_amount
             print("garnishment_amount:",garnishment_amount)
-            studentloan1=round(allowable_disposable_earning*.15,2)
-            studentloan2=round(allowable_disposable_earning*.10,2)
-            studentloan3=round(allowable_disposable_earning*0,2)
+            StudentLoanAmount1=round(allowable_disposable_earning*.15,2)
+            StudentLoanAmount2=round(allowable_disposable_earning*.10,2)
+            StudentLoanAmount3=round(allowable_disposable_earning*0,2)
 
             net_pay = round(disposable_earnings-garnishment_amount,2)
             
@@ -179,9 +179,9 @@ def MultipleStudentLoanCalculationData(request):
                 twentyfive_percent_of_earning=twentyfive_percent_of_earning,
                 fmw=fmw,
                 garnishment_amount=garnishment_amount,
-                studentloan1=studentloan1,
-                studentloan2=studentloan2,
-                studentloan3=studentloan3,
+                studentloan1=StudentLoanAmount1,
+                studentloan2=StudentLoanAmount2,
+                studentloan3=StudentLoanAmount3,
                 net_pay=net_pay
             )
 
@@ -190,9 +190,11 @@ def MultipleStudentLoanCalculationData(request):
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
                 garnishment_amount=garnishment_amount,
+                studentloan1=StudentLoanAmount1,
+                studentloan2=StudentLoanAmount2,
+                studentloan3=StudentLoanAmount3,
                 net_pay=net_pay            
             )
-
             LogEntry.objects.create(
                 action='Multiple Student Loan Calculation data Added',
                 details=f'Multiple Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'

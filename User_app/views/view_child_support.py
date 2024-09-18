@@ -40,10 +40,10 @@ def CalculationDataView(request):
             user = Garcalculation_data.objects.create(**data)
 
             # Retrieve the employee, tax, and employer records
-            employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
-            tax = Tax_details.objects.get(employer_id=data['employer_id'])
-            employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            gdata = Garcalculation_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+            # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
+            # tax = Tax_details.objects.get(employer_id=data['employer_id'])
+            # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
+            # gdata = Garcalculation_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
 
             # Extracting earnings and garnishment fees from gdata
             earnings = data['earnings']
@@ -59,8 +59,9 @@ def CalculationDataView(request):
             arrears_amt_Child5 = data.get('arrears_amt_Child5', 0)
             arrears_greater_than_12_weeks = data['arrears_greater_than_12_weeks']
             support_second_family = data['support_second_family']
-            number_of_garnishment = employee.number_of_garnishment
-            number_of_arrears = data['number_of_arrears']
+            number_of_garnishment = data['number_of_garnishment']
+            number_of_arrear = data['number_of_arrears']
+            number_of_garnishment = data['number_of_garnishment']
             garnishment_fees = data['garnishment_fees']
             federal_income_tax_rate=data['federal_income_tax']
 
@@ -176,17 +177,16 @@ def CalculationDataView(request):
                 ratio = arrears_amt_Child1 / allowed_child_support_arrear
                 arrears_amt_Child1 = amount_left_for_arrears * ratio
             elif amount_left_for_arrears > 0:
-                arrears_amt_Child1 = amount_left_for_arrears / number_of_arrears
+                arrears_amt_Child1 = amount_left_for_arrears / number_of_arrear
             else:
                 arrears_amt_Child1 = 0
-
             if (amount_left_for_arrears - allowed_child_support_arrear) >= 0:
                 arrears_amt_Child2 = arrears_amt_Child2
             elif allocation_method_for_arrears == "Pro Rate":
                 ratio = arrears_amt_Child2 / allowed_child_support_arrear
                 arrears_amt_Child2 = amount_left_for_arrears * ratio
             elif amount_left_for_arrears > 0:
-                arrears_amt_Child2 = amount_left_for_arrears / number_of_arrears
+                arrears_amt_Child2 = amount_left_for_arrears / number_of_arrear
             else:
                 arrears_amt_Child2 = 0
 
@@ -196,7 +196,7 @@ def CalculationDataView(request):
                 ratio = arrears_amt_Child3 / allowed_child_support_arrear
                 arrears_amt_Child3 = amount_left_for_arrears * ratio
             elif amount_left_for_arrears > 0:
-                arrears_amt_Child3 = amount_left_for_arrears / number_of_arrears
+                arrears_amt_Child3 = amount_left_for_arrears / number_of_arrear
             else:
                 arrears_amt_Child3 = 0
             
@@ -206,7 +206,7 @@ def CalculationDataView(request):
                 ratio = arrears_amt_Child4 / allowed_child_support_arrear
                 arrears_amt_Child3 = amount_left_for_arrears * ratio
             elif amount_left_for_arrears > 0:
-                arrears_amt_Child4 = amount_left_for_arrears / number_of_arrears
+                arrears_amt_Child4 = amount_left_for_arrears / number_of_arrear
             else:
                 arrears_amt_Child4 = 0
 
@@ -216,15 +216,15 @@ def CalculationDataView(request):
                 ratio = arrears_amt_Child5 / allowed_child_support_arrear
                 arrears_amt_Child5 = amount_left_for_arrears * ratio
             elif amount_left_for_arrears > 0:
-                arrears_amt_Child5 = amount_left_for_arrears / number_of_arrears
+                arrears_amt_Child5 = amount_left_for_arrears / number_of_arrear
             else:
                 arrears_amt_Child5 = 0
-
             if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
                 allowed_amount_for_other_garnishment = 0
             else:
                 allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
 
+            net_pay=round(disposable_earnings-allowed_amount_for_other_garnishment,2)
             # Create Calculation_data_results object
             Calculation_data_results.objects.create(
                 employee_id=data['employee_id'],
@@ -247,32 +247,31 @@ def CalculationDataView(request):
                 arrears_amt_Child3=arrears_amt_Child3,
                 arrears_amt_Child4=arrears_amt_Child4,
                 arrears_amt_Child5=arrears_amt_Child5,
-                number_of_arrears=number_of_arrears,
+                number_of_arrears=number_of_arrear,
+                number_of_garnishment=number_of_garnishment,
                 allowable_disposable_earnings=allowable_disposable_earnings,
                 withholding_available=withholding_available,
                 other_garnishment_amount=other_garnishment_amount,
                 amount_left_for_arrears=amount_left_for_arrears,
                 allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
             )
-
             # Create CalculationResult object
             CalculationResult.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
-                result=allowed_amount_for_other_garnishment
+                result=allowed_amount_for_other_garnishment,
+                net_pay=net_pay
             )
 
             LogEntry.objects.create(
                 action='Calculation data Added',
                 details=f'Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
             )
-
             return Response({'message': 'Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
-
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Tax_details.DoesNotExist:
-            return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
+        # except Tax_details.DoesNotExist:
+        #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
         except Exception as e:

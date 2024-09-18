@@ -51,6 +51,7 @@ class Calculation_data_results(models.Model):
     arrears_amt_Child4 =models.FloatField(null=True, blank=True)
     arrears_amt_Child5 =models.FloatField(null=True, blank=True)
     number_of_arrears= models.IntegerField(null=True, blank=True)
+    number_of_garnishment=models.IntegerField(null=True, blank=True)
     allowable_disposable_earnings=models.FloatField()
     withholding_available=models.FloatField()
     other_garnishment_amount=models.FloatField()
@@ -127,7 +128,8 @@ class Garcalculation_data(models.Model):
     arrears_amt_Child3 =models.FloatField(null=True, blank=True)
     arrears_amt_Child4 =models.FloatField(null=True, blank=True)
     arrears_amt_Child5 =models.FloatField(null=True, blank=True)
-    number_of_arrears= models.IntegerField()
+    number_of_garnishment= models.IntegerField()
+    number_of_arrers= models.IntegerField()
     order_id=models.IntegerField()
     state=models.CharField(max_length=255)
     federal_income_tax =models.FloatField()
@@ -140,6 +142,7 @@ class CalculationResult(models.Model):
     employee_id = models.IntegerField()
     employer_id = models.IntegerField()
     result = models.FloatField()  
+    net_pay = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class LogEntry(models.Model):
@@ -169,6 +172,9 @@ class multiple_student_loan_result(models.Model):
     employer_id = models.IntegerField()
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
+    StudentLoanAmount1= models.FloatField()
+    StudentLoanAmount2= models.FloatField()
+    StudentLoanAmount3= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class single_student_loan_data(models.Model):
@@ -216,9 +222,9 @@ class multiple_student_loan_data_and_result(models.Model):
     twentyfive_percent_of_earning= models.FloatField()
     fmw= models.FloatField()
     garnishment_amount= models.FloatField()
-    studentloan1= models.FloatField()
-    studentloan2= models.FloatField()
-    studentloan3= models.FloatField()
+    StudentLoanAmount1= models.FloatField()
+    StudentLoanAmount2= models.FloatField()
+    StudentLoanAmount3= models.FloatField()
     net_pay= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
