@@ -50,7 +50,7 @@ class Calculation_data_results(models.Model):
     arrears_amt_Child3 =models.FloatField(null=True, blank=True)
     arrears_amt_Child4 =models.FloatField(null=True, blank=True)
     arrears_amt_Child5 =models.FloatField(null=True, blank=True)
-    number_of_arrears= models.IntegerField(null=True, blank=True)
+    number_of_arrear= models.IntegerField(null=True, blank=True)
     number_of_garnishment=models.IntegerField(null=True, blank=True)
     allowable_disposable_earnings=models.FloatField()
     withholding_available=models.FloatField()

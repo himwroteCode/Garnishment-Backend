@@ -60,7 +60,7 @@ def CalculationDataView(request):
             arrears_greater_than_12_weeks = data['arrears_greater_than_12_weeks']
             support_second_family = data['support_second_family']
             number_of_garnishment = data['number_of_garnishment']
-            number_of_arrear = data['number_of_arrears']
+            number_of_arrear = data['number_of_arrear']
             number_of_garnishment = data['number_of_garnishment']
             garnishment_fees = data['garnishment_fees']
             federal_income_tax_rate=data['federal_income_tax']

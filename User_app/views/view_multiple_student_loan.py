@@ -137,10 +137,10 @@ def MultipleStudentLoanCalculationData(request):
 
             SDI_tax=data.get('SDI_tax',0) 
             total_tax = round(federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax,2)
-            print("total_tax",total_tax)
+            # print("total_tax",total_tax)
             disposable_earnings = round(earnings - total_tax, 2)
             allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
-            print("allowable_disposable_earning",allowable_disposable_earning)
+            # print("allowable_disposable_earning",allowable_disposable_earning)
             twentyfive_percent_of_earning= round(allowable_disposable_earning*.25,2)
             fmw=7.25*30
             
@@ -157,13 +157,13 @@ def MultipleStudentLoanCalculationData(request):
                 garnishment_amount=0
             else:
                 garnishment_amount=garnishment_amount
-            print("garnishment_amount:",garnishment_amount)
+            # print("garnishment_amount:",garnishment_amount)
             StudentLoanAmount1=round(allowable_disposable_earning*.15,2)
             StudentLoanAmount2=round(allowable_disposable_earning*.10,2)
             StudentLoanAmount3=round(allowable_disposable_earning*0,2)
 
             net_pay = round(disposable_earnings-garnishment_amount,2)
-            print("net_pay",net_pay)
+            # print("net_pay",net_pay)
             # Create Calculation_data_results object
             multiple_student_loan_data_and_result.objects.create(
                 employee_id=data['employee_id'],
