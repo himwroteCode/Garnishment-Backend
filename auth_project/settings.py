@@ -133,19 +133,19 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES ={
-    'default' :{
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME' : 'granishmentdb',
-        'HOST' : 'database-1.ctcyyq8ooo4x.eu-north-1.rds.amazonaws.com',
-        'USER' : 'admin',
-        'PASSWORD': 'Orang*#_0107-',
-        'PORT': '3306',
-                'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
-        },
-    }
-}
+# DATABASES ={
+#     'default' :{
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME' : 'granishmentdb',
+#         'HOST' : 'database-1.ctcyyq8ooo4x.eu-north-1.rds.amazonaws.com',
+#         'USER' : 'admin',
+#         'PASSWORD': 'Orang*#_0107-',
+#         'PORT': '3306',
+#                 'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
+#         },
+#     }
+# }
 
 # import os
 
@@ -171,20 +171,15 @@ DATABASES ={
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=DATABASE_URL='mssql://garnish-dev:G@rnish-D3v@garnish-dev1.database.windows.net:1433/garnishment-db?encrypt=true&trustServerCertificate=false&connectionTimeout=30'
-#     )
-# }
 
 
-# os.environ['DATABASE_URL'] = 'mssql://garnish-dev:G@rnish-D3v@garnish-dev1.database.windows.net:1433/garnishment-db?encrypt=true&trustServerCertificate=false&connectionTimeout=30'
 
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=os.getenv('DATABASE_URL')
-#     )
-# }
+os.environ['DATABASE_URL'] = "postgres://default:vlH6ye2fmEQn@ep-round-mountain-a1tgg5p9.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL')
+    )
+}
 LANGUAGE_CODE = 'en-us'
 USE_I18N = False
 

@@ -77,7 +77,7 @@ def login(request):
             )
                 response_data = {
                     'success': True,
-                    'message': 'Login successful',
+                    'message': 'Login successfully',
                     'user_data': user_data,
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
