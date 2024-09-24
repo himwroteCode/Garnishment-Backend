@@ -143,6 +143,11 @@ class CalculationResult(models.Model):
     employer_id = models.IntegerField()
     result = models.FloatField()  
     net_pay = models.FloatField()
+    amount_to_withhold_child1=models.FloatField(null=True, blank=True)
+    amount_to_withhold_child2 =models.FloatField(null=True, blank=True)
+    amount_to_withhold_child3=models.FloatField( null=True, blank=True)
+    amount_to_withhold_child4=models.FloatField(null=True, blank=True )
+    amount_to_withhold_child5=models.FloatField( null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class LogEntry(models.Model):

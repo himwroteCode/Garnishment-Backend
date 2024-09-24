@@ -260,6 +260,11 @@ def CalculationDataView(request):
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
                 result=allowed_amount_for_other_garnishment,
+                amount_to_withhold_child1=amount_to_withhold_child1,
+                amount_to_withhold_child2=amount_to_withhold_child2,
+                amount_to_withhold_child3=amount_to_withhold_child3,
+                amount_to_withhold_child4=amount_to_withhold_child4,
+                amount_to_withhold_child5=amount_to_withhold_child5,
                 net_pay=net_pay
             )
 
