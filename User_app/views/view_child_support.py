@@ -265,6 +265,11 @@ def CalculationDataView(request):
                 amount_to_withhold_child3=amount_to_withhold_child3,
                 amount_to_withhold_child4=amount_to_withhold_child4,
                 amount_to_withhold_child5=amount_to_withhold_child5,
+                arrears_amt_Child1=arrears_amt_Child1,
+                arrears_amt_Child2=arrears_amt_Child2,
+                arrears_amt_Child3=arrears_amt_Child3,
+                arrears_amt_Child4=arrears_amt_Child4,
+                arrears_amt_Child5=arrears_amt_Child5,
                 net_pay=net_pay
             )
 

@@ -43,6 +43,7 @@ def StudentLoanCalculationData(request):
             
             user = single_student_loan_data.objects.create(**data)
 
+
             # # Retrieve the employee, tax, and employer records
             # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
             # tax = Tax_details.objects.get(employer_id=data['employer_id'])
@@ -60,7 +61,7 @@ def StudentLoanCalculationData(request):
             state_tax_rate = data.get('state_tax',0) 
 
             SDI_tax=data.get('SDI_tax',0) 
-            # print(federal_income_tax_rate,social_tax_rate,medicare_tax_rate,state_tax_rate,)
+            print(federal_income_tax_rate,social_tax_rate,medicare_tax_rate,state_tax_rate,)
             total_tax = round((federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax),2)
             # print("total_tax :" ,total_tax)
             disposable_earnings = round(earnings - total_tax, 2)
@@ -115,7 +116,7 @@ def StudentLoanCalculationData(request):
                 net_pay=net_pay,
                 garnishment_amount=garnishment_amount
             )
-
+            #Adding log details
             LogEntry.objects.create(
                 action='Single Student Loan Calculation data Added',
                 details=f'Single Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
