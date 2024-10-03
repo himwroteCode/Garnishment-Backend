@@ -163,6 +163,10 @@ def MultipleStudentLoanCalculationData(request):
             StudentLoanAmount3=round(allowable_disposable_earning*0,2)
 
             net_pay = round(disposable_earnings-garnishment_amount,2)
+            if net_pay <0:
+                net_pay=0
+            else:
+                net_pay=net_pay
             # print("net_pay",net_pay)
             # Create Calculation_data_results object
             multiple_student_loan_data_and_result.objects.create(

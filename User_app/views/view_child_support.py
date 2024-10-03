@@ -225,6 +225,11 @@ def CalculationDataView(request):
                 allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
 
             net_pay=round(disposable_earnings-allowed_amount_for_other_garnishment,2)
+
+            if net_pay <0:
+                net_pay=0
+            else:
+                net_pay=net_pay
             # Create Calculation_data_results object
             Calculation_data_results.objects.create(
                 employee_id=data['employee_id'],

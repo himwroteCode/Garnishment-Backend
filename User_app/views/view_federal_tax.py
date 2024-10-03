@@ -166,6 +166,10 @@ def federal_case(request):
             amount_deduct=round(disposable_earnings-exempt_amount,2)
 
             net_pay=round(disposable_earnings-amount_deduct,2) 
+            if net_pay <0:
+                net_pay=0
+            else:
+                net_pay=net_pay
 
             # Create CalculationResult object
             federal_case_result.objects.create(

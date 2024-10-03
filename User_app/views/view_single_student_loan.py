@@ -87,6 +87,10 @@ def StudentLoanCalculationData(request):
             # print("garnishment_amount :" ,garnishment_amount)
             net_pay=round(disposable_earnings-garnishment_amount,2)
             # print("net_pay :" ,net_pay)
+            if net_pay <0:
+                net_pay=0
+            else:
+                net_pay=net_pay
             
             # Create Calculation_data_results object
             single_student_loan_data_and_result.objects.create(
