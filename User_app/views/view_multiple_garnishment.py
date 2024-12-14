@@ -372,8 +372,8 @@ def multiple_case_calculation(request):
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
-        # except Exception as e:
-        #     return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+        except Exception as e:
+            return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
 
