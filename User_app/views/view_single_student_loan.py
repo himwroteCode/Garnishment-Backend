@@ -36,42 +36,24 @@ def StudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = ['employee_name', 'garnishment_fees', 'earnings','order_id']
+            required_fields = ['employee_name', 'garnishment_fees','order_id']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
             
             user = single_student_loan_data.objects.create(**data)
 
-
-            # # Retrieve the employee, tax, and employer records
-            # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
-            # tax = Tax_details.objects.get(employer_id=data['employer_id'])
-            # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            # gdata = single_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
-
             # Extracting earnings and garnishment fees from gdata
-            earnings = data.get('earnings',0)
+            disposable_income = data.get('disposable_income',0)
             garnishment_fees = data.get('garnishment_fees',0)
            
-            # Calculate the various taxes
-            federal_income_tax_rate = data.get('federal_income_tax',0) 
-            social_tax_rate = data.get('social_and_security_tax',0)
-            medicare_tax_rate = data.get('medicare_tax',0)
-            state_tax_rate = data.get('state_tax',0) 
-
-            SDI_tax=data.get('SDI_tax',0) 
-            print(federal_income_tax_rate,social_tax_rate,medicare_tax_rate,state_tax_rate,)
-            total_tax = round((federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax),2)
-            # print("total_tax :" ,total_tax)
-            disposable_earnings = round(earnings - total_tax, 2)
             # print("disposable_earnings :" ,disposable_earnings)
-            allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
+            allowable_disposable_earning=round(disposable_income-garnishment_fees,2)
             # print("allowable_disposable_earning :" ,allowable_disposable_earning)
             fifteen_percent_of_eraning= round(allowable_disposable_earning*.15,2)
             # print("fifteen_percent_of_eraning :" ,fifteen_percent_of_eraning)
             fmw=round(7.25*30,2)
-            difference=round(disposable_earnings-fmw,2)
+            difference=round(disposable_income-fmw,2)
             if allowable_disposable_earning<fmw:
                 garnishment_amount=0
             else:
@@ -85,7 +67,7 @@ def StudentLoanCalculationData(request):
             else:
                 garnishment_amount=garnishment_amount
             # print("garnishment_amount :" ,garnishment_amount)
-            net_pay=round(disposable_earnings-garnishment_amount,2)
+            net_pay=round(disposable_income-garnishment_amount,2)
             # print("net_pay :" ,net_pay)
             if net_pay <0:
                 net_pay=0
@@ -96,15 +78,8 @@ def StudentLoanCalculationData(request):
             single_student_loan_data_and_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
-                federal_income_tax=federal_income_tax_rate,
-                social_and_security_tax=social_tax_rate,
-                medicare_tax=medicare_tax_rate,
-                state_tax=state_tax_rate,
-                SDI_tax=SDI_tax,
-                earnings=earnings,
                 garnishment_fees=garnishment_fees,
-                total_tax=total_tax,
-                disposable_earnings=disposable_earnings,
+                disposable_income=disposable_income,
                 allowable_disposable_earning=allowable_disposable_earning,
                 fifteen_percent_of_eraning=fifteen_percent_of_eraning,
                 fmw=fmw,

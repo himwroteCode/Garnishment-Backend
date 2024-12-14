@@ -112,7 +112,7 @@ def MultipleStudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = ['employee_name', 'garnishment_fees', 'earnings','order_id','federal_income_tax','social_and_security_tax','medicare_tax','state_tax','SDI_tax']
+            required_fields = ['employee_name', 'garnishment_fees', 'disposable_income','order_id']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -126,20 +126,11 @@ def MultipleStudentLoanCalculationData(request):
             # gdata = multiple_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
 
             # Extracting earnings and garnishment fees from gdata
-            earnings = data['earnings']
             garnishment_fees = data['garnishment_fees']
-            
-            # Calculate the various taxes
-            federal_income_tax_rate = data.get('federal_income_tax',0) 
-            social_tax_rate = data.get('social_and_security_tax',0)
-            medicare_tax_rate = data.get('medicare_tax',0)
-            state_tax_rate = data.get('state_tax',0) 
 
-            SDI_tax=data.get('SDI_tax',0) 
-            total_tax = round(federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate+SDI_tax,2)
             # print("total_tax",total_tax)
-            disposable_earnings = round(earnings - total_tax, 2)
-            allowable_disposable_earning=round(disposable_earnings-garnishment_fees,2)
+            disposable_income = data['disposable_income']
+            allowable_disposable_earning=round(disposable_income-garnishment_fees,2)
             # print("allowable_disposable_earning",allowable_disposable_earning)
             twentyfive_percent_of_earning= round(allowable_disposable_earning*.25,2)
             fmw=7.25*30
@@ -148,7 +139,7 @@ def MultipleStudentLoanCalculationData(request):
                 garnishment_amount=0
             else:
                 garnishment_amount=twentyfive_percent_of_earning
-            difference=round(disposable_earnings-fmw,2)
+            difference=round(disposable_income-fmw,2)
             if difference>garnishment_amount:
                 garnishment_amount=garnishment_amount
             else:
@@ -162,7 +153,7 @@ def MultipleStudentLoanCalculationData(request):
             StudentLoanAmount2=round(allowable_disposable_earning*.10,2)
             StudentLoanAmount3=round(allowable_disposable_earning*0,2)
 
-            net_pay = round(disposable_earnings-garnishment_amount,2)
+            net_pay = round(disposable_income-garnishment_amount,2)
             if net_pay <0:
                 net_pay=0
             else:
@@ -172,15 +163,8 @@ def MultipleStudentLoanCalculationData(request):
             multiple_student_loan_data_and_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
-                federal_income_tax=federal_income_tax_rate,
-                social_and_security_tax=social_tax_rate,
-                medicare_tax=medicare_tax_rate,
-                state_tax=state_tax_rate,
-                SDI_tax=SDI_tax,
-                earnings=earnings,
                 garnishment_fees=garnishment_fees,
-                total_tax=total_tax,
-                disposable_earnings=disposable_earnings,
+                disposable_income=disposable_income,
                 allowable_disposable_earning=allowable_disposable_earning,
                 twentyfive_percent_of_earning=twentyfive_percent_of_earning,
                 fmw=fmw,

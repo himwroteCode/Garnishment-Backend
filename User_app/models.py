@@ -31,13 +31,9 @@ class Employer_Profile(AbstractBaseUser):
 class Calculation_data_results(models.Model):
     employee_id=models.IntegerField()
     employer_id=models.IntegerField()
-    fedral_income_tax=models.FloatField()
-    social_and_security=models.FloatField()
-    medicare_tax=models.FloatField()
     state=models.CharField(max_length=255)
-    state_taxes=models.FloatField()
-    earnings= models.FloatField()
     support_second_family=models.BooleanField()
+    disposable_income =models.FloatField()
     garnishment_fees=models.FloatField()
     arrears_greater_than_12_weeks=models.BooleanField()
     amount_to_withhold_child1=models.FloatField(null=True, blank=True)
@@ -111,11 +107,10 @@ class Location(models.Model):
     # street=models.CharField(max_length=250)
 
 class Garcalculation_data(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
-    earnings = models.FloatField()
     support_second_family = models.BooleanField()
     arrears_greater_than_12_weeks = models.BooleanField(null=True, blank=True)
     amount_to_withhold_child1=models.FloatField(null=True, blank=True)
@@ -132,15 +127,12 @@ class Garcalculation_data(models.Model):
     number_of_arrear= models.IntegerField()
     order_id=models.IntegerField()
     state=models.CharField(max_length=255)
-    federal_income_tax =models.FloatField()
-    social_tax =models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax =models.FloatField()
+    disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     result = models.FloatField()  
     net_pay = models.FloatField()
     amount_to_withhold_child1=models.FloatField(null=True, blank=True)
@@ -171,15 +163,15 @@ class application_activity(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class single_student_loan_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
     StudentLoanAmount1= models.FloatField()
@@ -188,46 +180,29 @@ class multiple_student_loan_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class single_student_loan_data(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
     garnishment_fees= models.IntegerField()
     order_id=models.IntegerField()
-    federal_income_tax= models.FloatField()
-    social_and_security_tax= models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax= models.FloatField()
-    SDI_tax= models.FloatField()
+    disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_data(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
     garnishment_fees= models.FloatField()
     order_id=models.IntegerField()
-    federal_income_tax= models.FloatField()
-    social_and_security_tax= models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax= models.FloatField()
-    SDI_tax= models.FloatField()
+    disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_data_and_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
-    federal_income_tax= models.FloatField()
-    social_and_security_tax= models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax= models.FloatField()
-    SDI_tax= models.FloatField()
-    total_tax=models.FloatField()
     garnishment_fees= models.FloatField()
-    disposable_earnings= models.FloatField()
+    disposable_income= models.FloatField()
     allowable_disposable_earning= models.FloatField()
     twentyfive_percent_of_earning= models.FloatField()
     fmw= models.FloatField()
@@ -239,18 +214,11 @@ class multiple_student_loan_data_and_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class single_student_loan_data_and_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
-    federal_income_tax= models.FloatField()
-    social_and_security_tax= models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax= models.FloatField()
-    SDI_tax= models.FloatField()
-    total_tax=models.FloatField()
     garnishment_fees= models.FloatField()
-    disposable_earnings= models.FloatField()
+    disposable_income= models.FloatField()
     allowable_disposable_earning= models.FloatField()
     fifteen_percent_of_eraning= models.FloatField()
     fmw= models.FloatField()
@@ -260,54 +228,34 @@ class single_student_loan_data_and_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_loan_case_data(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
+    disposable_income =models.FloatField()
     garnishment_fees= models.FloatField()
     pay_period = models.CharField(max_length=255)
     filing_status = models.CharField(max_length=255)
     no_of_exception = models.IntegerField()
-    federal_income_tax =models.FloatField()
-    local_tax =models.FloatField()
-    social_and_security =models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax =models.FloatField()
-    workers_compensation=models.FloatField()
-    medical_insurance=models.FloatField()
-    contribution=models.FloatField()
-    united_way_contribution=models.FloatField()
     order_id=models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_tax_data_and_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
-    earnings = models.FloatField()  
     garnishment_fees= models.IntegerField()
     pay_period = models.CharField(max_length=255)
     filing_status = models.CharField(max_length=255)
     no_of_exception = models.IntegerField()
-    fedral_income_tax =models.FloatField()
-    social_and_security =models.FloatField()
-    medicare_tax= models.FloatField()
-    state_tax =models.FloatField()
-    local_tax =models.FloatField()
-    workers_compensation=models.FloatField()
-    medical_insurance=models.FloatField()
-    contribution=models.FloatField()
-    united_way_contribution=models.FloatField()
-    total_tax=models.FloatField()
-    disposable_earnings=models.FloatField()
+    disposable_income=models.FloatField()
     exempt_amount=models.FloatField()
     amount_deduct=models.FloatField()
     net_pay=models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_case_result(models.Model):
-    employee_id = models.IntegerField()
-    employer_id = models.IntegerField()
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
     result= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -359,8 +307,6 @@ class setting(models.Model):
     visibilitys=models.BooleanField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-
-
 class APICallLog(models.Model):
     path = models.CharField(max_length=255)
     method = models.CharField(max_length=10)
@@ -369,6 +315,18 @@ class APICallLog(models.Model):
     def __str__(self):
         return f'{self.path} - {self.method} - {self.timestamp}'
 
+class State_tax_data(models.Model):
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
+    employee_name=models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    gross_income = models.FloatField()  
+    garnishment_fees= models.FloatField()
+    disposable_income =models.FloatField()
+    debt=models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
 # class APICallLog(models.Model):
 #     endpoint = models.CharField(max_length=255)
 #     date = models.DateField(auto_now_add=True)
@@ -376,3 +334,65 @@ class APICallLog(models.Model):
 
 #     def __str__(self):
 #         return f'{self.endpoint} - {self.date} - {self.count}'
+
+class state_tax_result(models.Model):
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
+    disposable_income=models.FloatField()
+    monthly_garnishment_amount=models.FloatField()
+    net_pay = models.FloatField()  
+    duration_of_levies= models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+
+from django.db import models
+
+class multiple_garnishment_data(models.Model):
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
+    employee_name = models.CharField(max_length=255)
+    garnishment_fees = models.FloatField()
+    support_second_family = models.BooleanField()
+    arrears_greater_than_12_weeks = models.BooleanField(null=True, blank=True)
+    amount_to_withhold_child1 = models.FloatField(null=True, blank=True)
+    amount_to_withhold_child2 = models.FloatField(null=True, blank=True)
+    amount_to_withhold_child3 = models.FloatField(null=True, blank=True)
+    amount_to_withhold_child4 = models.FloatField(null=True, blank=True)
+    amount_to_withhold_child5 = models.FloatField(null=True, blank=True)
+    arrears_amt_Child1 = models.FloatField(null=True, blank=True)
+    arrears_amt_Child2 = models.FloatField(null=True, blank=True)
+    arrears_amt_Child3 = models.FloatField(null=True, blank=True)
+    arrears_amt_Child4 = models.FloatField(null=True, blank=True)
+    arrears_amt_Child5 = models.FloatField(null=True, blank=True)
+    number_of_garnishment = models.IntegerField()
+    number_of_arrear = models.IntegerField()
+    order_id = models.IntegerField()
+    state = models.CharField(max_length=255)
+    disposable_income = models.FloatField()
+    pay_period = models.CharField(max_length=255)
+    filing_status = models.CharField(max_length=255)
+    no_of_exception = models.IntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Adding garnishment_order field as a JSONField
+    garnishment_order = models.JSONField(default=list)
+
+    def __str__(self):
+        return f"Garnishment Data for Employee: {self.employee_name}, Order ID: {self.order_id}"
+    
+
+
+
+class multiple_garnishment_case_result(models.Model):
+    employee_id = models.CharField(max_length=255)
+    employer_id = models.CharField(max_length=255)
+    garnishment_priority_order= models.CharField(max_length=255)
+    garnishment_amount= models.FloatField()
+    net_pay = models.FloatField()  
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+
+
+

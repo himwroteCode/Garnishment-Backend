@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,multiple_student_loan_data,Calculation_data_results,single_student_loan_data,federal_loan_case_data,setting,Employee_Details,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
+from .models import Employer_Profile,multiple_student_loan_data,multiple_garnishment_case_result,Calculation_data_results,single_student_loan_data,federal_loan_case_data,setting,Employee_Details,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_case_result,federal_tax_data_and_result,married_filing_sepearte_return,married_filing_joint_return,head_of_household,Department,CalculationResult, Location,Tax_details,LogEntry,IWOPDFFile,single_student_loan_result,multiple_student_loan_result,single_filing_status
 
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
@@ -160,6 +160,11 @@ class multiple_student_loan_data_Serializer(serializers.ModelSerializer):
         model = multiple_student_loan_data
         fields = '__all__'
 
+
+class multiple_garnishment_data_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = multiple_garnishment_case_result
+        fields = '__all__'
 
 class APICallCountSerializer(serializers.Serializer):
     date = serializers.DateField()

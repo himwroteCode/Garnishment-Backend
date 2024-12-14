@@ -3,6 +3,9 @@ from ..views import *
 from ..views.views import *
 from django.urls import include, path
 from rest_framework import routers
+from ..views.view_state_tax import *
+from ..views.view_multiple_garnishment import *
+
 
 
 urlpatterns = [
@@ -52,6 +55,9 @@ urlpatterns = [
     path('POSTsetting/',SettingPostAPI, name='POST Setting'),
     path('GETallcalculationresult/<int:employer_id>/',GETallcalculationresult.as_view(), name='Get_Multiple_Student_Loan_Case_Data'),
     path('call-count/', APICallCountView.as_view(), name='api-call-count'),
+    path('state_tax_case/',state_tax, name='state_tax_case'),
+    path('multiple_garnishment_case/',multiple_case_calculation, name='state_tax_case'),
+    path('multiple_garnishment_result/<str:employer_id>/<str:employee_id>/',get_multiple_garnishment_case_result.as_view(), name='state_tax_case'),
 ]
 
 

@@ -35,7 +35,7 @@ def federal_case(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = [ 'garnishment_fees','employee_name','no_of_exception','filing_status','pay_period', 'earnings']
+            required_fields = ['garnishment_fees','employee_name','no_of_exception','filing_status','pay_period', 'disposable_income']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)           
@@ -47,27 +47,15 @@ def federal_case(request):
             # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
 
             # Extracting earnings and garnishment fees from gdata
-            earnings = data.get('earnings',0)
             garnishment_fees = data.get('garnishment_fees',0)
             
             # Calculate the various taxes
             # mexico_tax=data.get('mexico_tax',0)
-            workers_compensation=data.get('workers_compensation',0)
-            medical_insurance=data.get('medical_insurance',0)
-            contribution=data.get('contribution',0)
-            united_way_contribution=data.get('united_way_contribution',0)
             filing_status=data.get('filing_status',0)
             no_of_exception=data.get('no_of_exception',0)
-            pay_period=data.get('pay_period',0)
-            local_tax_rate=data.get('local_tax',0)
-            social_tax_rate = data.get('social_and_security',0)
-            medicare_tax_rate = data.get('medicare_tax',0)
-            state_tax_rate = data.get('state_tax',0)
-            federal_income_tax_rate=data.get('federal_income_tax',0)
-            total_tax = round(federal_income_tax_rate+social_tax_rate+medicare_tax_rate+local_tax_rate+state_tax_rate+workers_compensation+medical_insurance+contribution+united_way_contribution,2)
-            # print("total_tax:",total_tax)
-            
-            disposable_earnings = round(earnings - total_tax, 2)
+            pay_period=data.get('pay_period')
+            disposable_income=data.get('disposable_income',0)
+
             
             if filing_status.lower() == "single filing status":
                 queryset = single_filing_status.objects.filter(pay_period=pay_period)
@@ -163,9 +151,9 @@ def federal_case(request):
             else:
                 return JsonResponse({"error": "Invalid filing status"}, status=400)
 
-            amount_deduct=round(disposable_earnings-exempt_amount,2)
+            amount_deduct=round(disposable_income-exempt_amount,2)
 
-            net_pay=round(disposable_earnings-amount_deduct,2) 
+            net_pay=round(disposable_income-amount_deduct,2) 
             if net_pay <0:
                 net_pay=0
             else:
@@ -182,22 +170,11 @@ def federal_case(request):
             federal_tax_data_and_result.objects.create(
                 employee_id=data['employee_id'],
                 employer_id=data['employer_id'],
-                fedral_income_tax=federal_income_tax_rate,
-                social_and_security=social_tax_rate,
-                medicare_tax=medicare_tax_rate,
-                state_tax=state_tax_rate,
-                earnings=earnings,
-                local_tax=local_tax_rate,
                 garnishment_fees=garnishment_fees,
-                workers_compensation=workers_compensation,
-                medical_insurance=medical_insurance,
-                contribution=contribution,
-                united_way_contribution=united_way_contribution,
                 filing_status=filing_status,
                 no_of_exception=no_of_exception,
                 pay_period=pay_period,
-                total_tax=total_tax,
-                disposable_earnings=disposable_earnings,
+                disposable_income=disposable_income,
                 exempt_amount=exempt_amount,
                 amount_deduct=amount_deduct,
                 net_pay=net_pay

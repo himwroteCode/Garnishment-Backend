@@ -22,7 +22,6 @@ from django.utils.decorators import method_decorator
 import csv
 from rest_framework.views import APIView
 
-
 @csrf_exempt
 @api_view(['POST'])
 def CalculationDataView(request):
@@ -30,9 +29,9 @@ def CalculationDataView(request):
         try:
             data = request.data
             required_fields = ['employer_id','employee_id',
-                'earnings', 'employee_name', 'garnishment_fees',
+                 'employee_name', 'garnishment_fees',
                 'arrears_greater_than_12_weeks', 'support_second_family', 'amount_to_withhold_child1'
-                , 'state', 'number_of_arrear', 'order_id','federal_income_tax', 'social_tax','medicare_tax','state_tax']
+                , 'state', 'number_of_arrear', 'order_id','disposable_income']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing_Done: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -44,9 +43,7 @@ def CalculationDataView(request):
             # tax = Tax_details.objects.get(employer_id=data['employer_id'])
             # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
             # gdata = Garcalculation_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
-
             # Extracting earnings and garnishment fees from gdata
-            earnings = data['earnings']
             amount_to_withhold_child1 = data.get('amount_to_withhold_child1', 0)
             amount_to_withhold_child2 = data.get('amount_to_withhold_child2', 0)
             amount_to_withhold_child3 = data.get('amount_to_withhold_child3', 0)
@@ -63,17 +60,8 @@ def CalculationDataView(request):
             number_of_arrear = data['number_of_arrear']
             number_of_garnishment = data['number_of_garnishment']
             garnishment_fees = data['garnishment_fees']
-            federal_income_tax_rate=data['federal_income_tax']
-
-
             state=data['state']
-            # Calculate the various taxes
-            social_tax_rate = data['social_tax']
-            medicare_tax_rate = data['medicare_tax']
-            state_tax_rate = data['state_tax']
-            total_tax = federal_income_tax_rate + social_tax_rate + medicare_tax_rate + state_tax_rate
-            disposable_earnings = round(earnings - total_tax, 2)
-
+            disposable_income = data['disposable_income']
             # ccpa_limit=ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
             # Calculate ccpa_limit based on conditions
             if support_second_family and arrears_greater_than_12_weeks:
@@ -86,13 +74,13 @@ def CalculationDataView(request):
                 ccpa_limit = 0.50
 
             # Calculate allowable disposable earnings
-            allowable_disposable_earnings = round(disposable_earnings * ccpa_limit, 2)
+            allowable_disposable_earnings = round(disposable_income * ccpa_limit, 2)
             withholding_available = round(allowable_disposable_earnings - garnishment_fees, 2)
-            other_garnishment_amount = round(disposable_earnings * 0.25, 2)
+            other_garnishment_amount = round(disposable_income * 0.25, 2)
 
             # Federal Minimum Wage calculation
             fmw = 30 * 7.25
-            Disposable_Income_minus_Minimum_Wage_rule = round(earnings - fmw, 2)
+            Disposable_Income_minus_Minimum_Wage_rule = round(disposable_income - fmw, 2)
             Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
 
             # Determine allocation method for garnishment
@@ -224,42 +212,38 @@ def CalculationDataView(request):
             else:
                 allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
 
-            net_pay=round(disposable_earnings-allowed_amount_for_other_garnishment,2)
+            net_pay=round(disposable_income-allowed_amount_for_other_garnishment,2)
 
             if net_pay <0:
                 net_pay=0
             else:
                 net_pay=net_pay
             # Create Calculation_data_results object
-            Calculation_data_results.objects.create(
-                employee_id=data['employee_id'],
-                employer_id=data['employer_id'],
-                fedral_income_tax=federal_income_tax_rate,
-                social_and_security=social_tax_rate,
-                medicare_tax=medicare_tax_rate,
-                state_taxes=state_tax_rate,
-                earnings=earnings,
-                support_second_family=support_second_family,
-                garnishment_fees=garnishment_fees,
-                arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
-                amount_to_withhold_child1=amount_to_withhold_child1,
-                amount_to_withhold_child2=amount_to_withhold_child2,
-                amount_to_withhold_child3=amount_to_withhold_child3,
-                amount_to_withhold_child4=amount_to_withhold_child4,
-                amount_to_withhold_child5=amount_to_withhold_child5,
-                arrears_amt_Child1=arrears_amt_Child1,
-                arrears_amt_Child2=arrears_amt_Child2,
-                arrears_amt_Child3=arrears_amt_Child3,
-                arrears_amt_Child4=arrears_amt_Child4,
-                arrears_amt_Child5=arrears_amt_Child5,
-                number_of_arrear=number_of_arrear,
-                number_of_garnishment=number_of_garnishment,
-                allowable_disposable_earnings=allowable_disposable_earnings,
-                withholding_available=withholding_available,
-                other_garnishment_amount=other_garnishment_amount,
-                amount_left_for_arrears=amount_left_for_arrears,
-                allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
-            )
+            # Calculation_data_results.objects.create(
+            #     employee_id=data['employee_id'],
+            #     employer_id=data['employer_id'],
+            #     support_second_family=support_second_family,
+            #     garnishment_fees=garnishment_fees,
+            #     arrears_greater_than_12_weeks=arrears_greater_than_12_weeks,
+            #     amount_to_withhold_child1=amount_to_withhold_child1,
+            #     amount_to_withhold_child2=amount_to_withhold_child2,
+            #     amount_to_withhold_child3=amount_to_withhold_child3,
+            #     amount_to_withhold_child4=amount_to_withhold_child4,
+            #     amount_to_withhold_child5=amount_to_withhold_child5,
+            #     arrears_amt_Child1=arrears_amt_Child1,
+            #     arrears_amt_Child2=arrears_amt_Child2,
+            #     arrears_amt_Child3=arrears_amt_Child3,
+            #     arrears_amt_Child4=arrears_amt_Child4,
+            #     arrears_amt_Child5=arrears_amt_Child5,
+            #     number_of_arrear=number_of_arrear,
+            #     number_of_garnishment=number_of_garnishment,
+            #     disposable_income=disposable_income,
+            #     allowable_disposable_earnings=allowable_disposable_earnings,
+            #     withholding_available=withholding_available,
+            #     other_garnishment_amount=other_garnishment_amount,
+            #     amount_left_for_arrears=amount_left_for_arrears,
+            #     allowed_amount_for_other_garnishment=allowed_amount_for_other_garnishment
+            # )
             # Create CalculationResult object
             CalculationResult.objects.create(
                 employee_id=data['employee_id'],
@@ -285,12 +269,10 @@ def CalculationDataView(request):
             return Response({'message': 'Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
-        # except Tax_details.DoesNotExist:
-        #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
-        # except Exception as e:
-        #     return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+        except Exception as e:
+            return Response({"error":{str(e)}, "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
 
