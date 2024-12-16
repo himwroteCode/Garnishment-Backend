@@ -51,9 +51,8 @@ def multiple_case_calculation(request):
             arrears_amt_Child5 = data.get('arrears_amt_Child5', 0)
             arrears_greater_than_12_weeks = data['arrears_greater_than_12_weeks']
             support_second_family = data['support_second_family']
-            number_of_garnishment = data['number_of_garnishment']
+            number_of_child_support_order = data['number_of_child_support_order']
             number_of_arrear = data['number_of_arrear']
-            number_of_garnishment = data['number_of_garnishment']
             garnishment_fees = data['garnishment_fees']
             garnishment_order =data['garnishment_order']
             state=data['state']
@@ -105,7 +104,7 @@ def multiple_case_calculation(request):
                     ratio = amount_to_withhold_child1 / amount_to_withhold
                     amount_to_withhold_child1 = allowed_amount_for_garnishment * ratio
                 elif amount_to_withhold_child1 > 0:
-                    amount_to_withhold_child1 = allowed_amount_for_garnishment / number_of_garnishment
+                    amount_to_withhold_child1 = allowed_amount_for_garnishment / number_of_child_support_order
                 else:
                     amount_to_withhold_child1 = 0
     
@@ -115,7 +114,7 @@ def multiple_case_calculation(request):
                     ratio = amount_to_withhold_child2 / amount_to_withhold
                     amount_to_withhold_child2 = allowed_amount_for_garnishment * ratio
                 elif amount_to_withhold_child2 > 0:
-                    amount_to_withhold_child2 = allowed_amount_for_garnishment / number_of_garnishment
+                    amount_to_withhold_child2 = allowed_amount_for_garnishment / number_of_child_support_order
                 else:
                     amount_to_withhold_child2 = 0
     
@@ -125,7 +124,7 @@ def multiple_case_calculation(request):
                     ratio = amount_to_withhold_child3 / amount_to_withhold
                     amount_to_withhold_child3 = allowed_amount_for_garnishment * ratio
                 elif amount_to_withhold_child3 > 0:
-                    amount_to_withhold_child3 = allowed_amount_for_garnishment / number_of_garnishment
+                    amount_to_withhold_child3 = allowed_amount_for_garnishment / number_of_child_support_order
                 else:
                     amount_to_withhold_child3 = 0
                 
@@ -135,7 +134,7 @@ def multiple_case_calculation(request):
                     ratio = amount_to_withhold_child4 / amount_to_withhold
                     amount_to_withhold_child4 = allowed_amount_for_garnishment * ratio
                 elif amount_to_withhold_child4 > 0:
-                    amount_to_withhold_child4 = allowed_amount_for_garnishment / number_of_garnishment
+                    amount_to_withhold_child4 = allowed_amount_for_garnishment / number_of_child_support_order
                 else:
                     amount_to_withhold_child3 = 0
     
@@ -145,7 +144,7 @@ def multiple_case_calculation(request):
                     ratio = amount_to_withhold_child5/ amount_to_withhold
                     amount_to_withhold_child5 = allowed_amount_for_garnishment * ratio
                 elif amount_to_withhold_child5 > 0:
-                    amount_to_withhold_child5= allowed_amount_for_garnishment / number_of_garnishment
+                    amount_to_withhold_child5= allowed_amount_for_garnishment / number_of_child_support_order
                 else:
                     amount_to_withhold_child5 = 0
     

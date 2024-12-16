@@ -31,7 +31,7 @@ def CalculationDataView(request):
             required_fields = ['employer_id','employee_id',
                  'employee_name', 'garnishment_fees',
                 'arrears_greater_than_12_weeks', 'support_second_family', 'amount_to_withhold_child1'
-                , 'state', 'number_of_arrear', 'order_id','disposable_income']
+                , 'state', 'number_of_arrear', 'order_id','disposable_income','number_of_child_support_order']
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
                 return Response({'error': f'Required fields are missing_Done: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -56,9 +56,8 @@ def CalculationDataView(request):
             arrears_amt_Child5 = data.get('arrears_amt_Child5', 0)
             arrears_greater_than_12_weeks = data['arrears_greater_than_12_weeks']
             support_second_family = data['support_second_family']
-            number_of_garnishment = data['number_of_garnishment']
+            number_of_child_support_order = data['number_of_child_support_order']
             number_of_arrear = data['number_of_arrear']
-            number_of_garnishment = data['number_of_garnishment']
             garnishment_fees = data['garnishment_fees']
             state=data['state']
             disposable_income = data['disposable_income']
@@ -102,7 +101,7 @@ def CalculationDataView(request):
                 ratio = amount_to_withhold_child1 / amount_to_withhold
                 amount_to_withhold_child1 = allowed_amount_for_garnishment * ratio
             elif amount_to_withhold_child1 > 0:
-                amount_to_withhold_child1 = allowed_amount_for_garnishment / number_of_garnishment
+                amount_to_withhold_child1 = allowed_amount_for_garnishment / number_of_child_support_order
             else:
                 amount_to_withhold_child1 = 0
 
@@ -112,7 +111,7 @@ def CalculationDataView(request):
                 ratio = amount_to_withhold_child2 / amount_to_withhold
                 amount_to_withhold_child2 = allowed_amount_for_garnishment * ratio
             elif amount_to_withhold_child2 > 0:
-                amount_to_withhold_child2 = allowed_amount_for_garnishment / number_of_garnishment
+                amount_to_withhold_child2 = allowed_amount_for_garnishment / number_of_child_support_order
             else:
                 amount_to_withhold_child2 = 0
 
@@ -122,7 +121,7 @@ def CalculationDataView(request):
                 ratio = amount_to_withhold_child3 / amount_to_withhold
                 amount_to_withhold_child3 = allowed_amount_for_garnishment * ratio
             elif amount_to_withhold_child3 > 0:
-                amount_to_withhold_child3 = allowed_amount_for_garnishment / number_of_garnishment
+                amount_to_withhold_child3 = allowed_amount_for_garnishment / number_of_child_support_order
             else:
                 amount_to_withhold_child3 = 0
             
@@ -132,7 +131,7 @@ def CalculationDataView(request):
                 ratio = amount_to_withhold_child4 / amount_to_withhold
                 amount_to_withhold_child4 = allowed_amount_for_garnishment * ratio
             elif amount_to_withhold_child4 > 0:
-                amount_to_withhold_child4 = allowed_amount_for_garnishment / number_of_garnishment
+                amount_to_withhold_child4 = allowed_amount_for_garnishment / number_of_child_support_order
             else:
                 amount_to_withhold_child3 = 0
 
@@ -142,7 +141,7 @@ def CalculationDataView(request):
                 ratio = amount_to_withhold_child5/ amount_to_withhold
                 amount_to_withhold_child5 = allowed_amount_for_garnishment * ratio
             elif amount_to_withhold_child5 > 0:
-                amount_to_withhold_child5= allowed_amount_for_garnishment / number_of_garnishment
+                amount_to_withhold_child5= allowed_amount_for_garnishment / number_of_child_support_order
             else:
                 amount_to_withhold_child5 = 0
 
