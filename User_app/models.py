@@ -228,6 +228,7 @@ class single_student_loan_data_and_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_loan_case_data(models.Model):
+    batch_id = models.CharField(max_length=255)
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
