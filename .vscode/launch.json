@@ -4,14 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
+
         {
             "name": "Python Debugger: Django",
             "type": "debugpy",
             "request": "launch",
-            "args": [
-                "runserver"
-            ],
+            "justMyCode": false,
+            "args": ["runserver", "127.0.0.1:8000", "--noreload", "--settings=auth_project.settings"],
             "django": true,
             "autoStartBrowser": false,
             "program": "${workspaceFolder}/manage.py"
