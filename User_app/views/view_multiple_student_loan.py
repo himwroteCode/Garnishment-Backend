@@ -112,92 +112,89 @@ def MultipleStudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = ['employee_name', 'garnishment_fees', 'disposable_income','order_id']
-            missing_fields = [field for field in required_fields if field not in data]
-            if missing_fields:
-                return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
+            batch_id = data.get("batch_id")
+            rows = data.get("rows", [])
             
-            user = multiple_student_loan_data.objects.create(**data)
+            # Validate batch number
+            if not batch_id:
+                return Response({"error": "batch_id is required"}, status=400)
 
-            # # Retrieve the employee, tax, and employer records
-            # employee = Employee_Details.objects.get(employee_id=data['employee_id'], employer_id=data['employer_id'])
-            # tax = Tax_details.objects.get(employer_id=data['employer_id'])
-            # employer = Employer_Profile.objects.get(employer_id=data['employer_id'])
-            # gdata = multiple_student_loan_data.objects.filter(employer_id=data['employer_id'], employee_id=data['employee_id']).order_by('-timestamp').first()
+            if not rows:
+                return Response({"error": "No rows provided"}, status=400)
 
-            # Extracting earnings and garnishment fees from gdata
-            garnishment_fees = data['garnishment_fees']
-
-            # print("total_tax",total_tax)
-            disposable_income = data['disposable_income']
-            allowable_disposable_earning=round(disposable_income-garnishment_fees,2)
-            # print("allowable_disposable_earning",allowable_disposable_earning)
-            twentyfive_percent_of_earning= round(allowable_disposable_earning*.25,2)
-            fmw=7.25*30
+            # Process each result
+            for record in rows:
+                employee_id = record.get("employee_id")
+                employer_id = record.get("employer_id")
+                garnishment_fees = record.get("garnishment_fees", 0)
+                disposable_income = record.get("disposable_income", 0)
             
-            if allowable_disposable_earning<fmw:
-                garnishment_amount=0
-            else:
-                garnishment_amount=twentyfive_percent_of_earning
-            difference=round(disposable_income-fmw,2)
-            if difference>garnishment_amount:
-                garnishment_amount=garnishment_amount
-            else:
-                garnishment_amount=difference
-            if garnishment_amount<0:
-                garnishment_amount=0
-            else:
-                garnishment_amount=garnishment_amount
-            # print("garnishment_amount:",garnishment_amount)
-            StudentLoanAmount1=round(allowable_disposable_earning*.15,2)
-            StudentLoanAmount2=round(allowable_disposable_earning*.10,2)
-            StudentLoanAmount3=round(allowable_disposable_earning*0,2)
+                user = multiple_student_loan_data.objects.create(**record)
+                allowable_disposable_earning=round(disposable_income-garnishment_fees,2)
+                twentyfive_percent_of_earning= round(allowable_disposable_earning*.25,2)
+                fmw=7.25*30
+                
+                if allowable_disposable_earning<fmw:
+                    garnishment_amount=0
+                else:
+                    garnishment_amount=twentyfive_percent_of_earning
+                difference=round(disposable_income-fmw,2)
+                if difference>garnishment_amount:
+                    garnishment_amount=garnishment_amount
+                else:
+                    garnishment_amount=difference
+                if garnishment_amount<0:
+                    garnishment_amount=0
+                else:
+                    garnishment_amount=garnishment_amount
 
-            net_pay = round(disposable_income-garnishment_amount,2)
-            if net_pay <0:
-                net_pay=0
-            else:
-                net_pay=net_pay
-            # print("net_pay",net_pay)
-            # Create Calculation_data_results object
-            multiple_student_loan_data_and_result.objects.create(
-                employee_id=data['employee_id'],
-                employer_id=data['employer_id'],
-                garnishment_fees=garnishment_fees,
-                disposable_income=disposable_income,
-                allowable_disposable_earning=allowable_disposable_earning,
-                twentyfive_percent_of_earning=twentyfive_percent_of_earning,
-                fmw=fmw,
-                garnishment_amount=garnishment_amount,
-                StudentLoanAmount1=StudentLoanAmount1,
-                StudentLoanAmount2=StudentLoanAmount2,
-                StudentLoanAmount3=StudentLoanAmount3,
-                net_pay=net_pay
-            )
+                StudentLoanAmount1=round(allowable_disposable_earning*.15,2)
+                StudentLoanAmount2=round(allowable_disposable_earning*.10,2)
+                StudentLoanAmount3=round(allowable_disposable_earning*0,2)
+    
+                net_pay = round(disposable_income-garnishment_amount,2)
+                if net_pay <0:
+                    net_pay=0
+                else:
+                    net_pay=net_pay
 
-            # Create CalculationResult object
-            multiple_student_loan_result.objects.create(
-                employee_id=data['employee_id'],
-                employer_id=data['employer_id'],
-                garnishment_amount=garnishment_amount,
-                StudentLoanAmount1=StudentLoanAmount1,
-                StudentLoanAmount2=StudentLoanAmount2,
-                StudentLoanAmount3=StudentLoanAmount3,
-                net_pay=net_pay            
-            )
-            LogEntry.objects.create(
-                action='Multiple Student Loan Calculation data Added',
-                details=f'Multiple Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
-            )
+                # Create Calculation_data_results object
+                multiple_student_loan_data_and_result.objects.create(
+                    employee_id=employee_id,
+                    employer_id=employer_id,
+                    garnishment_fees=garnishment_fees,
+                    disposable_income=disposable_income,
+                    allowable_disposable_earning=allowable_disposable_earning,
+                    twentyfive_percent_of_earning=twentyfive_percent_of_earning,
+                    fmw=fmw,
+                    garnishment_amount=garnishment_amount,
+                    StudentLoanAmount1=StudentLoanAmount1,
+                    StudentLoanAmount2=StudentLoanAmount2,
+                    StudentLoanAmount3=StudentLoanAmount3,
+                    net_pay=net_pay
+                )
+    
+                # Create CalculationResult object
+                multiple_student_loan_result.objects.create(
+                    employee_id=employee_id,
+                    employer_id=employer_id,
+                    garnishment_amount=garnishment_amount,
+                    StudentLoanAmount1=StudentLoanAmount1,
+                    StudentLoanAmount2=StudentLoanAmount2,
+                    StudentLoanAmount3=StudentLoanAmount3,
+                    net_pay=net_pay            
+                )
+                LogEntry.objects.create(
+                    action='Multiple Student Loan Calculation data Added',
+                    details=f'Multiple Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+                )
             return Response({'message': 'Multiple Student Loan Calculations Details Successfully Registered', "status code":status.HTTP_200_OK})
         except Employee_Details.DoesNotExist:
             return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
-        # except Tax_details.DoesNotExist:
-        #     return Response({"error": "Tax details not found", "status code":status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
             return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
         except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
 

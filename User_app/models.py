@@ -109,6 +109,7 @@ class Location(models.Model):
 class Garcalculation_data(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
     support_second_family = models.BooleanField()
@@ -133,6 +134,7 @@ class Garcalculation_data(models.Model):
 class CalculationResult(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255)
     result = models.FloatField()  
     net_pay = models.FloatField()
     amount_to_withhold_child1=models.FloatField(null=True, blank=True)
@@ -167,6 +169,7 @@ class single_student_loan_result(models.Model):
     employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
+    batch_id=models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class multiple_student_loan_result(models.Model):
@@ -174,6 +177,7 @@ class multiple_student_loan_result(models.Model):
     employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
     garnishment_amount= models.FloatField()
+    batch_id=models.CharField(max_length=255)
     StudentLoanAmount1= models.FloatField()
     StudentLoanAmount2= models.FloatField()
     StudentLoanAmount3= models.FloatField()
@@ -185,6 +189,7 @@ class single_student_loan_data(models.Model):
     employee_name=models.CharField(max_length=255)
     garnishment_fees= models.IntegerField()
     order_id=models.IntegerField()
+    batch_id=models.CharField(max_length=255)
     disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -194,6 +199,7 @@ class multiple_student_loan_data(models.Model):
     employee_name=models.CharField(max_length=255)
     garnishment_fees= models.FloatField()
     order_id=models.IntegerField()
+    batch_id=models.CharField(max_length=255,null=True, blank=True)
     disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -202,6 +208,7 @@ class multiple_student_loan_data_and_result(models.Model):
     employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees= models.FloatField()
+    batch_id=models.CharField(max_length=255)
     disposable_income= models.FloatField()
     allowable_disposable_earning= models.FloatField()
     twentyfive_percent_of_earning= models.FloatField()
@@ -217,6 +224,7 @@ class single_student_loan_data_and_result(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255)    
     garnishment_fees= models.FloatField()
     disposable_income= models.FloatField()
     allowable_disposable_earning= models.FloatField()
@@ -231,6 +239,7 @@ class federal_loan_case_data(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255)
     disposable_income =models.FloatField()
     garnishment_fees= models.FloatField()
     pay_period = models.CharField(max_length=255)
@@ -242,6 +251,7 @@ class federal_loan_case_data(models.Model):
 class federal_tax_data_and_result(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees= models.IntegerField()
     pay_period = models.CharField(max_length=255)
@@ -257,6 +267,7 @@ class federal_case_result(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
     net_pay = models.FloatField()  
+    batch_id=models.CharField(max_length=255)
     result= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -346,11 +357,10 @@ class state_tax_result(models.Model):
 
 
 
-from django.db import models
-
 class multiple_garnishment_data(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255,null=True, blank=True)
     employee_name = models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
     support_second_family = models.BooleanField()
@@ -387,6 +397,7 @@ class multiple_garnishment_data(models.Model):
 class multiple_garnishment_case_result(models.Model):
     employee_id = models.CharField(max_length=255)
     employer_id = models.CharField(max_length=255)
+    batch_id=models.CharField(max_length=255,null=True, blank=True)
     garnishment_priority_order= models.CharField(max_length=255)
     garnishment_amount= models.FloatField()
     net_pay = models.FloatField()  
