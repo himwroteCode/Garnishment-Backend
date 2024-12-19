@@ -11,20 +11,11 @@ from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-import json
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from django.contrib.auth.hashers import make_password
-from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
-from rest_framework import viewsets ,generics
 from ..serializers import *
-from django.http import HttpResponse
-from ..forms import PDFUploadForm
-from django.db import transaction
 from rest_framework.decorators import api_view
 from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
-from rest_framework_simplejwt.tokens import RefreshToken ,AccessToken, TokenError
 import csv
 from rest_framework.views import APIView
 
@@ -36,80 +27,85 @@ def StudentLoanCalculationData(request):
     if request.method == 'POST':
         try:
             data = request.data
-            required_fields = ['employee_name', 'garnishment_fees','order_id']
-            missing_fields = [field for field in required_fields if field not in data]
-            if missing_fields:
-                return Response({'error': f'Required fields are missing: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
+            batch_id = data.get("batch_id")
+            rows = data.get("rows", [])
             
-            user = single_student_loan_data.objects.create(**data)
+            # Validate batch number
+            if not batch_id:
+                return Response({"error": "batch_id is required"}, status=400)
 
-            # Extracting earnings and garnishment fees from gdata
-            disposable_income = data.get('disposable_income',0)
-            garnishment_fees = data.get('garnishment_fees',0)
-           
-            # print("disposable_earnings :" ,disposable_earnings)
-            allowable_disposable_earning=round(disposable_income-garnishment_fees,2)
-            # print("allowable_disposable_earning :" ,allowable_disposable_earning)
-            fifteen_percent_of_eraning= round(allowable_disposable_earning*.15,2)
-            # print("fifteen_percent_of_eraning :" ,fifteen_percent_of_eraning)
-            fmw=round(7.25*30,2)
-            difference=round(disposable_income-fmw,2)
-            if allowable_disposable_earning<fmw:
-                garnishment_amount=0
-            else:
-                garnishment_amount=fifteen_percent_of_eraning
-            if difference>garnishment_amount:
-                garnishment_amount=garnishment_amount
-            else:
-                garnishment_amount=difference
-            if garnishment_amount<0:
-                garnishment_amount=0
-            else:
-                garnishment_amount=garnishment_amount
-            # print("garnishment_amount :" ,garnishment_amount)
-            net_pay=round(disposable_income-garnishment_amount,2)
-            # print("net_pay :" ,net_pay)
-            if net_pay <0:
-                net_pay=0
-            else:
-                net_pay=net_pay
-            
-            # Create Calculation_data_results object
-            single_student_loan_data_and_result.objects.create(
-                employee_id=data['employee_id'],
-                employer_id=data['employer_id'],
-                garnishment_fees=garnishment_fees,
-                disposable_income=disposable_income,
-                allowable_disposable_earning=allowable_disposable_earning,
-                fifteen_percent_of_eraning=fifteen_percent_of_eraning,
-                fmw=fmw,
-                garnishment_amount=garnishment_amount,
-                difference=difference,
-                net_pay=net_pay
-            )
+            if not rows:
+                return Response({"error": "No rows provided"}, status=400)
 
-            # Create CalculationResult object
-            single_student_loan_result.objects.create(
-                employee_id=data['employee_id'],
-                employer_id=data['employer_id'],
-                net_pay=net_pay,
-                garnishment_amount=garnishment_amount
-            )
-            #Adding log details
-            LogEntry.objects.create(
-                action='Single Student Loan Calculation data Added',
-                details=f'Single Student Loan Calculation data Added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
-            )
+            # Process each result
+            for record in rows:
+                employee_id = record.get("employee_id")
+                employer_id = record.get("employer_id")
+                employee_name = record.get("employee_name")
+                garnishment_fees = record.get("garnishment_fees", 0)
+                disposable_income = record.get("disposable_income", 0)
+
+                # Save the record to the `single_student_loan_data` table
+                user = single_student_loan_data.objects.create(**record)
+
+                # Perform calculations
+                allowable_disposable_earning = round(disposable_income - garnishment_fees, 2)
+                fifteen_percent_of_earning = round(allowable_disposable_earning * 0.15, 2)
+                fmw = round(7.25 * 30, 2)
+                difference = round(disposable_income - fmw, 2)
+
+                # Calculate garnishment amount
+                if allowable_disposable_earning < fmw:
+                    garnishment_amount = 0
+                else:
+                    garnishment_amount = min(fifteen_percent_of_earning, difference)
+                
+                if garnishment_amount < 0:
+                    garnishment_amount = 0
+                
+                # Calculate net pay
+                net_pay = round(disposable_income - garnishment_amount, 2)
+                if net_pay < 0:
+                    net_pay = 0
+
+                # Save the calculated results to the appropriate tables
+                single_student_loan_data_and_result.objects.create(
+                    employee_id=employee_id,
+                    employer_id=employer_id,
+                    employee_name=employee_name,
+                    garnishment_fees=garnishment_fees,
+                    disposable_income=disposable_income,
+                    allowable_disposable_earning=allowable_disposable_earning,
+                    fifteen_percent_of_eraning=fifteen_percent_of_earning,
+                    fmw=fmw,
+                    garnishment_amount=garnishment_amount,
+                    difference=difference,
+                    net_pay=net_pay
+                )
+
+                single_student_loan_result.objects.create(
+                    employee_id=employee_id,
+                    employer_id=employer_id,
+                    net_pay=net_pay,
+                    batch_id=batch_id,
+                    garnishment_amount=garnishment_amount
+                )
+
+                # Add log details
+                log_entry = LogEntry.objects.create(
+                    action='Single Student Loan Calculation data Added',
+                    details=f'Single Student Loan Calculation data added successfully with employer ID {user.employer_id} and employee ID {user.employee_id}'
+                )
 
             return Response({'message': 'Single Student Loan Calculation Details Registered Successfully', "status code":status.HTTP_200_OK})
         except Employee_Details.DoesNotExist:
-            return Response({"error": "Employee details not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Employee details not found", status:status.HTTP_404_NOT_FOUND})
         except Employer_Profile.DoesNotExist:
-            return Response({"error": "Employer profile not found", "status code":status.HTTP_404_NOT_FOUND})
+            return Response({"error": "Employer profile not found", status:status.HTTP_404_NOT_FOUND})
         except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+            return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
+        return Response({'message': 'Please use POST method', "status_code": status.HTTP_400_BAD_REQUEST})
 
 
 class get_Single_Student_loan_result(APIView):
