@@ -6,6 +6,7 @@ from rest_framework import routers
 from ..views.view_state_tax import *
 from ..views.view_multiple_garnishment import *
 
+from ..views.test import *
 
 
 urlpatterns = [
@@ -13,6 +14,8 @@ urlpatterns = [
     path('', include('User_app.urls.url_child_support')),
     path('', include('User_app.urls.url_multiple_student_loan')),
     path('', include('User_app.urls.url_single_student_loan')),
+    path('', include('User_app.urls.url_state_tax')),
+    path('', include('User_app.urls.url_multiple_garnishment')),
     path("register", register, name="register"),
     path("login",login, name="login"),    
     path('employer-profile/', EmployerProfile, name='employer_profile'),
@@ -58,6 +61,8 @@ urlpatterns = [
     path('state_tax_case/',state_tax, name='state_tax_case'),
     path('multiple_garnishment_case/',multiple_case_calculation, name='state_tax_case'),
     path('multiple_garnishment_result/<str:employer_id>/<str:employee_id>/',get_multiple_garnishment_case_result.as_view(), name='state_tax_case'),
+    path('StudentLoanCalculationtest/',StudentLoanCalculationTest, name='Student-Loan-Calculation-Data'),
+
 ]
 
 
