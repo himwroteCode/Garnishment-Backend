@@ -6,8 +6,6 @@ from rest_framework import routers
 from ..views.view_state_tax import *
 from ..views.view_multiple_garnishment import *
 
-
-
 urlpatterns = [
     path('', include('User_app.urls.url_federal_tax')),
     path('', include('User_app.urls.url_child_support')),
