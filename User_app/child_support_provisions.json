@@ -1,0 +1,88 @@
+{
+    "ChildSupportStateProvisions": [
+        {
+            "State": "Idaho",
+            "DisposableEarnings": "CCPA",
+            "WithholdingLimits": "50%",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Current support",
+                "Medical support premiums",
+                "Arrears"
+            ],
+            "EmployerFee": "$5 per payment"
+        },
+        {
+            "State": "Illinois",
+            "DisposableEarnings": "CCPA; and Required union dues",
+            "WithholdingLimits": "50% to 65%",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Current support",
+                "Medical support premiums",
+                "Arrears"
+            ],
+            "EmployerFee": "$5 per month"
+        },
+        {
+            "State": "Indiana",
+            "DisposableEarnings": "CCPA",
+            "WithholdingLimits": "50% to 65%",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Current support",
+                "Arrears",
+                "Medical support premiums"
+            ],
+            "EmployerFee": "$2 per payment"
+        },
+        {
+            "State": "Iowa",
+            "DisposableEarnings": "CCPA",
+            "WithholdingLimits": "50% by policy; 50% to 65% by statute",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Current support",
+                "Arrears",
+                "No policy for health"
+            ],
+            "EmployerFee": "$2 per payment"
+        },
+        {
+            "State": "Kansas",
+            "DisposableEarnings": "CCPA",
+            "WithholdingLimits": "50% to 65%",
+            "AllocationMethod": "Divide Equally",
+            "PriorityOfSupport": [
+                "Current support",
+                "Arrears",
+                "Medical support premiums"
+            ],
+            "EmployerFee": "Lesser of $5 per pay period or $10 per month"
+        },
+        {
+            "State": "Kentucky",
+            "DisposableEarnings": "CCPA",
+            "WithholdingLimits": "50% to 65%",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Current support",
+                "Medical support premiums",
+                "Arrears"
+            ],
+            "EmployerFee": "$1 per payment"
+        },
+        {
+            "State": "Louisiana",
+            "DisposableEarnings": "CCPA; Reasonable deductions that are made in the usual course of business at the time the garnishment is served for the purpose of providing benefits for retirement, medical insurance, and life insurance",
+            "WithholdingLimits": "50% child; and 40% spousal support only",
+            "AllocationMethod": "Prorate",
+            "PriorityOfSupport": [
+                "Health insurance premiums",
+                "Current support",
+                "Arrears"
+            ],
+            "EmployerFee": "$5 per pay period"
+        }
+    ]
+}
