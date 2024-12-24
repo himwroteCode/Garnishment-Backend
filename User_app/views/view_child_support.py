@@ -49,6 +49,7 @@ def CalculationDataView(request):
                 number_of_child_support_order = record.get('number_of_child_support_order')
                 number_of_arrear = record.get('number_of_arrear')
                 garnishment_fees = record.get('garnishment_fees')
+                pay_period=record.get('pay_period')
                 state=record.get('state')
                 disposable_income = record.get('disposable_income')
                 # ccpa_limit=ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
@@ -68,7 +69,12 @@ def CalculationDataView(request):
                 other_garnishment_amount = round(disposable_income * 0.25, 2)
     
                 # Federal Minimum Wage calculation
-                fmw = 30 * 7.25
+   
+                if pay_period.lower()=="weekly":
+                    fmw = 30 * 7.25
+                elif pay_period.lower()=="biweekly":
+                    fmw = 60 * 7.25
+                
                 Disposable_Income_minus_Minimum_Wage_rule = round(disposable_income - fmw, 2)
                 Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
     
