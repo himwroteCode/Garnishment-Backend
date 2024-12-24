@@ -47,7 +47,7 @@ class Calculation_data_results(models.Model):
     arrears_amt_Child4 =models.FloatField(null=True, blank=True)
     arrears_amt_Child5 =models.FloatField(null=True, blank=True)
     number_of_arrear= models.IntegerField(null=True, blank=True)
-    number_of_child_support_order=models.IntegerField(null=True, blank=True)
+    number_of_child_support_order=models.IntegerField()
     allowable_disposable_earnings=models.FloatField()
     withholding_available=models.FloatField()
     other_garnishment_amount=models.FloatField()
@@ -112,6 +112,7 @@ class Garcalculation_data(models.Model):
     batch_id=models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees = models.FloatField()
+    pay_period = models.CharField(max_length=255)
     support_second_family = models.BooleanField()
     arrears_greater_than_12_weeks = models.BooleanField(null=True, blank=True)
     amount_to_withhold_child1=models.FloatField(null=True, blank=True)
@@ -188,7 +189,7 @@ class single_student_loan_data(models.Model):
     employer_id = models.CharField(max_length=255)
     employee_name=models.CharField(max_length=255)
     garnishment_fees= models.IntegerField()
-    order_id=models.IntegerField()
+    order_id=models.CharField(max_length=255)
     batch_id=models.CharField(max_length=255)
     disposable_income =models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -245,7 +246,7 @@ class federal_loan_case_data(models.Model):
     pay_period = models.CharField(max_length=255)
     filing_status = models.CharField(max_length=255)
     no_of_exception = models.IntegerField()
-    order_id=models.IntegerField()
+    order_id=models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class federal_tax_data_and_result(models.Model):
@@ -352,6 +353,7 @@ class state_tax_result(models.Model):
     disposable_income=models.FloatField()
     monthly_garnishment_amount=models.FloatField()
     net_pay = models.FloatField()  
+    gross_income = models.FloatField()
     duration_of_levies= models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -391,8 +393,6 @@ class multiple_garnishment_data(models.Model):
     def __str__(self):
         return f"Garnishment Data for Employee: {self.employee_name}, Order ID: {self.order_id}"
     
-
-
 
 class multiple_garnishment_case_result(models.Model):
     employee_id = models.CharField(max_length=255)

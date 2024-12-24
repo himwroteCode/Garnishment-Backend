@@ -151,7 +151,8 @@ def federal_case(request):
                     employee_id=employee_id,
                     employer_id=employer_id,
                     result=amount_deduct,
-                    net_pay=net_pay
+                    net_pay=net_pay,
+                    batch_id=batch_id
                 
                 )
                 federal_tax_data_and_result.objects.create(
@@ -164,7 +165,8 @@ def federal_case(request):
                     disposable_income=disposable_income,
                     exempt_amount=exempt_amount,
                     amount_deduct=amount_deduct,
-                    net_pay=net_pay
+                    net_pay=net_pay,
+                    batch_id=batch_id
                 )
                 LogEntry.objects.create(
                     action='Federal Tax Calculation data Added',
@@ -188,7 +190,8 @@ class get_federal_case_result(APIView):
         employees = federal_case_result.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
         if employees.exists():
             try:
-                serializer = federal_case_result_Serializer(employees,many=True)
+                employee= employees.order_by('-timestamp')
+                serializer = federal_case_result_Serializer(employee,many=True)
                 response_data = {
                     'success': True,
                     'message': 'Data retrieved successfully',
@@ -264,4 +267,24 @@ class get_all_federal_tax_result(APIView):
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
  
+class FederalCaseBatchResult(APIView):
+    def get(self, request, batch_id):
+        employees = federal_case_result.objects.filter(batch_id=batch_id)
+        if employees.exists():
+            try:
+                employee= employees.order_by('-timestamp')
+                serializer = federal_case_result_Serializer(employee,many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except federal_case_result.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+            except Exception as e:
+                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+        else:
+            return JsonResponse({'message': 'Batch ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 

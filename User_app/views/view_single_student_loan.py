@@ -188,3 +188,24 @@ class get_all_Single_Student_loan_result(APIView):
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
+
+class SingleStudentLoanBatchResult(APIView):
+    def get(request,self, batch_id): 
+        employees = single_student_loan_result.objects.filter(batch_id=batch_id)
+        if employees.exists():
+            try:
+                employee= employees.order_by('-timestamp')       
+                serializer = SingleStudentLoanSerializer(employee,many=True)
+
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except Employer_Profile.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})    
+

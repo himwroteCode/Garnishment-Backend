@@ -7,4 +7,6 @@ urlpatterns = [
     path('FederalCaseResult/<int:employer_id>/<int:employee_id>/', get_federal_case_result.as_view(), name='get_federal_case_result'),
     path('FederalCaseDataAndResult/<int:employer_id>/<int:employee_id>/', get_federal_case_data_and_result.as_view(), name='get_federal_case_data_and_result'),
     path('GetFederalCaseData/<int:employer_id>/<int:employee_id>/', get_federal_case_data.as_view(), name='get_federal_case_data'),
+    path('FederalCaseBatchResult/<str:batch_id>/', FederalCaseBatchResult.as_view(), name='FederalCaseBatchResult'),
+
 ]

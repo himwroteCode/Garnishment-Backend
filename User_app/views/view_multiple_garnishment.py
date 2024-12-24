@@ -75,15 +75,19 @@ def multiple_case_calculation(request):
                     other_garnishment_amount = round(disposable_income * 0.25, 2)
         
                     # Federal Minimum Wage calculation
-                    fmw = 30 * 7.25
+                    fmw = 30 * 7.25   
+                    # 1. calculation to be verifed - assume pay period to be weekly and for biweekly it should be changed ? 
+                    # 2. Create a funcation out of this line. 
+                    # 3. Fed Rate needs to be configurable  
                     Disposable_Income_minus_Minimum_Wage_rule = round(disposable_income - fmw, 2)
                     Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
         
                     # Determine allocation method for garnishment
+                    # create a funcation to find the allocation method
                     if state in ["Alabama", "Arizona", "Alaska", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Florida", "Georgia", "Idaho", "Illinois", "Indiana", "Iowa", "Kentucky", "Louisiana", "Maine", "Montana", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "North Carolina", "North Dakota", "New York", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Utah", "Vermont", "Virginia", "West Virginia", "Wyoming", "Tennessee","Wisconsin", "Wyoming"]:
-                        allocation_method_for_garnishment = "Divide Equally"
+                        allocation_method_for_garnishment =  "Pro Rate"
                     elif state in ["Kansas", "Texas", "Washington"]:
-                        allocation_method_for_garnishment = "Pro Rate"
+                        allocation_method_for_garnishment = "Divide Equally"
         
                     # Determine the allowable garnishment amount
                     if Minimum_amt <= 0:
@@ -203,10 +207,12 @@ def multiple_case_calculation(request):
                         arrears_amt_Child5 = amount_left_for_arrears / number_of_arrear
                     else:
                         arrears_amt_Child5 = 0
+
                     if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
                         allowed_amount_for_other_garnishment = 0
                     else:
                         allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
+                    
                     garnishment_amount=allowed_amount_for_other_garnishment
                     garnishment_priority_order="child support"
                     net_pay=round(disposable_income-allowed_amount_for_other_garnishment,2)
@@ -353,7 +359,8 @@ def multiple_case_calculation(request):
                     employer_id=employer_id,
                     garnishment_priority_order=garnishment_priority_order,
                     garnishment_amount=garnishment_amount,
-                    net_pay=net_pay
+                    net_pay=net_pay,
+                    batch_id=batch_id
                 
                 )
                 LogEntry.objects.create(
@@ -373,11 +380,11 @@ def multiple_case_calculation(request):
 
 
 class get_multiple_garnishment_case_result(APIView):
-    def get(self, request, employee_id, employer_id): 
-        employees = multiple_garnishment_case_result.objects.filter(employee_id=employee_id, employer_id=employer_id)
+    def get(self, request, batch_id): 
+        employees = multiple_garnishment_case_result.objects.filter(batch_id=batch_id)
         if employees.exists():
             try:
-                employee= employees.order_by('-timestamp')[:1]
+                employee= employees.order_by('-timestamp')
                 serializer = multiple_garnishment_data_Serializer(employee, many=True)
                 response_data = {
                     'success': True,

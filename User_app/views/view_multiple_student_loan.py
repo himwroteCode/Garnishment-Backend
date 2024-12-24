@@ -182,7 +182,8 @@ def MultipleStudentLoanCalculationData(request):
                     StudentLoanAmount1=StudentLoanAmount1,
                     StudentLoanAmount2=StudentLoanAmount2,
                     StudentLoanAmount3=StudentLoanAmount3,
-                    net_pay=net_pay            
+                    net_pay=net_pay   ,
+                    batch_id=batch_id         
                 )
                 LogEntry.objects.create(
                     action='Multiple Student Loan Calculation data Added',
@@ -198,3 +199,21 @@ def MultipleStudentLoanCalculationData(request):
     else:
         return Response({'message': 'Please use POST method', "status_code":status.HTTP_400_BAD_REQUEST})
 
+class MultipleStudentLoanBatchResult(APIView):
+    def get(self, request, batch_id): 
+        employees = multiple_student_loan_result.objects.filter(batch_id=batch_id)
+        if employees.exists():
+            try:
+                employee= employees.order_by('-timestamp')      
+                serializer = MultipleStudentLoanSerializer(employee, many=True)
+                response_data = {
+                    'success': True,
+                    'message': 'Data retrieved successfully',
+                    'status code': status.HTTP_200_OK,
+                    'data': serializer.data
+                }
+                return JsonResponse(response_data)
+            except Employer_Profile.DoesNotExist:
+                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
+        else:
+            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
