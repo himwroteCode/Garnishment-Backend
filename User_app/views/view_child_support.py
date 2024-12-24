@@ -9,69 +9,26 @@ from rest_framework.views import APIView
 from auth_project.garnishment_library import gar_resused_classes as gc
 from django.utils.decorators import method_decorator
 
-class GarnishmentCalculator:
-    def __init__(self, record):
-        self.employee_id = record.get("employee_id")
-        self.employer_id = record.get("employer_id")
-        self.amount_to_withhold = [
-            record.get(f"amount_to_withhold_child{i}", 0) for i in range(1, 6)
-        ]
-        self.arrears_amounts = [
-            record.get(f"arrears_amt_Child{i}", 0) for i in range(1, 6)
-        ]
-        self.arrears_greater_than_12_weeks = record.get("arrears_greater_than_12_weeks")
-        self.support_second_family = record.get("support_second_family")
-        self.number_of_child_support_order = record.get("number_of_child_support_order")
-        self.number_of_arrear = record.get("number_of_arrear")
-        self.garnishment_fees = record.get("garnishment_fees", 0)
-        self.pay_period = record.get("pay_period")
-        self.state = record.get("state")
-        self.disposable_income = record.get("disposable_income", 0)
-
-    def calculate_ccpa_limit(self):
-        if self.support_second_family and self.arrears_greater_than_12_weeks:
-            return 0.55
-        elif not self.support_second_family and not self.arrears_greater_than_12_weeks:
-            return 0.60
-        elif not self.support_second_family and self.arrears_greater_than_12_weeks:
-            return 0.65
-        else:
-            return 0.50
-
-    def calculate_allowable_disposable_earnings(self):
-        ccpa_limit = self.calculate_ccpa_limit()
-        return round(self.disposable_income * ccpa_limit, 2)
-
-    def calculate_minimum_wage_rule(self):
-        federal_minimum_wage = 7.25
-        if self.pay_period.lower() == "weekly":
-            return 30 * federal_minimum_wage
-        elif self.pay_period.lower() == "biweekly":
-            return 60 * federal_minimum_wage
-        return 0
-
-    def calculate_withholding(self, allowed_amount, allocation_method):
-        results = []
-        total_amount_to_withhold = sum(self.amount_to_withhold)
-        for amount in self.amount_to_withhold:
-            result = gc.CalculateAmountToWithhold(
-                allowed_amount, total_amount_to_withhold, allocation_method, self.number_of_child_support_order
-            ).calculate(amount)
-            results.append(result)
-        return results
-
-    def calculate_arrears(self, amount_left, allocation_method):
-        results = []
-        total_arrears = sum(self.arrears_amounts)
-        for arrears in self.arrears_amounts:
-            result = gc.CalculateArrearAmountForChild(
-                amount_left, total_arrears, allocation_method, self.number_of_arrear
-            ).calculate(arrears)
-            results.append(result)
-        return results
 
 
+def calculate_ccpa_limit(support_second_family,arrears_greater_than_12_weeks):
+    # Calculate the CCPA limit based on conditions
+    if support_second_family and arrears_greater_than_12_weeks:
+        return 0.55
+    elif not support_second_family and not arrears_greater_than_12_weeks:
+        return 0.60
+    elif not support_second_family and arrears_greater_than_12_weeks:
+        return 0.65
+    return 0.50
 
+def calculate_minimum_wage_rule(pay_period):
+    # Calculate the minimum wage rule based on pay period
+    federal_minimum_wage = 7.25
+    if pay_period == "weekly":
+        return 30 * federal_minimum_wage
+    elif pay_period == "biweekly":
+        return 60 * federal_minimum_wage
+    return 0
 @method_decorator(csrf_exempt, name='dispatch')
 class CalculationDataView(APIView):
     def post(self, request, *args, **kwargs):
@@ -111,90 +68,83 @@ class CalculationDataView(APIView):
                 state=record.get('state')
                 disposable_income = record.get('disposable_income')
                 # ccpa_limit=ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
-                
+
                 # Calculate ccpa_limit based on conditions
-                if support_second_family and arrears_greater_than_12_weeks:
-                    ccpa_limit = 0.55
-                elif not support_second_family and not arrears_greater_than_12_weeks:
-                    ccpa_limit = 0.60
-                elif not support_second_family and arrears_greater_than_12_weeks:
-                    ccpa_limit = 0.65
-                else:
-                    ccpa_limit = 0.50
-    
+                ccpa_limit=calculate_ccpa_limit(support_second_family,arrears_greater_than_12_weeks)
+                    
                 # Calculate allowable disposable earnings
                 allowable_disposable_earnings = round(disposable_income * ccpa_limit, 2)
+                print("allowable_disposable_earnings",allowable_disposable_earnings)
                 withholding_available = round(allowable_disposable_earnings - garnishment_fees, 2)
+                print("withholding_available",withholding_available)
                 other_garnishment_amount = round(disposable_income * 0.25, 2)
     
                 # Federal Minimum Wage calculation
-                if pay_period.lower()=="weekly":
-                    fmw = 30 * 7.25
-                elif pay_period.lower()=="biweekly":
-                    fmw = 60 * 7.25
+                fmw=calculate_minimum_wage_rule(pay_period)
+                print("fmv",fmw)
                 
                 Disposable_Income_minus_Minimum_Wage_rule = round(disposable_income - fmw, 2)
+                print("Disposable_Income_minus_Minimum_Wage_rule",Disposable_Income_minus_Minimum_Wage_rule)
                 Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
+
                 allocation_method_for_garnishment  = gc.StateMethodIdentifiers(state).get_allocation_method()
+                print("allocation_method_for_garnishment",allocation_method_for_garnishment)
                 
                 # Determine the allowable garnishment amount
-                if Minimum_amt <= 0:
-                    allowed_amount_for_garnishment = 0
-                else:
-                    allowed_amount_for_garnishment = Minimum_amt
-                
+                allowed_amount_for_garnishment = max(0, Minimum_amt)                
                 amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3+amount_to_withhold_child4+amount_to_withhold_child5
-                
+                print("amount_to_withhold",amount_to_withhold)
                 # Determine the allowable garnishment amount
-                amount_to_withhold_child1=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child1)
-                amount_to_withhold_child2=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child2)
-                amount_to_withhold_child3=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child3)
-                amount_to_withhold_child4=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child4)
-                amount_to_withhold_child5=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child5)
+                amount_to_withhold_childs1=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child1)
+                print("amount_to_withhold_child1",amount_to_withhold_childs1)
+                amount_to_withhold_childs2=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child2)
+                print("amount_to_withhold_child2",amount_to_withhold_childs2)
+                amount_to_withhold_childs3=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child3)
+                print("amount_to_withhold_child3",amount_to_withhold_childs3)
+                amount_to_withhold_childs4=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child4)
+                amount_to_withhold_childs5=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child5)
                 
                 # Calculate the amount left for arrears
                 if allowed_amount_for_garnishment > 0 and (allowed_amount_for_garnishment - amount_to_withhold) > 0:
                     amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold, 2)
                 else:
                     amount_left_for_arrears = 0
+                print("amount_left_for_arrears",amount_left_for_arrears)
                 
                 allocation_method_for_arrears=allocation_method_for_garnishment
-                
+                print("allocation_method_for_arrears",allocation_method_for_arrears)
                 # Determine allowed amount for other garnishment
                 allowed_child_support_arrear = arrears_amt_Child1 + arrears_amt_Child2 + arrears_amt_Child3+amount_to_withhold_child4+amount_to_withhold_child5
-                arrears_amt_Child1=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child1)
-                arrears_amt_Child2=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child2)
-                arrears_amt_Child3=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child3)
-                arrears_amt_Child4=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child4)
-                arrears_amt_Child5=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child5)
+                arrears_amt_Childs1=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child1)
+                print("arrears_amt_Childs1",arrears_amt_Childs1)
+                arrears_amt_Childs2=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child2)
+                print("arrears_amt_Childs2")
+                arrears_amt_Childs3=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child3)
+                arrears_amt_Childs4=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child4)
+                arrears_amt_Childs5=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child5)
                 
                 if (amount_left_for_arrears - allowed_child_support_arrear) <= 0:
                     allowed_amount_for_other_garnishment = 0
                 else:
                     allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
-    
-                net_pay=round(disposable_income-allowed_amount_for_other_garnishment,2)
-    
-                if net_pay <0:
-                    net_pay=0
-                else:
-                    net_pay=net_pay
+                print("allowed_amount_for_other_garnishment",allowed_amount_for_other_garnishment)
+                net_pay = max(0, (disposable_income - allowed_amount_for_other_garnishment))
 
                 # Create CalculationResult object
                 CalculationResult.objects.create(
-                    employee_id=record.get("employee_id"),
-                    employer_id=record.get("employer_id"),
+                    employee_id=employee_id,
+                    employer_id=employer_id,
                     result=allowed_amount_for_other_garnishment,
-                    amount_to_withhold_child1=amount_to_withhold_child1,
-                    amount_to_withhold_child2=amount_to_withhold_child2,
-                    amount_to_withhold_child3=amount_to_withhold_child3,
-                    amount_to_withhold_child4=amount_to_withhold_child4,
-                    amount_to_withhold_child5=amount_to_withhold_child5,
-                    arrears_amt_Child1=arrears_amt_Child1,
-                    arrears_amt_Child2=arrears_amt_Child2,
-                    arrears_amt_Child3=arrears_amt_Child3,
-                    arrears_amt_Child4=arrears_amt_Child4,
-                    arrears_amt_Child5=arrears_amt_Child5,
+                    amount_to_withhold_child1=amount_to_withhold_childs1,
+                    amount_to_withhold_child2=amount_to_withhold_childs2,
+                    amount_to_withhold_child3=amount_to_withhold_childs3,
+                    amount_to_withhold_child4=amount_to_withhold_childs4,
+                    amount_to_withhold_child5=amount_to_withhold_childs5,
+                    arrears_amt_Child1=arrears_amt_Childs1,
+                    arrears_amt_Child2=arrears_amt_Childs2,
+                    arrears_amt_Child3=arrears_amt_Childs3,
+                    arrears_amt_Child4=arrears_amt_Childs4,
+                    arrears_amt_Child5=arrears_amt_Childs5,
                     net_pay=net_pay,
                     batch_id=batch_id
                 )

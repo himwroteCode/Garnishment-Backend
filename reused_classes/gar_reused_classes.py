@@ -24,13 +24,13 @@ class StateMethodIdentifiers:
         with open(file_path, 'r') as file:
             data = json.load(file)
         # Accessing child support data
-        child_support_data = data.get("ChildSupportStateProvisions", [])
+        child_support_data = data.get("States", [])
         
         # Searching for the matching state
         for record in child_support_data:
-            if record['State'].lower() == self.state:
+            if record['State'].lower() == self.state.lower():
                 return record['AllocationMethod']
         
-        # If no matching record is found
-        return f"No allocation method found for the state: {self.state.capitalize()}."
+        # # If no matching record is found
+        # return f"No allocation method found for the state: {self.state.capitalize()}."
 

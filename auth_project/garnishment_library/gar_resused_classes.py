@@ -24,7 +24,7 @@ class StateMethodIdentifiers:
         with open(file_path, 'r') as file:
             data = json.load(file)
         # Accessing child support data
-        child_support_data = data.get("ChildSupportStateProvisions", [])
+        child_support_data = data.get("States", [])
         
         # Searching for the matching state
         for record in child_support_data:
