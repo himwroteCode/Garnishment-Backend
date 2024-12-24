@@ -60,7 +60,6 @@ class Employee_Details(models.Model):
     employee_name = models.CharField(max_length=255)
     department = models.CharField(max_length=255)
     pay_cycle = models.CharField(max_length=255)
-    number_of_child_support_order = models.IntegerField()
     location = models.CharField(max_length=255)
     def __str__(self):
         return self.employee_name
