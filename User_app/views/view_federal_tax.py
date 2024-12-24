@@ -190,8 +190,7 @@ class get_federal_case_result(APIView):
         employees = federal_case_result.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
         if employees.exists():
             try:
-                employee= employees.order_by('-timestamp')
-                serializer = federal_case_result_Serializer(employee,many=True)
+                serializer = federal_case_result_Serializer(employees,many=True)
                 response_data = {
                     'success': True,
                     'message': 'Data retrieved successfully',
@@ -201,8 +200,8 @@ class get_federal_case_result(APIView):
                 return JsonResponse(response_data)
             except federal_case_result.DoesNotExist:
                 return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-            except Exception as e:
-                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+            # except Exception as e:
+            #     return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
