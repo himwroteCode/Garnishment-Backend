@@ -61,6 +61,8 @@ class Employee_Details(models.Model):
     department = models.CharField(max_length=255)
     pay_cycle = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
+    number_of_child_support_order=models.IntegerField()
+    
     def __str__(self):
         return self.employee_name
   
