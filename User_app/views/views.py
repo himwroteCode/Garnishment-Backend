@@ -202,7 +202,7 @@ def EmployeeDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_name','department', 'pay_cycle', 'number_of_garnishment', 'location']
+            required_fields = ['employee_name','department', 'pay_cycle', 'number_of_child_support_order', 'location']
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:

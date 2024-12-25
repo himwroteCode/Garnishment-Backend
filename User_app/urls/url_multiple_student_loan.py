@@ -8,5 +8,6 @@ urlpatterns = [
     path('GetAllMultipleStudentLoanResult/<int:employer_id>/',get_all_multiple_student_loan_result.as_view(), name='GetAllSingleStudentLoanResult'),
     path('GetMultipleStudentLoanResult/<int:employer_id>/<int:employee_id>/',get_multiple_student_loan_result.as_view(), name='get_MultipleStudentLoanResult'),
     path('GetMultipleStudentLoanData/<int:employer_id>/<int:employee_id>/',get_multiple_student_loan_case_data.as_view(), name='Get_Multiple_Student_Loan_Case_Data'),
-     
+    path('MultipleStudentLoanBatchResult/<str:batch_id>/',MultipleStudentLoanBatchResult.as_view(), name='GetAllSingleStudentLoanResult'),
+
 ]
