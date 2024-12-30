@@ -1,0 +1,302 @@
+{"WithholdingRules": [
+    {
+        "SNo":1,
+        "State":"Alabama",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":2,
+        "State":"Alaska",
+        "Withholding Limit":"40%",
+        "Rule":"Rule_2"
+    },
+    {
+        "SNo":3,
+        "State":"Arizona",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":4,
+        "State":"Arkansas",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {                   
+        "SNo":5,
+        "State":"California",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":6,
+        "State":"Colorado",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":7,
+        "State":"Connecticut",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_6"
+    },
+    {
+        "SNo":8,
+        "State":"Delaware",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":9,
+        "State":"Florida",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":10,
+        "State":"Georgia",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":11,
+        "State":"Hawaii",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":12,
+        "State":"Idaho",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":13,
+        "State":"Illinois",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":14,
+        "State":"Indiana",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":15,
+        "State":"Iowa",
+        "Withholding Limit":"50% by policy; 50% to 65% by statute",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":16,
+        "State":"Kansas",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":17,
+        "State":"Kentucky",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":18,
+        "State":"Louisiana",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":19,
+        "State":"Maine",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":20,
+        "State":"Maryland",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":21,
+        "State":"Massachusetts",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":22,
+        "State":"Michigan",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":23,
+        "State":"Minnesota",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":24,
+        "State":"Mississippi",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":25,
+        "State":"Missouri",
+        "Withholding Limit":"50% by policy; 50% to 65% by statute",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":26,
+        "State":"Montana",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":27,
+        "State":"Nebraska",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":28,
+        "State":"Nevada",
+        "Withholding Limit":"50% by policy; 50% to 65% by statute",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":29,
+        "State":"New Hampshire",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":30,
+        "State":"New Jersey",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":31,
+        "State":"New Mexico",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":32,
+        "State":"New York",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":33,
+        "State":"North Carolina",
+        "Withholding Limit":"40-50%",
+        "Rule":"Rule_4"
+    },
+    {
+        "SNo":34,
+        "State":"North Dakota",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":35,
+        "State":"Ohio",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":36,
+        "State":"Oklahoma",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":37,
+        "State":"Oregon",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":38,
+        "State":"Pennsylvania",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":39,
+        "State":"Rhode Island",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":40,
+        "State":"South Carolina",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":41,
+        "State":"South Dakota",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":42,
+        "State":"Tennessee",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":43,
+        "State":"Texas",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":44,
+        "State":"Utah",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":45,
+        "State":"Vermont",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":46,
+        "State":"Virginia",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":47,
+        "State":"Washington",
+        "Withholding Limit":"50%",
+        "Rule":"Rule_3"
+    },
+    {
+        "SNo":48,
+        "State":"West Virginia",
+        "Withholding Limit":"40-55%",
+        "Rule":"Rule_5"
+    },
+    {
+        "SNo":49,
+        "State":"Wisconsin",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    },
+    {
+        "SNo":50,
+        "State":"Wyoming",
+        "Withholding Limit":"50%-65%",
+        "Rule":"Rule_1"
+    }
+] }
