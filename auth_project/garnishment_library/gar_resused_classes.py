@@ -18,7 +18,7 @@ class StateMethodIdentifiers:
 
     def get_allocation_method(self):
 
-        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'child_support_provisions.json')
+        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child_support_provisions.json')
 
         # Reading the JSON file
         with open(file_path, 'r') as file:
@@ -85,7 +85,7 @@ class WLIdentifier:
         self.order_gt_one = order_gt_one.lower()
     
     def get_state_rules(self):
-        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'withholding_rules.json')
+        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/withholding_rules.json')
 
         # Reading the JSON file
         with open(file_path, 'r') as file:
@@ -101,7 +101,7 @@ class WLIdentifier:
         return f"No allocation method found for the state: {self.state.capitalize()}."
     
     def find_wl_value(self,state_rule):
-        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'withholding_limits.json')
+        file_path = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/withholding_limits.json')
         
         # Reading the JSON file
         with open(file_path, 'r') as file:
