@@ -9,7 +9,19 @@ from rest_framework.views import APIView
 from auth_project.garnishment_library import gar_resused_classes as gc
 from django.utils.decorators import method_decorator
 
-
+# State
+# Pay Period
+# Gross Pay
+# Federal Tax
+# State Tax
+# Local Tax
+# Social Security & Medicare Tax (FICA)
+# Arrears Greater than 12 weeks
+# Support 2nd Family
+# Arrears for child 1
+# Arrears for child 2
+# Child Support Order 1
+# Child support Order 2
 
 def calculate_ccpa_limit(support_second_family,arrears_greater_than_12_weeks):
     # Calculate the CCPA limit based on conditions
@@ -35,7 +47,7 @@ class CalculationDataView(APIView):
         try:
             data = request.data
             batch_id = data.get("batch_id")
-            rows = data.get("rows", [])
+            rows = data.get("rows", []) 
             
             # Validate batch number
             if not batch_id:
@@ -74,33 +86,24 @@ class CalculationDataView(APIView):
                     
                 # Calculate allowable disposable earnings
                 allowable_disposable_earnings = round(disposable_income * ccpa_limit, 2)
-                print("allowable_disposable_earnings",allowable_disposable_earnings)
                 withholding_available = round(allowable_disposable_earnings - garnishment_fees, 2)
-                print("withholding_available",withholding_available)
                 other_garnishment_amount = round(disposable_income * 0.25, 2)
     
                 # Federal Minimum Wage calculation
-                fmw=calculate_minimum_wage_rule(pay_period)
-                print("fmv",fmw)
-                
+                fmw=calculate_minimum_wage_rule(pay_period)                
                 Disposable_Income_minus_Minimum_Wage_rule = round(disposable_income - fmw, 2)
-                print("Disposable_Income_minus_Minimum_Wage_rule",Disposable_Income_minus_Minimum_Wage_rule)
                 Minimum_amt = min(Disposable_Income_minus_Minimum_Wage_rule, withholding_available)
-
                 allocation_method_for_garnishment  = gc.StateMethodIdentifiers(state).get_allocation_method()
-                print("allocation_method_for_garnishment",allocation_method_for_garnishment)
+
                 
                 # Determine the allowable garnishment amount
                 allowed_amount_for_garnishment = max(0, Minimum_amt)                
                 amount_to_withhold = amount_to_withhold_child1 + amount_to_withhold_child2 + amount_to_withhold_child3+amount_to_withhold_child4+amount_to_withhold_child5
-                print("amount_to_withhold",amount_to_withhold)
+                
                 # Determine the allowable garnishment amount
                 amount_to_withhold_childs1=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child1)
-                print("amount_to_withhold_child1",amount_to_withhold_childs1)
                 amount_to_withhold_childs2=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child2)
-                print("amount_to_withhold_child2",amount_to_withhold_childs2)
                 amount_to_withhold_childs3=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child3)
-                print("amount_to_withhold_child3",amount_to_withhold_childs3)
                 amount_to_withhold_childs4=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child4)
                 amount_to_withhold_childs5=gc.CalculateAmountToWithhold(allowed_amount_for_garnishment, amount_to_withhold, allocation_method_for_garnishment,number_of_child_support_order).calculate(amount_to_withhold_child5)
                 
@@ -109,16 +112,13 @@ class CalculationDataView(APIView):
                     amount_left_for_arrears = round(allowed_amount_for_garnishment - amount_to_withhold, 2)
                 else:
                     amount_left_for_arrears = 0
-                print("amount_left_for_arrears",amount_left_for_arrears)
+
                 
                 allocation_method_for_arrears=allocation_method_for_garnishment
-                print("allocation_method_for_arrears",allocation_method_for_arrears)
                 # Determine allowed amount for other garnishment
                 allowed_child_support_arrear = arrears_amt_Child1 + arrears_amt_Child2 + arrears_amt_Child3+amount_to_withhold_child4+amount_to_withhold_child5
                 arrears_amt_Childs1=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child1)
-                print("arrears_amt_Childs1",arrears_amt_Childs1)
                 arrears_amt_Childs2=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child2)
-                print("arrears_amt_Childs2")
                 arrears_amt_Childs3=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child3)
                 arrears_amt_Childs4=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child4)
                 arrears_amt_Childs5=gc.CalculateArrearAmountForChild(amount_left_for_arrears, allowed_child_support_arrear,allocation_method_for_arrears,number_of_arrear).calculate(arrears_amt_Child5)
@@ -127,7 +127,6 @@ class CalculationDataView(APIView):
                     allowed_amount_for_other_garnishment = 0
                 else:
                     allowed_amount_for_other_garnishment = round(amount_left_for_arrears - allowed_child_support_arrear, 2)
-                print("allowed_amount_for_other_garnishment",allowed_amount_for_other_garnishment)
                 net_pay = max(0, (disposable_income - allowed_amount_for_other_garnishment))
 
                 # Create CalculationResult object
@@ -221,7 +220,6 @@ class ChildSupportGarnishmentBatchResult(APIView):
                 return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
         else:
             return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-
 
 
 
