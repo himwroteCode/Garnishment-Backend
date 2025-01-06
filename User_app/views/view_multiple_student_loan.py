@@ -173,8 +173,8 @@ class MultipleStudentLoanCalculationData(APIView):
 
             return Response({
                 'message': 'Multiple Student Loan Calculations Details Successfully Registered',
-                "status_code": status.HTTP_200_OK
-                # "result": calculation_results
+                "status_code": status.HTTP_200_OK,
+                "result": calculation_results
             })
 
         except Employee_Details.DoesNotExist:
