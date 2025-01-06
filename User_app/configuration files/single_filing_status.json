@@ -1,0 +1,53 @@
+{"single_filing_status":[
+    {
+        "Pay Period": "Daily",
+        "Exemptions 1": 37.5,
+        "Exemptions 2": 52.12,
+        "Exemptions 3": 66.73,
+        "Exemptions 4": 81.35,
+        "Exemptions 5": 95.96,
+        "Exemptions 6": 110.58,
+        "More than 6": "22.88 plus 14.62 for each exemption"
+    },
+    {
+        "Pay Period": "Weekly",
+        "Exemptions 1": 187.5,
+        "Exemptions 2": 260.58,
+        "Exemptions 3": 333.65,
+        "Exemptions 4": 406.73,
+        "Exemptions 5": 479.81,
+        "Exemptions 6": 552.88,
+        "More than 6": "114.42 plus 73.08 for each exemption"
+    },
+    {
+        "Pay Period": "Biweekly",
+        "Exemptions 1": 375,
+        "Exemptions 2": 521.15,
+        "Exemptions 3": 667.31,
+        "Exemptions 4": 813.46,
+        "Exemptions 5": 959.62,
+        "Exemptions 6": 1105.77,
+        "More than 6": "228.85 plus 146.15 for each exemption"
+    },
+    {
+        "Pay Period": "Semimonthly",
+        "Exemptions 1": 406.25,
+        "Exemptions 2": 564.58,
+        "Exemptions 3": 722.92,
+        "Exemptions 4": 881.25,
+        "Exemptions 5": 1039.58,
+        "Exemptions 6": 1197.92,
+        "More than 6": "247.92 plus 158.33 for each exemption"
+    },
+    {
+        "Pay Period": "Monthly",
+        "Exemptions 1": 812.5,
+        "Exemptions 2": 1129.17,
+        "Exemptions 3": 1445.83,
+        "Exemptions 4": 1762.5,
+        "Exemptions 5": 2079.17,
+        "Exemptions 6": 2395.83,
+        "More than 6": "495.83 plus 316.67 for each exemption"
+    }
+]
+}
