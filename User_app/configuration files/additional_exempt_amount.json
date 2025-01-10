@@ -1,56 +1,16 @@
-{"additional_exempt_amount" :[
-    {
-        "No of Exemption": 1,
-        "Filing Status": "Single or Head of Household",
-        "Daily": 5.58,
-        "Weekly": 27.88,
-        "Biweekly": 55.77,
-        "Semimonthly": 60.42,
-        "Monthly": 120.83
-    },
-    {
-        "No of Exemption": 2,
-        "Filing Status": "Single or Head of Household",
-        "Daily": 11.15,
-        "Weekly": 55.77,
-        "Biweekly": 111.54,
-        "Semimonthly": 120.83,
-        "Monthly": 241.67
-    },
-    {
-        "No of Exemption": 1,
-        "Filing Status": "Any other Filing Status",
-        "Daily": 4.42,
-        "Weekly": 22.12,
-        "Biweekly": 44.23,
-        "Semimonthly": 47.92,
-        "Monthly": 95.83
-    },
-    {
-        "No of Exemption": 2,
-        "Filing Status": "Any other Filing Status",
-        "Daily": 8.85,
-        "Weekly": 44.23,
-        "Biweekly": 88.46,
-        "Semimonthly": 95.83,
-        "Monthly": 191.67
-    },
-    {
-        "No of Exemption": 3,
-        "Filing Status": "Any other Filing Status",
-        "Daily": 13.27,
-        "Weekly": 66.35,
-        "Biweekly": 132.69,
-        "Semimonthly": 143.75,
-        "Monthly": 287.50
-    },
-    {
-        "No of Exemption": 4,
-        "Filing Status": "Any other Filing Status",
-        "Daily": 17.69,
-        "Weekly": 88.46,
-        "Biweekly": 176.92,
-        "Semimonthly": 191.67,
-        "Monthly": 383.33
-    }
-]}
+{
+    "*": [1, 2, 1, 2, 3, 4],
+    "Filing Status": [
+        "Single or Head of Household",
+        "Single or Head of Household",
+        "Any Other Filing Status",
+        "Any Other Filing Status",
+        "Any Other Filing Status",
+        "Any Other Filing Status"
+    ],
+    "Daily": [7.69, 15.38, 6.15, 12.31, 18.46, 24.62],
+    "Weekly": [38.46, 76.92, 30.77, 61.54, 92.31, 123.08],
+    "Biweekly": [76.92, 153.85, 61.54, 123.08, 184.62, 246.15],
+    "Semi-monthly": [83.33, 166.67, 66.67, 133.33, 200.00, 266.67],
+    "Monthly": [166.67, 333.33, 133.33, 266.67, 400.00, 533.33]
+}

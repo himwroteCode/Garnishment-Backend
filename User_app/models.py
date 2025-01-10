@@ -130,7 +130,8 @@ class Garcalculation_data(models.Model):
     number_of_arrear= models.IntegerField()
     order_id=models.CharField(max_length=255)
     state=models.CharField(max_length=255)
-    disposable_income =models.FloatField()
+    gross_pay =models.FloatField()
+    mandatory_deductions=models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):

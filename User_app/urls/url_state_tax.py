@@ -6,3 +6,8 @@ urlpatterns = [
     path('state_tax_case/',StateTaxView.as_view(), name='state_tax_case'),
 
 ]
+
+
+
+
+

@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 from auth_project.garnishment_library import gar_resused_classes as gc
 from django.utils.decorators import method_decorator
 
-
 class ChildSupport:
     """
     This class contains utility functions to calculate various child support-related amounts.
@@ -21,20 +20,6 @@ class ChildSupport:
         mandatory_deductions=record.get("mandatory_deductions")
         # Calculate disposable earnings
         return gross_pay - mandatory_deductions
-    
-    def calculate_tcsa(self, record):
-        return [
-            value 
-            for key, value in record .items() 
-            if key.lower().startswith('child_support_amount')
-        ]
-
-    def calculate_taa(self, record):
-        return [
-            value
-            for key, value in record.items() 
-            if key.lower().startswith('arrears_amount')
-        ]
 
     def calculate_wl(self, record):
 
@@ -46,28 +31,37 @@ class ChildSupport:
         supports_2nd_family = record.get("supports_2nd_family")
         arrears_of_more_than_12_weeks = record.get("arrears_of_more_than_12_weeks")
 
-        # Determine the state rules
-        state_rules = gc.WLIdentifier().get_state_rules(state)
 
-        calculate_tcsa = len(self.calculate_tcsa(record))+1
-       
         # Calculate Disposable Earnings (DE)
         de = self.calculate_de(record)
 
         # Determine if DE > 145 and if there is more than one order
-        de_gt_145 = "No" if de <= 145 or state_rules != "Rule_6" else "Yes"
-
-        #Determine arrears_of_more_than_12_weeks
-        arrears_of_more_than_12_weeks = "" if state_rules == "Rule_4" else arrears_of_more_than_12_weeks
-
-        #Determine order_gt_one
-        order_gt_one = "No" if calculate_tcsa > 1 or state_rules != "Rule_4" else "Yes"
-
+        de_gt_145 = "Yes" if de > 145 else "No"
+        order_gt_one = "Yes" if no_of_child_support_order > 1 else "No"
 
         # Identify withholding limit using state rules
-        wl_limit = gc.WLIdentifier().find_wl_value(de,state, employee_id, supports_2nd_family, arrears_of_more_than_12_weeks, de_gt_145, order_gt_one)
+        wl_limit = gc.WLIdentifier(
+            state, de, employee_id, rule_name, supports_2nd_family, 
+            arrears_of_more_than_12_weeks, de_gt_145, order_gt_one
+        ).get_state_rules()
 
         return wl_limit
+
+    def calculate_tcsa(self, record):
+
+        return [
+            value for rec in record 
+            for key, value in rec.items() 
+            if key.lower().startswith('amount_to_withhold_child')
+        ]
+
+    def calculate_taa(self, record):
+
+        return [
+            value for rec in record 
+            for key, value in rec.items() 
+            if key.lower().startswith('arrear_amount')
+        ]
 
     def calculate_twa(self, record):
         
@@ -84,7 +78,7 @@ class ChildSupport:
 
         tcsa = self.calculate_tcsa(record)
         ade = self.calculate_ade(record)
-        return min(ade, sum(tcsa))
+        return min(ade, tcsa)
 
     def calculate_each_child_support_amt(self, record):
 
@@ -124,12 +118,12 @@ class SingleChild(ChildSupport):
 
         return withholding_amount, arrear_amount
 
-class MultipleChild(ChildSupport):
+class MultipleChild:
     """
     This class calculates the child support amounts and arrear amounts for multiple child support orders.
     """
 
-    def calculate(self, record):
+    def calculate(self, record, mandatory_deductions, gross_pay):
 
         # Extract necessary values and calculate required metrics
         ade = self.calculate_ade(record)
@@ -148,7 +142,7 @@ class MultipleChild(ChildSupport):
             arrear_amount = self.calculate_each_arrears_amt(record)
         else:
             # Apply the allocation method for garnishment
-            if allocation_method_for_garnishment == "prorate":
+            if allocation_method_for_garnishment == self.PRORATE:
                 child_support_amount = {
                     f"child support amount {i+1}": (amount / twa) * ade for i, amount in enumerate(tcsa)
                 }
@@ -163,7 +157,7 @@ class MultipleChild(ChildSupport):
                     else:
                         arrear_amount=self.calculate_each_arrears_amt(record)
             
-            elif allocation_method_for_garnishment == "divide equally":
+            elif allocation_method_for_garnishment == self.DIVIDEEQUALLY :
                 child_support_amount = {
                     f"child support amount {i+1}": ade / len(tcsa) for i, _ in enumerate(tcsa)
                 }
@@ -220,16 +214,16 @@ class CalculationDataView(APIView):
                 # Extract necessary values
                 gross_pay = record.get("gross_pay")
                 mandatory_deductions = record.get("mandatory_deductions")
-                tcsa = ChildSupport().calculate_tcsa(record)
+                tcsa = self.calculate_tcsa(record)
 
                 # Perform calculations based on the number of child support orders
-                if len(tcsa)+1 > 1:
-                    result = MultipleChild().calculate(record)
+                if tcsa > 1:
+                    result = MultipleChild().calculate(record, mandatory_deductions, gross_pay)
                 else:
-                    result = SingleChild().calculate(record)
+                    result = SingleChild().calculate(record, mandatory_deductions, gross_pay)
 
                 # Save record to the database
-                # user = Garcalculation_data.objects.create(**record)
+                user = Garcalculation_data.objects.create(**record)
                 output.append({
                     "employee_id": record.get("employee_id"),
                     "employer_id": record.get("employer_id"),
@@ -253,104 +247,19 @@ class CalculationDataView(APIView):
                 },
                 status=status.HTTP_200_OK
             )
-        except Employee_Details.DoesNotExist:
-            return Response(
-                {"error": "Employee details not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        # except Employer_Profile.DoesNotExist:
+
+        # except Employee_Details.DoesNotExist:
         #     return Response(
-        #         {"error": "Employer profile not found"},
+        #         {"error": "Employee details not found"},
         #         status=status.HTTP_404_NOT_FOUND
         #     )
-        except Exception as e:
+        except Employer_Profile.DoesNotExist:
             return Response(
-                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": "Employer profile not found"},
+                status=status.HTTP_404_NOT_FOUND
             )
-
-
-class SingleCalculationDetailView(APIView):
-    def get(self, request, employer_id, employee_id):
-        employees = CalculationResult.objects.filter(employer_id=employer_id, employee_id=employee_id).order_by('-timestamp')[0:1]
-        if employees.exists():
-            try:
-                serializer = ResultSerializer(employees, many=True)
-                response_data = {
-                    'success': True,
-                    'message': 'Data fetched successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': serializer.data
-                }
-                return JsonResponse(response_data)
-            except CalculationResult.DoesNotExist:
-                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-            except Exception as e:
-                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-        else:
-            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-
-
-class AllGarnishmentResultDetailView(APIView):
-    def get(self, request, employer_id):
-        employees = CalculationResult.objects.filter(employer_id=employer_id).order_by('-timestamp')
-        if employees.exists():
-            try:
-                serializer = ResultSerializer(employees, many=True)
-                response_data = {
-                    'success': True,
-                    'message': 'Data retrieved successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': serializer.data
-                }
-                return JsonResponse(response_data)
-            except CalculationResult.DoesNotExist:
-                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-            except Exception as e:
-                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-        else:
-            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-
-class ChildSupportGarnishmentBatchResult(APIView):
-    def get(self, request, batch_id):
-        employees = CalculationResult.objects.filter(batch_id=batch_id)
-        if employees.exists():
-            try:
-                employee= employees.order_by('-timestamp')
-                serializer = ResultSerializer(employee, many=True)
-                response_data = {
-                    'success': True,
-                    'message': 'Data retrieved successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': serializer.data
-                }
-                return JsonResponse(response_data)
-            except CalculationResult.DoesNotExist:
-                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-            except Exception as e:
-                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-        else:
-            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-
-
-
-class get_child_garnishment_case_data_and_result(APIView):
-    def get(self, request, employer_id,employee_id):
-        employees = Calculation_data_results.objects.filter(employer_id=employer_id,employee_id=employee_id).order_by('-timestamp')[0:1]
-        if employees.exists():
-            try:
-                serializer = Calculation_data_results_Serializer(employees,many=True)
-                response_data = {
-                    'success': True,
-                    'message': 'Garnishment Result Data retrieved successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': serializer.data
-                }
-                return JsonResponse(response_data)
-            except federal_tax_data_and_result.DoesNotExist:
-                return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-            except Exception as e:
-                return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})  
-        else:
-            return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-  
+        # except Exception as e:
+        #     return Response(
+        #         {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        #     )
