@@ -93,9 +93,9 @@ class WLIdentifier:
                 return record['Rule']  
 
         # If no matching record is found
-        return f"No allocation method found for the state: {state.capitalize()}."
+        return f"No allocation method found for the state: {state.capitalize()}." 
 
-    def find_wl_value(self, DE,state, employee_id, supports_2nd_family, arrears_of_more_than_12_weeks, de_gt_145, order_gt_one):
+    def find_wl_value(self, de,state, employee_id, supports_2nd_family, arrears_of_more_than_12_weeks, de_gt_145, order_gt_one):
         file_path = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/withholding_limits.json')
         state_rule = self.get_state_rules(state)
 
@@ -113,7 +113,9 @@ class WLIdentifier:
                          detail["Arrears_of_more_than_12_weeks"] == arrears_of_more_than_12_weeks and
                          detail["de_gt_145"] == de_gt_145 and
                          detail["order_gt_one"] == order_gt_one)):
-                        return int(detail["WL"].replace("%", "")) / 100
+                        result = int(detail["WL"].replace("%", "")) / 100
+                        print(result)
+                        return result
         
         return f"No matching WL found for this employee: {employee_id}"
 

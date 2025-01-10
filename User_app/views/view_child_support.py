@@ -22,34 +22,39 @@ class ChildSupport:
         # Calculate disposable earnings
         return gross_pay - mandatory_deductions
     
-    def calculate_tcsa(self, record):
+    def get_list_supportAmt(self, record):
+        child_support=record.get("child_support")
+
         return [
             value 
-            for key, value in record .items() 
-            if key.lower().startswith('child_support_amount')
+            for Amt_dict in child_support
+            for key, value in Amt_dict.items() 
+            if key.lower().startswith('amount')
         ]
 
-    def calculate_taa(self, record):
+
+    def get_list_support_arrearAmt(self, record):
+        child_support=record.get("child_support")
         return [
             value
-            for key, value in record.items() 
-            if key.lower().startswith('arrears_amount')
+            for Amt_dict in child_support
+            for key, value in Amt_dict.items() 
+            if key.lower().startswith('arrear')
         ]
+
 
     def calculate_wl(self, record):
 
         # Extract necessary values from the record
         state = record.get("state")
         employee_id = record.get("employee_id")
-        no_of_child_support_order = record.get("no_of_child_support_order", 0)
-        rule_name = record.get("rule_name")
-        supports_2nd_family = record.get("supports_2nd_family")
+        supports_2nd_family = record.get("support_second_family")
         arrears_of_more_than_12_weeks = record.get("arrears_of_more_than_12_weeks")
 
         # Determine the state rules
         state_rules = gc.WLIdentifier().get_state_rules(state)
 
-        calculate_tcsa = len(self.calculate_tcsa(record))+1
+        calculate_tcsa = len(self.get_list_supportAmt(record))
        
         # Calculate Disposable Earnings (DE)
         de = self.calculate_de(record)
@@ -58,11 +63,13 @@ class ChildSupport:
         de_gt_145 = "No" if de <= 145 or state_rules != "Rule_6" else "Yes"
 
         #Determine arrears_of_more_than_12_weeks
-        arrears_of_more_than_12_weeks = "" if state_rules == "Rule_4" else arrears_of_more_than_12_weeks
+        arrears_of_more_than_12_weeks = "" if state_rules == "Rule_4" else "Yes"
 
         #Determine order_gt_one
         order_gt_one = "No" if calculate_tcsa > 1 or state_rules != "Rule_4" else "Yes"
 
+
+        
 
         # Identify withholding limit using state rules
         wl_limit = gc.WLIdentifier().find_wl_value(de,state, employee_id, supports_2nd_family, arrears_of_more_than_12_weeks, de_gt_145, order_gt_one)
@@ -71,8 +78,9 @@ class ChildSupport:
 
     def calculate_twa(self, record):
         
-        tcsa = self.calculate_tcsa(record)
-        taa = self.calculate_taa(record)
+        tcsa = self.get_list_supportAmt(record)
+        taa = self.get_list_support_arrearAmt(record)
+        print("tcsa",sum(tcsa))
         return sum(tcsa) + sum(taa)
 
     def calculate_ade(self, record):
@@ -81,27 +89,26 @@ class ChildSupport:
         return wl * de
 
     def calculate_wa(self, record):
-
-        tcsa = self.calculate_tcsa(record)
+        tcsa = self.get_list_supportAmt(record)
         ade = self.calculate_ade(record)
         return min(ade, sum(tcsa))
 
     def calculate_each_child_support_amt(self, record):
 
-        tcsa = self.calculate_tcsa(record)
+        tcsa = self.get_list_supportAmt(record)
         return {f"child support amount{i+1}": amount for i, amount in enumerate(tcsa)}
 
     def calculate_each_arrears_amt(self, record):
 
-        taa = self.calculate_taa(record)
+        taa = self.get_list_support_arrearAmt(record)
         return {f"arrear amount{i+1}": amount for i, amount in enumerate(taa)}
 
 
 class SingleChild(ChildSupport):
     def calculate(self, record):
         # Extract values from the record
-        child_support_amount = record.get("child_support_amount", 0)
-        arrear_amount = record.get("arrear_amount", 0)
+        child_support_amount = self.get_list_supportAmt(record)[0]
+        arrear_amount = self.get_list_support_arrearAmt(record)[0]
 
         # Calculate Adjusted Disposable Earnings (ADE) using a helper function
         ade = self.calculate_ade(record)
@@ -133,8 +140,8 @@ class MultipleChild(ChildSupport):
 
         # Extract necessary values and calculate required metrics
         ade = self.calculate_ade(record)
-        tcsa = self.calculate_tcsa(record)
-        taa = self.calculate_taa(record)
+        tcsa = self.get_list_supportAmt(record)
+        taa = self.get_list_support_arrearAmt(record)
         twa = self.calculate_twa(record)
         wa = self.calculate_wa(record)
         state = record.get("state")
@@ -204,7 +211,7 @@ class CalculationDataView(APIView):
             # Validate rows
             if not rows:
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
-
+            
             for record in rows:
                 # Validate essential fields in each record
                 required_fields = [
@@ -218,12 +225,11 @@ class CalculationDataView(APIView):
                     )
 
                 # Extract necessary values
-                gross_pay = record.get("gross_pay")
-                mandatory_deductions = record.get("mandatory_deductions")
-                tcsa = ChildSupport().calculate_tcsa(record)
+
+                tcsa = ChildSupport().get_list_supportAmt(record)
 
                 # Perform calculations based on the number of child support orders
-                if len(tcsa)+1 > 1:
+                if len(tcsa) > 1:
                     result = MultipleChild().calculate(record)
                 else:
                     result = SingleChild().calculate(record)
@@ -268,6 +274,31 @@ class CalculationDataView(APIView):
                 {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# record=   {
+#       "employee_id": "EMP002",
+#       "employer_id" :"EMP001",
+#       "gross_pay": 400,
+#       "employee_name": "Michael Johnson",
+#       "garnishment_fees": 5,
+#       "arrears_greater_than_12_weeks": "Yes",
+#       "support_second_family": "No",
+#       "child_support" : [ {"amount": 150, "arrear": 15}, {"amount": 100, "arrear": 0}],
+#       "state": "Texas",
+#       "arrears_amount1": 99,
+#       "pay_period" : "weekly",
+#       "mandatory_deductions":40
+#     }   
+
+# print("calculate_twa",ChildSupport().calculate_twa(record))
+# print("calculate_wl",ChildSupport().calculate_wl(record))
+# print("calculate_tcsa",ChildSupport().get_list_supportAmt(record))
+# print("calculate_tcsa_sum",sum(ChildSupport().get_list_supportAmt(record)))
+# print("calculate_taa",ChildSupport().get_list_support_arrearAmt(record))
+# print("calculate_ade",ChildSupport().calculate_ade(record))
+# print("calculate_wa",ChildSupport().calculate_wa(record))
+# print("calculate_wa",MultipleChild().calculate(record))
 
 
 class SingleCalculationDetailView(APIView):
