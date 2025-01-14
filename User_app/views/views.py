@@ -819,15 +819,9 @@ class EmployeeImportView(APIView):
     
             # Check the file extension
             if file_name.endswith('.csv'):
-<<<<<<< HEAD
                 df = pandas.read_csv(file)
             elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
                 df = pandas.read_excel(file)
-=======
-                df = pd.read_csv(file)
-            elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-                df = pd.read_excel(file)
->>>>>>> 154eb468c0ebbc975e8e02789112676746248973
             else:
                 return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
             df['employer_id'] = employer_id        
@@ -856,11 +850,6 @@ class EmployeeImportView(APIView):
             return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         
         return Response({"message": "File processed successfully", "status code" :status.HTTP_201_CREATED})
-<<<<<<< HEAD
-=======
-
->>>>>>> 154eb468c0ebbc975e8e02789112676746248973
-
 
 
 #Extracting the Last Five record from the Log Table
