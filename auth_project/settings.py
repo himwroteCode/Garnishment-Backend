@@ -4,11 +4,6 @@ import sys
 from pathlib import Path
 import dj_database_url
 from datetime import timedelta
-from .config import ccpa_limit
-from reused_classes.gar_reused_classes import *
-
-MY_GLOBAL_FUNCTION = DisposableIncomeCalculator()
-MY_GLOBAL_STATE_FUNCTION = StateMethodIdentifiers(state="indiana")
 
 
 
@@ -57,8 +52,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework.authtoken',
     'django_rest_passwordreset',
-    'User_app'
-]
+    # 'celery',
+    # 'django-celery-results',
+    'User_app',]
 
 AUTHENTICATION_BACKENDS=[
     'django.contrib.auth.backends.ModelBackend'
@@ -106,6 +102,14 @@ TEMPLATES = [
     },
 ]
 
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'  # Use Redis as broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# Django-Celery-Results
+
+CELERY_RESULT_BACKEND = 'django-db'
 
 
 

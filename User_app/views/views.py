@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ..models import *
-import pandas as pd
+import pandas 
 from User_app.models import *
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
@@ -13,7 +13,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 import json
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
@@ -820,9 +819,9 @@ class EmployeeImportView(APIView):
     
             # Check the file extension
             if file_name.endswith('.csv'):
-                df = pd.read_csv(file)
+                df = pandas.read_csv(file)
             elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-                df = pd.read_excel(file)
+                df = pandas.read_excel(file)
             else:
                 return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
             df['employer_id'] = employer_id        

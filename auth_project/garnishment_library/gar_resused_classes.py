@@ -54,8 +54,6 @@ class CalculateAmountToWithhold:
             return self.allowed_amount_for_garnishment / self.number_of_child_support_order
         else:
             return 0
-class ChildSupportConstants:
-        constrant="divide equally"
 
 
 class CalculateArrearAmountForChild:
@@ -114,7 +112,6 @@ class WLIdentifier:
                          detail["de_gt_145"] == de_gt_145 and
                          detail["order_gt_one"] == order_gt_one)):
                         result = int(detail["WL"].replace("%", "")) / 100
-                        print(result)
                         return result
         
         return f"No matching WL found for this employee: {employee_id}"

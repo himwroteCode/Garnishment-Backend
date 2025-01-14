@@ -80,7 +80,6 @@ class ChildSupport:
         
         tcsa = self.get_list_supportAmt(record)
         taa = self.get_list_support_arrearAmt(record)
-        print("tcsa",sum(tcsa))
         return sum(tcsa) + sum(taa)
 
     def calculate_ade(self, record):
@@ -194,7 +193,7 @@ class MultipleChild(ChildSupport):
 @method_decorator(csrf_exempt, name='dispatch')
 class CalculationDataView(APIView):
     """
-    API View to handle child support calculations and save data to the database.
+    API View to handle Garnishment calculations and save data to the database.
     """
 
     def post(self, request, *args, **kwargs):
@@ -223,33 +222,121 @@ class CalculationDataView(APIView):
                         {"error": f"Missing fields in record: {', '.join(missing_fields)}"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-
-                # Extract necessary values
-
-                tcsa = ChildSupport().get_list_supportAmt(record)
-
-                # Perform calculations based on the number of child support orders
-                if len(tcsa) > 1:
-                    result = MultipleChild().calculate(record)
-                else:
-                    result = SingleChild().calculate(record)
-
-                # Save record to the database
-                # user = Garcalculation_data.objects.create(**record)
-                output.append({
-                    "employee_id": record.get("employee_id"),
-                    "employer_id": record.get("employer_id"),
-                    "result": result
-                })
-
-                # Log the action
-                LogEntry.objects.create(
-                    action="Calculation data added",
-                    details=(
-                        f"Calculation data added successfully with employer ID "
-                        f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
+                if "garnishment_type"=="child_support":
+                    # Validate child support fields
+                    required_child_support_fields = [
+                        "child_support", "arrears_greater_than_12_weeks", "support_second_family","gross_pay","state"
+                    ]
+                    
+                    missing_child_support_fields = [
+                        field for field in required_child_support_fields if field not in record
+                    ]
+                    if missing_child_support_fields:
+                        return Response(
+                            {"error": f"Missing fields in record: {', '.join(missing_child_support_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )     
+                    else:                   
+                        
+                        # Extract necessary values        
+                        tcsa = ChildSupport().get_list_supportAmt(record)
+        
+                        # Perform calculations based on the number of child support orders
+                        if len(tcsa) > 1:
+                            result = MultipleChild().calculate(record)
+                        else:
+                            result = SingleChild().calculate(record)
+        
+                        # Save record to the database
+                        # user = Garcalculation_data.objects.create(**record)
+                        output.append({
+                            "employee_id": record.get("employee_id"),
+                            "employer_id": record.get("employer_id"),
+                            "result": result
+                        })
+                    # Log the action
+                    LogEntry.objects.create(
+                        action="Calculation data added",
+                        details=(
+                            f"Calculation data added successfully with employer ID "
+                            f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
+                        )
                     )
-                )
+                elif "garnishment_type"=="federal_tax":
+                    # Validate federal tax fields
+                    required_federal_tax_fields = [
+                        "filing_status", "gross_pay", "state"
+                    ]
+                    missing_federal_tax_fields = [
+                        field for field in required_federal_tax_fields if field not in record
+                    ]
+                    if missing_federal_tax_fields:
+                        return Response(
+                            {"error": f"Missing fields in record: {', '.join(missing_federal_tax_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    else:
+                        # Extract necessary values
+                        filing_status = record.get("filing_status")
+                        gross_pay = record.get("gross_pay")
+                        state = record.get("state")
+        
+                        # Perform calculations
+                        result = gc.FederalTax().calculate_federal_tax(filing_status, gross_pay, state)
+        
+                        # Save record to the database
+                        # user = Garcalculation_data.objects.create(**record)
+                        output.append({
+                            "employee_id": record.get("employee_id"),
+                            "employer_id": record.get("employer_id"),
+                            "result": result
+                        })
+        
+                        # Log the action
+                        LogEntry.objects.create(
+                            action="Calculation data added",
+                            details=(
+                                f"Calculation data added successfully with employer ID "
+                                f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
+                            )
+                        )
+                elif "garnishment_type"=="student_loan":
+                    # Validate student loan fields
+                    required_student_loan_fields = [
+                        "gross_pay", "state"
+                    ]
+                    missing_student_loan_fields = [
+                        field for field in required_student_loan_fields if field not in record
+                    ]
+                    if missing_student_loan_fields:
+                        return Response(
+                            {"error": f"Missing fields in record: {', '.join(missing_student_loan_fields)}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    else:
+                        # Extract necessary values
+                        gross_pay = record.get("gross_pay")
+                        state = record.get("state")
+        
+                        # Perform calculations
+                        result = gc.StudentLoan().calculate_student_loan(gross_pay, state)
+        
+                        # Save record to the database
+                        # user = Garcalculation_data.objects.create(**record)
+                        output.append({
+                            "employee_id": record.get("employee_id"),
+                            "employer_id": record.get("employer_id"),
+                            "result": result
+                        })
+        
+                        # Log the action
+                        LogEntry.objects.create(
+                            action="Calculation data added",
+                            details=(
+                                f"Calculation data added successfully with employer ID "
+                                f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
+                            )
+                        )
 
             return Response(
                 {

@@ -6,6 +6,8 @@ from ..serializers import *
 from django.db import transaction
 from rest_framework.views import APIView
 from django.db import transaction
+from concurrent.futures import ThreadPoolExecutor
+from django.db import transaction
 
 
 class get_multiple_student_loan_case_data(APIView):
@@ -87,8 +89,7 @@ class get_all_multiple_student_loan_result(APIView):
 
 
 
-from concurrent.futures import ThreadPoolExecutor
-from django.db import transaction
+
 
 class MultipleStudentLoanCalculationData(APIView):
     def post(self, request):
@@ -103,7 +104,7 @@ class MultipleStudentLoanCalculationData(APIView):
             return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=1000) as executor:
                 results = list(executor.map(self.process_record, rows, [batch_id] * len(rows)))
 
             return Response({
