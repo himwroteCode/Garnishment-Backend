@@ -103,7 +103,7 @@ class MultipleStudentLoanCalculationData(APIView):
             return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=1000) as executor:
                 results = list(executor.map(self.process_record, rows, [batch_id] * len(rows)))
 
             return Response({
