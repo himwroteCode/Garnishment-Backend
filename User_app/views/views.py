@@ -1,6 +1,4 @@
 from rest_framework import status
-from django.contrib import messages
-from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +14,6 @@ import json
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
-from rest_framework import viewsets ,generics
 from ..serializers import *
 from django.http import HttpResponse
 from ..forms import PDFUploadForm
@@ -197,12 +194,13 @@ def EmployerProfile(request):
         return JsonResponse({'message': 'Please use POST method','status code':status.HTTP_400_BAD_REQUEST})
 
 
+
 @csrf_exempt
 def EmployeeDetails(request):
     if request.method == 'POST' :
         try:
             data = json.loads(request.body)
-            required_fields = ['employee_name','department', 'pay_cycle', 'number_of_child_support_order', 'location']
+            required_fields = [ "company_id", "first_name", "middle_name", "last_name", "disability", "age", "work_address", "work_zip_code", "home_address", "home_zip_code", "number_of_garnishment", "type_of_garnishment", "sdu"]
             missing_fields = [field for field in required_fields if field not in data or not data[field]]
             
             if missing_fields:
