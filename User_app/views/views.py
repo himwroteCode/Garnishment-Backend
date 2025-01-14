@@ -807,49 +807,50 @@ def export_employee_data(request, employer_id):
 
 
 
-# #Import employee details using the Excel file
-# class EmployeeImportView(APIView):
-#     def post(self, request, employer_id):
-#         try:
-#             if 'file' not in request.FILES:
-#                 return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+#Import employee details using the Excel file
+class EmployeeImportView(APIView):
+    def post(self, request, employer_id):
+        try:
+            if 'file' not in request.FILES:
+                return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
             
-#             file = request.FILES['file']
-#             file_name = file.name
+            file = request.FILES['file']
+            file_name = file.name
     
-#             # Check the file extension
-#             if file_name.endswith('.csv'):
-#                 df = pd.read_csv(file)
-#             elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-#                 df = pd.read_excel(file)
-#             else:
-#                 return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
-#             df['employer_id'] = employer_id        
-#             employees = []
-#             for _, row in df.iterrows():
-#                 employee_data={
-#                 'employee_name':row['employee_name'],
-#                 'department':row['department'],
-#                 'pay_cycle':row['pay_cycle'],
-#                 'number_of_garnishment':row['number_of_garnishment'],
-#                 'location':row['location'],
-#                 'employer_id': row['employer_id'] 
-#                 }
-#                 # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
+            # Check the file extension
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
+                df = pd.read_excel(file)
+            else:
+                return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
+            df['employer_id'] = employer_id        
+            employees = []
+            for _, row in df.iterrows():
+                employee_data={
+                'employee_name':row['employee_name'],
+                'department':row['department'],
+                'pay_cycle':row['pay_cycle'],
+                'number_of_child_support_order':row['number_of_child_support_order'],
+                'location':row['location'],
+                'employer_id': row['employer_id'] 
+                }
+                # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
     
-#                 serializer = EmployeeDetailsSerializer(data=employee_data)
-#                 if serializer.is_valid():
-#                     employees.append(serializer.save())   
-#                 else:
-#                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                serializer = EmployeeDetailsSerializer(data=employee_data)
+                if serializer.is_valid():
+                    employees.append(serializer.save())   
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
-#             LogEntry.objects.create(
-#             action='Employee details Imported',
-#             details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
-#         except Exception as e:
-#             return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
+            LogEntry.objects.create(
+            action='Employee details Imported',
+            details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
+        except Exception as e:
+            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
         
-#         return Response({"message": "File processed successfully", "status code" :status.HTTP_201_CREATED})
+        return Response({"message": "File processed successfully", "status code" :status.HTTP_201_CREATED})
+
 
 
 
