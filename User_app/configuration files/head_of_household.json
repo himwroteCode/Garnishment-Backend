@@ -1,54 +1,54 @@
 {"head_of_household":[
-    {
-        "Pay Period": "Daily",
-        "Exemptions 1": 48.08,
-        "Exemptions 2": 62.69,
-        "Exemptions 3": 77.31,
-        "Exemptions 4": 91.92,
-        "Exemptions 5": 106.54,
-        "Exemptions 6": 121.15,
-        "More than 7": "33.46 plus 14.62 for each exemption"
-    },
-    {
-        "Pay Period": "Weekly",
-        "Exemptions 1": 240.38,
-        "Exemptions 2": 313.46,
-        "Exemptions 3": 386.54,
-        "Exemptions 4": 459.62,
-        "Exemptions 5": 532.69,
-        "Exemptions 6": 605.77,
-        "More than 7": "167.30 plus 73.08 for each exemption"
-    },
-    {
-        "Pay Period": "Biweekly",
-        "Exemptions 1": 480.77,
-        "Exemptions 2": 626.92,
-        "Exemptions 3": 773.08,
-        "Exemptions 4": 919.23,
-        "Exemptions 5": 1065.38,
-        "Exemptions 6": 1211.54,
-        "More than 7": "334.62 plus 146.15 for each exemption"
-    },
-    {
-        "Pay Period": "Semimonthly",
-        "Exemptions 1": 520.83,
-        "Exemptions 2": 679.17,
-        "Exemptions 3": 837.5,
-        "Exemptions 4": 995.83,
-        "Exemptions 5": 1154.17,
-        "Exemptions 6": 1312.5,
-        "More than 7": "362.50 plus 158.33 for each exemption"
-    },
-    {
-        "Pay Period": "Monthly",
-        "Exemptions 1": 1041.67,
-        "Exemptions 2": 1358.33,
-        "Exemptions 3": 1675,
-        "Exemptions 4": 1991.67,
-        "Exemptions 5": 2308.33,
-        "Exemptions 6": 2625,
-        "More than 7": "725.00 plus 316.67 for each exemption"
-    }
-]
+        {
+            "Pay Period": "daily",
+            "0": 86.54,
+            "1": 106.16,
+            "2": 125.78,
+            "3": 145.4,
+            "4": 165.02,
+            "5": 184.64,
+            "6": "86.54 plus 19.62 for each dependent"
+        },
+        {
+            "Pay Period": "weekly",
+            "0": 432.69,
+            "1": 530.77,
+            "2": 628.85,
+            "3": 726.93,
+            "4": 825.01,
+            "5": 923.09,
+            "6": "432.69 plus 98.08 for each dependent"
+        },
+        {
+            "Pay Period": "biweekly",
+            "0": 865.38,
+            "1": 1061.53,
+            "2": 1257.68,
+            "3": 1453.83,
+            "4": 1649.98,
+            "5": 1846.13,
+            "6": "865.38 plus 196.15 for each dependent"
+        },
+        {
+            "Pay Period": "semimonthly",
+            "0": 937.5,
+            "1": 1150,
+            "2": 1362.5,
+            "3": 1575,
+            "4": 1787.5,
+            "5": 2000,
+            "6": "937.50 plus 212.50 for each dependent"
+        },
+        {
+            "Pay Period": "monthly",
+            "0": 1875,
+            "1": 2300,
+            "2": 2725,
+            "3": 3150,
+            "4": 3575,
+            "5": 4000,
+            "6": "1875.00 plus 425.00 for each dependent"
+        }
+    ]
 }
-    
+

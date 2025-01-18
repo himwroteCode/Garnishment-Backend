@@ -10,12 +10,14 @@ from auth_project.garnishment_library import gar_resused_classes as gc
 from django.utils.decorators import method_decorator
 
 
+
 class ChildSupport:
     """
     This class contains utility functions to calculate various child support-related amounts.
     """
     PRORATE = "prorate"
     DEVIDEEQUALLY = "divide equally"
+    CHILSUPPORT = "child_support"
     def calculate_de(self,record):
         gross_pay = record.get("gross_pay") 
         mandatory_deductions=record.get("mandatory_deductions")
@@ -23,7 +25,7 @@ class ChildSupport:
         return gross_pay - mandatory_deductions
     
     def get_list_supportAmt(self, record):
-        child_support=record.get("child_support")
+        child_support=record.get(self.self.CHILSUPPORT)
 
         return [
             value 
@@ -34,7 +36,7 @@ class ChildSupport:
 
 
     def get_list_support_arrearAmt(self, record):
-        child_support=record.get("child_support")
+        child_support=record.get(self.CHILSUPPORT)
         return [
             value
             for Amt_dict in child_support
@@ -222,10 +224,10 @@ class CalculationDataView(APIView):
                         {"error": f"Missing fields in record: {', '.join(missing_fields)}"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                if "garnishment_type"=="child_support":
+                if "garnishment_type"==self.self.CHILSUPPORT:
                     # Validate child support fields
                     required_child_support_fields = [
-                        "child_support", "arrears_greater_than_12_weeks", "support_second_family","gross_pay","state"
+                        self.CHILSUPPORT, "arrears_greater_than_12_weeks", "support_second_family","gross_pay","state"
                     ]
                     
                     missing_child_support_fields = [
@@ -371,7 +373,7 @@ class CalculationDataView(APIView):
 #       "garnishment_fees": 5,
 #       "arrears_greater_than_12_weeks": "Yes",
 #       "support_second_family": "No",
-#       "child_support" : [ {"amount": 150, "arrear": 15}, {"amount": 100, "arrear": 0}],
+#       self.CHILSUPPORT : [ {"amount": 150, "arrear": 15}, {"amount": 100, "arrear": 0}],
 #       "state": "Texas",
 #       "arrears_amount1": 99,
 #       "pay_period" : "weekly",

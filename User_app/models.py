@@ -6,26 +6,22 @@ from django.db import models
 
 # Employer_Profile details
 class Employer_Profile(AbstractBaseUser):
-    employer_id = models.AutoField(primary_key=True)
-    employer_name = models.CharField(max_length=100)
+    cid = models.AutoField(primary_key=True)
+    company_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=100, unique=True)
-    street_name = models.CharField(max_length=255, null=True, blank=True)
-    federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
-    city = models.CharField(max_length=255, null=True, blank=True)
-    state = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
+    registered_address = models.CharField(max_length=100, unique=True)
     zipcode = models.CharField(max_length=10, null=True, blank=True)
-    number_of_employees = models.IntegerField(null=True, blank=True)
-    department = models.CharField(max_length=255, null=True, blank=True)
+    ein = models.IntegerField()
+    bank_name = models.CharField(max_length=255, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
 
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'employer_name']
+    # USERNAME_FIELD = 'email'
+    # REQUIRED_FIELDS = ['username', 'employer_name']
 
-    def __str__(self):
-        return self.username
+    # def __str__(self):
+    #     return self.username
     
 
 class Calculation_data_results(models.Model):
@@ -54,18 +50,49 @@ class Calculation_data_results(models.Model):
     amount_left_for_arrears=models.FloatField()
     allowed_amount_for_other_garnishment=models.FloatField()
 
-class Employee_Details(models.Model):
-    employee_id = models.AutoField(primary_key=True)
-    employer_id = models.IntegerField()
-    employee_name = models.CharField(max_length=255)
-    department = models.CharField(max_length=255)
-    pay_cycle = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    number_of_child_support_order=models.IntegerField()
+
+class Employee_Detail(models.Model):
+    employee_id = models.CharField(max_length=255)
+    company_id = models.CharField(max_length=255)
+    age = models.IntegerField()
+    social_security_number = models.CharField(max_length=255)
+    blind = models.BooleanField(null=True, blank=True)
+    home_state=models.CharField(max_length=255)
+    work_state=models.CharField(max_length=255)
+    gender=models.CharField(max_length=255,null=True, blank=True)
+    pay_period = models.CharField(max_length=255)
+    number_of_exemptions = models.IntegerField()
+    filing_status = models.CharField(max_length=255)
+    marital_status = models.CharField(max_length=255)
+    number_of_student_default_loan = models.IntegerField()
+    support_second_family = models.BooleanField()
+    spouse_age = models.IntegerField(null=True, blank=True)
+    is_spouse_blind = models.BooleanField(null=True, blank=True)
+
+
     
-    def __str__(self):
-        return self.employee_name
-  
+# # Employer_Profile details
+# class Employer_Profile(AbstractBaseUser):
+#     employer_id = models.AutoField(primary_key=True)
+#     employer_name = models.CharField(max_length=100)
+#     email = models.EmailField(unique=True)
+#     username = models.CharField(max_length=100, unique=True)
+#     street_name = models.CharField(max_length=255, null=True, blank=True)
+#     federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
+#     city = models.CharField(max_length=255, null=True, blank=True)
+#     state = models.CharField(max_length=255, null=True, blank=True)
+#     country = models.CharField(max_length=255, null=True, blank=True)
+#     zipcode = models.CharField(max_length=10, null=True, blank=True)
+#     number_of_employees = models.IntegerField(null=True, blank=True)
+#     department = models.CharField(max_length=255, null=True, blank=True)
+#     location = models.CharField(max_length=255, null=True, blank=True)
+
+
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = ['username', 'employer_name']
+
+#     def __str__(self):
+#         return self.username
 class Tax_details(models.Model):
     tax_id = models.AutoField(primary_key=True)
     employer_id=models.IntegerField(unique=True)

@@ -8,7 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from auth_project.garnishment_library import gar_resused_classes as gc
 from django.utils.decorators import method_decorator
-
+import os
+import json 
+from django.conf import settings
 
 class ChildSupport:
     """
@@ -16,14 +18,82 @@ class ChildSupport:
     """
     PRORATE = "prorate"
     DEVIDEEQUALLY = "divide equally"
+    CHILDSUPPORT = "child_support"
+    
+    def __init__(self):
+        self.de_rules_file  = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/disposable earning rules.json')
+        self.ccpa_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/ccpa_rules.json')
+
+    def _load_json_file(self, file_path):
+        """
+        Helper method to load a JSON file.
+        """
+        try:
+            with open(file_path, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            raise Exception(f"File not found: {file_path}")
+        except json.JSONDecodeError:
+            raise Exception(f"Invalid JSON format in file: {file_path}")
+
+    def calculate_de_rule(self, record):
+        """
+        Calculate the Disposable Earnings (DE) rule based on the state.
+        """
+        state = record.get("state")
+        if not state:
+            raise ValueError("State information is missing in the record.")
+
+        data = self._load_json_file(self.de_rules_file)
+        de_rules = data.get("de", [])
+
+        # Find matching state in DE rules
+        for rule in de_rules:
+            if rule['State'].lower() == state.lower():
+                return rule['Disposable Earnings']
+
+        raise ValueError(f"No DE rule found for state: {state}")
+
+
+
+    def calculate_md(self, record):
+        """
+        Calculate mandatory deductions based on state and tax rules.
+        """
+        gross_pay = record.get("gross_pay")
+        state = record.get("state")
+        tax = record.get("tax")
+
+        if gross_pay is None or state is None or tax is None:
+            raise ValueError("Record must include 'gross_pay', 'state', and 'tax' fields.")
+
+        de_rule = self.calculate_de_rule(record)
+        print(f"Disposable Earnings Rule: {de_rule}")
+
+        data = self._load_json_file(self.ccpa_rules_file)
+        ccpa_rules = data.get("CCPA_Rules", {})
+
+        # Calculate mandatory deductions
+        mandatory_deductions = 0
+        if de_rule.lower() == "ccpa":
+            mandatory_tax_keys = ccpa_rules.get("Mandatory_deductions", [])
+            tax_amt = [tax.get(k, 0) for tax in tax for k in mandatory_tax_keys if k in tax]
+            mandatory_deductions = sum(tax_amt)
+
+        print(f"Mandatory Deductions: {mandatory_deductions}")
+
+        return mandatory_deductions
+    
+
+
     def calculate_de(self,record):
         gross_pay = record.get("gross_pay") 
-        mandatory_deductions=record.get("mandatory_deductions")
+        mandatory_deductions=self.calculate_md(record)
         # Calculate disposable earnings
         return gross_pay - mandatory_deductions
     
     def get_list_supportAmt(self, record):
-        child_support=record.get("child_support")
+        child_support=record.get(self.CHILDSUPPORT)
 
         return [
             value 
@@ -34,7 +104,7 @@ class ChildSupport:
 
 
     def get_list_support_arrearAmt(self, record):
-        child_support=record.get("child_support")
+        child_support=record.get(self.CHILDSUPPORT)
         return [
             value
             for Amt_dict in child_support
@@ -187,4 +257,24 @@ class MultipleChild(ChildSupport):
                 raise ValueError("Invalid allocation method for garnishment.")
 
         return child_support_amount, arrear_amount
+    
+# record=   {
+#       "employee_id": "EMP002",
+#       "employer_id" :"EMP001",
+#       "gross_pay": 400,
+#       "employee_name": "Michael Johnson",
+#       "garnishment_fees": 5,
+#       "arrears_greater_than_12_weeks": "Yes",
+#       "support_second_family": "No",
+#       "child_support" : [ {"amount": 150, "arrear": 15}, {"amount": 100, "arrear": 0}],
+#       "state": "Texas",
+#       "arrears_amount1": 99,
+#       "pay_period" : "weekly",
+#       "mandatory_deductions":40,
+#       "garnishment_type":"child_support"
+#     }   
+
+    
+# tcsa = ChildSupport().get_list_supportAmt(record)
+# result = MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record)
 
