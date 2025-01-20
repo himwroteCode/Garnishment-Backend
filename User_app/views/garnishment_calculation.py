@@ -33,7 +33,6 @@ class CalculationDataView(APIView):
 
             for record in rows:
 
-
                 # Validate essential fields
                 # required_fields = [
                 #     "employee_id", "employer_id", "gross_pay", "state"
@@ -103,6 +102,7 @@ class CalculationDataView(APIView):
                 output.append({
                     "employee_id": record.get("employee_id"),
                     "employer_id": record.get("employer_id"),
+                    "garnishment_type": garnishment_type,
                     "withhuolding_amt": result
                 })
 

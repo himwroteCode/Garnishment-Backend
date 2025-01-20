@@ -22,14 +22,14 @@ class federal_tax_calculation():
     def get_total_exemption_self(self, request):
       age = request.get('age')
         
-      disabiltiy = request.get('disability')
+      blind = request.get('blind')
       number_of_exemption = 0
 
-      if (age>=65 and disabiltiy==True) :
+      if (age>=65 and blind==True) :
           number_of_exemption=2
-      elif (age<65 and disabiltiy==True) :
+      elif (age<65 and blind==True) :
           number_of_exemption=1
-      elif(age>=65 and disabiltiy==False) :
+      elif(age>=65 and blind==False) :
           number_of_exemption=1
       return number_of_exemption
 
@@ -53,7 +53,7 @@ class federal_tax_calculation():
 
         file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/additional_exempt_amount.json')
         age=record.get('age')
-        disability=record.get('disability')
+        blind=record.get('blind')
         result = 0
         with open(file_path, 'r') as file:
             data = json.load(file)
