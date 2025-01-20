@@ -5,25 +5,46 @@ from django.db import models
 
 
 # Employer_Profile details
+# class Employer_Profile(AbstractBaseUser):
+#     employer_id = models.CharField(max_length=100,primary_key=True)
+#     company_name = models.CharField(max_length=100)
+#     email = models.EmailField(unique=True)
+#     registered_address = models.CharField(max_length=100, unique=True)
+#     zipcode = models.CharField(max_length=10, null=True, blank=True)
+#     ein = models.IntegerField()
+#     bank_name = models.CharField(max_length=255, null=True, blank=True)
+#     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+#     location = models.CharField(max_length=255, null=True, blank=True)
+
+
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = ['username', 'employer_name']
+
+#     def __str__(self):
+#         return self.username
+    
 class Employer_Profile(AbstractBaseUser):
-    cid = models.AutoField(primary_key=True)
-    company_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    registered_address = models.CharField(max_length=100, unique=True)
+    employer_id = models.AutoField(primary_key=True)
+    employer_name = models.CharField(max_length=100,default="ABS")
+    email = models.EmailField(unique=True,default="rtt@gmail.com")
+    username = models.CharField(max_length=100, unique=True,default="USN")
+    street_name = models.CharField(max_length=255, null=True, blank=True)
+    federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=255, null=True, blank=True)
+    state = models.CharField(max_length=255, null=True, blank=True)
+    country = models.CharField(max_length=255, null=True, blank=True)
     zipcode = models.CharField(max_length=10, null=True, blank=True)
-    ein = models.IntegerField()
-    bank_name = models.CharField(max_length=255, null=True, blank=True)
-    bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+    number_of_employees = models.IntegerField(null=True, blank=True)
+    department = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
 
 
-    # USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['username', 'employer_name']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'employer_name']
 
-    # def __str__(self):
-    #     return self.username
+    def __str__(self):
+        return self.username
     
-
 class Calculation_data_results(models.Model):
     employee_id=models.IntegerField()
     employer_id=models.IntegerField()
@@ -53,6 +74,7 @@ class Calculation_data_results(models.Model):
 
 class Employee_Detail(models.Model):
     employee_id = models.CharField(max_length=255)
+    employer_id =models.CharField(max_length=255)
     company_id = models.CharField(max_length=255)
     age = models.IntegerField()
     social_security_number = models.CharField(max_length=255)
@@ -72,7 +94,7 @@ class Employee_Detail(models.Model):
 
     
 # # Employer_Profile details
-# class Employer_Profile(AbstractBaseUser):
+# class Employer_Profile(models.Model):
 #     employer_id = models.AutoField(primary_key=True)
 #     employer_name = models.CharField(max_length=100)
 #     email = models.EmailField(unique=True)
@@ -88,11 +110,11 @@ class Employee_Detail(models.Model):
 #     location = models.CharField(max_length=255, null=True, blank=True)
 
 
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = ['username', 'employer_name']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'employer_name']
 
-#     def __str__(self):
-#         return self.username
+    def __str__(self):
+        return self.username
 class Tax_details(models.Model):
     tax_id = models.AutoField(primary_key=True)
     employer_id=models.IntegerField(unique=True)
@@ -383,7 +405,16 @@ class multiple_garnishment_case_result(models.Model):
     net_pay = models.FloatField()  
     timestamp = models.DateTimeField(auto_now_add=True)
 
-
+# class company_details(models.Model):
+#     co_id= models.IntegerField(max_length=255) 
+#     ein = models.IntegerField(max_length=255)
+#     company_name = models.CharField(max_length=255)
+#     zipcode= models.IntegerField(max_length=255)
+#     state= models.CharField(max_length=255)
+#     DBA_name= models.CharField(max_length=255)
+#     bank_name = models.CharField(max_length=255, null=True, blank=True)
+#     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+#     location = models.CharField(max_length=255, null=True, blank=True)
 
 
 
