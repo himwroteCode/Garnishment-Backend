@@ -129,11 +129,11 @@ class CalculationDataView(APIView):
                 {"error": "Employee details not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        # except Exception as e:
-        #     return Response(
-        #         {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
-        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        #     )
+        except Exception as e:
+            return Response(
+                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # record=   {
