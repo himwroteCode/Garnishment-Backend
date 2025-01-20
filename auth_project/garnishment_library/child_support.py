@@ -68,7 +68,6 @@ class ChildSupport:
             raise ValueError("Record must include 'gross_pay', 'state', and 'tax' fields.")
 
         de_rule = self.calculate_de_rule(record)
-        print(f"Disposable Earnings Rule: {de_rule}")
 
         data = self._load_json_file(self.ccpa_rules_file)
         ccpa_rules = data.get("CCPA_Rules", {})
@@ -80,7 +79,6 @@ class ChildSupport:
             tax_amt = [tax.get(k, 0) for tax in tax for k in mandatory_tax_keys if k in tax]
             mandatory_deductions = sum(tax_amt)
 
-        print(f"Mandatory Deductions: {mandatory_deductions}")
 
         return mandatory_deductions
     
@@ -137,10 +135,7 @@ class ChildSupport:
 
         #Determine order_gt_one
         order_gt_one = "No" if calculate_tcsa > 1 or state_rules != "Rule_4" else "Yes"
-
-
         
-
         # Identify withholding limit using state rules
         wl_limit = gc.WLIdentifier().find_wl_value(de,state, employee_id, supports_2nd_family, arrears_of_more_than_12_weeks, de_gt_145, order_gt_one)
 

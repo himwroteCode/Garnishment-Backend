@@ -293,55 +293,6 @@ class federal_tax_data_and_result(models.Model):
     net_pay=models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-class federal_case_result(models.Model):
-    employee_id = models.CharField(max_length=255)
-    employer_id = models.CharField(max_length=255)
-    net_pay = models.FloatField()  
-    batch_id=models.CharField(max_length=255)
-    result= models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-class single_filing_status(models.Model):
-    pay_period = models.CharField(max_length=255) 
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()   
-    exemptions_6= models.FloatField()   
-    morethan7= models.CharField(max_length=255)
-
-class head_of_household(models.Model):
-    pay_period = models.CharField(max_length=255)
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()   
-    exemptions_6= models.FloatField()   
-    morethan7= models.CharField(max_length=255)
-
-
-class married_filing_joint_return(models.Model):
-    pay_period = models.CharField(max_length=255) 
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()  
-    exemptions_6= models.FloatField()    
-    morethan7= models.CharField(max_length=255)
-
-class married_filing_sepearte_return(models.Model):
-    pay_period = models.CharField(max_length=255)
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField() 
-    exemptions_6= models.FloatField()     
-    morethan7= models.CharField(max_length=255)
-
 class setting(models.Model):
     employer_id=models.IntegerField()
     modes=models.BooleanField()

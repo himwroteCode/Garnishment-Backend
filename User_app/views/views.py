@@ -255,24 +255,6 @@ def TaxDetails(request):
         return JsonResponse({'message': 'Please use POST method ', 'status code':status.HTTP_400_BAD_REQUEST})
 
 
-@api_view(['GET'])
-def get_Location_Deatils(request, employer_id):
-    employees=LocationSerializer.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-
-
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
 
 
@@ -343,79 +325,6 @@ class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
         return JsonResponse(response_data)
 
 
-#update Tax Details
-@method_decorator(csrf_exempt, name='dispatch')
-class TaxDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Tax_details.objects.all()
-    serializer_class = TaxSerializer
-    lookup_field = 'tax_id'  
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-            LogEntry.objects.create(
-            action='Tax details Updated',
-            details=f'Tax details Updated successfully for tax ID {instance.tax_id}'
-                )
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
-
-
-#update Location Details
-@method_decorator(csrf_exempt, name='dispatch')
-class LocatiionDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    lookup_field = 'location_id'  
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            LogEntry.objects.create(
-            action='Location details Updated',
-            details=f'LOcation details Updated successfully added for Location ID {instance.location_id}'
-                )
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
-    
-
-#update Department Details
-@method_decorator(csrf_exempt, name='dispatch')
-class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Department.objects.all()
-    serializer_class = DepartmentSerializer
-    lookup_field = 'department_id'  
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            LogEntry.objects.create(
-            action='Department details Updated',
-            details=f'Department details has been successfully Updated for Department ID {instance.department_id}')
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
-
 
 #PDF upload view
 @transaction.atomic
@@ -459,62 +368,6 @@ def get_employee_by_employer_id(self, employer_id):
             return JsonResponse(response_data)
 
         except Employee_Detail.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-
-@api_view(['GET'])
-def get_Tax_details(request,employer_id):
-    employees=Tax_details.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = TaxSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-@api_view(['GET'])
-def get_Location_details(request, employer_id):
-    employees=Location.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-@api_view(['GET'])
-def get_Department_details(request, employer_id):
-    employees=Department.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = DepartmentSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Tax_details.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
@@ -895,52 +748,7 @@ class EmployeeDetailsList(APIView):
         except Exception as e:
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
-#Extracting the ALL Tax Details
-class TaxDetailsList(APIView):
-    def get(self, request, format=None):
-        try:
-            queryset = Tax_details.objects.all()
-            serializer = TaxSerializer(queryset, many=True)
-            response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-    
 
-#Extracting the ALL Location Details
-class LocationDetailsList(APIView):
-    def get(self, request, format=None):
-        try:
-            queryset = Location.objects.all()
-            serializer = LocationSerializer(queryset, many=True)
-            response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-
-
-#Extracting the ALL Department Details
-class DepartmentDetailsList(APIView):
-    def get(self, request, format=None):
-        try:
-            queryset = Department.objects.all()
-            serializer = DepartmentSerializer(queryset, many=True)
-            response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
 #Get the single employee details
@@ -961,62 +769,7 @@ def get_single_Employee_Detail(request, employer_id, employee_id):
 
     
 
-#Get the singal Tax details  
-@api_view(['GET'])
-def get_single_tax_details(request, employer_id,tax_id):
-    employees=Tax_details.objects.filter(employer_id=employer_id,tax_id=tax_id)
-    if employees.exists():
-        try:
-            serializer = TaxSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
-
-#Get the singal Location details  
-@api_view(['GET'])
-def get_single_location_details(request, employer_id,location_id):
-    employees=Location.objects.filter(employer_id=employer_id,location_id=location_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-#Get the singal Department details  
-@api_view(['GET'])
-def get_single_department_details(request, employer_id,department_id):
-    employees=Department.objects.filter(employer_id=employer_id,department_id=department_id).order_by('-timestamp')[0:1]
-    if employees.exists():
-        try:
-            serializer = DepartmentSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})   
-    
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PasswordResetRequestView(APIView):
@@ -1108,52 +861,52 @@ class GETSettingDetails(APIView):
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
     
 
-class GETallcalculationresult(APIView):
-    def get(self, request, employer_id):
+# class GETallcalculationresult(APIView):
+#     def get(self, request, employer_id):
         
-        # Retrieve data for each model
-        calculation_data_result = CalculationResult.objects.filter(employer_id=employer_id)
-        single_student_loan_results = single_student_loan_result.objects.filter(employer_id=employer_id)
-        multiple_student_loan_results = multiple_student_loan_result.objects.filter(employer_id=employer_id)
-        federal_case_results = federal_case_result.objects.filter(employer_id=employer_id)
+#         # Retrieve data for each model
+#         calculation_data_result = CalculationResult.objects.filter(employer_id=employer_id)
+#         single_student_loan_results = single_student_loan_result.objects.filter(employer_id=employer_id)
+#         multiple_student_loan_results = multiple_student_loan_result.objects.filter(employer_id=employer_id)
+#         federal_case_results = federal_case_result.objects.filter(employer_id=employer_id)
 
-        if calculation_data_result.exists() or single_student_loan_results.exists() or multiple_student_loan_results.exists() or federal_case_results.exists():
-            try:
-                # Serialize the data using the correct serializer classes
-                calculatoinserializer = ResultSerializer(calculation_data_result, many=True)
-                singlestudentserializer = SingleStudentLoanSerializer(single_student_loan_results, many=True)
-                multiplestudentserializer = MultipleStudentLoanSerializer(multiple_student_loan_results, many=True)
-                federalcaseserializer = federal_case_result_Serializer(federal_case_results, many=True)
+#         if calculation_data_result.exists() or single_student_loan_results.exists() or multiple_student_loan_results.exists() or federal_case_results.exists():
+#             try:
+#                 # Serialize the data using the correct serializer classes
+#                 calculatoinserializer = ResultSerializer(calculation_data_result, many=True)
+#                 singlestudentserializer = SingleStudentLoanSerializer(single_student_loan_results, many=True)
+#                 multiplestudentserializer = MultipleStudentLoanSerializer(multiple_student_loan_results, many=True)
+#                 federalcaseserializer = federal_case_result_Serializer(federal_case_results, many=True)
 
-                # Adding the case field to each serialized data
-                for item in calculatoinserializer.data:
-                    item['Garnishment case'] = 'Child Support Calculation Result'
-                for item in singlestudentserializer.data:
-                    item['Garnishment case'] = 'Single Student Loan Result'
-                for item in multiplestudentserializer.data:
-                    item['Garnishment case'] = 'Multiple Student Loan Result'
-                for item in federalcaseserializer.data:
-                    item['Garnishment case'] = 'Federal Tax Case Result'
+#                 # Adding the case field to each serialized data
+#                 for item in calculatoinserializer.data:
+#                     item['Garnishment case'] = 'Child Support Calculation Result'
+#                 for item in singlestudentserializer.data:
+#                     item['Garnishment case'] = 'Single Student Loan Result'
+#                 for item in multiplestudentserializer.data:
+#                     item['Garnishment case'] = 'Multiple Student Loan Result'
+#                 for item in federalcaseserializer.data:
+#                     item['Garnishment case'] = 'Federal Tax Case Result'
 
-                # Combine all serialized data into one list
-                final_result = (
-                    calculatoinserializer.data + 
-                    singlestudentserializer.data + 
-                    multiplestudentserializer.data + 
-                    federalcaseserializer.data
-                )
+#                 # Combine all serialized data into one list
+#                 final_result = (
+#                     calculatoinserializer.data + 
+#                     singlestudentserializer.data + 
+#                     multiplestudentserializer.data + 
+#                     federalcaseserializer.data
+#                 )
 
-                response_data = {
-                    'success': True,
-                    'message': 'Data retrieved successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': final_result
-                }
-                return JsonResponse(response_data, status=status.HTTP_200_OK)
-            except Exception as e:
-                return JsonResponse({'message': f'Error occurred: {str(e)}', 'status code': status.HTTP_500_INTERNAL_SERVER_ERROR})
-        else:
-            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
+#                 response_data = {
+#                     'success': True,
+#                     'message': 'Data retrieved successfully',
+#                     'status code': status.HTTP_200_OK,
+#                     'data': final_result
+#                 }
+#                 return JsonResponse(response_data, status=status.HTTP_200_OK)
+#             except Exception as e:
+#                 return JsonResponse({'message': f'Error occurred: {str(e)}', 'status code': status.HTTP_500_INTERNAL_SERVER_ERROR})
+#         else:
+#             return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
 # from django.db.models import Count

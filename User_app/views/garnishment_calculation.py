@@ -2,17 +2,15 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from User_app.models import *
 from rest_framework.response import Response
-from ..serializers import *
+from User_app.serializers import *
 from rest_framework.views import APIView
 from auth_project.garnishment_library import gar_resused_classes as gc
 from auth_project.garnishment_library.child_support import ChildSupport,MultipleChild,SingleChild as gc
 from django.utils.decorators import method_decorator
-
 from auth_project.garnishment_library.federal_case import federal_tax
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CalculationDataView(APIView):
-
     """
     API View to handle Garnishment calculations and save data to the database.
     """
@@ -34,6 +32,8 @@ class CalculationDataView(APIView):
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
 
             for record in rows:
+
+
                 # Validate essential fields
                 # required_fields = [
                 #     "employee_id", "employer_id", "gross_pay", "state"
@@ -44,44 +44,37 @@ class CalculationDataView(APIView):
                 #         {"error": f"Missing fields in record: {', '.join(missing_fields)}"},
                 #         status=status.HTTP_400_BAD_REQUEST
                 #     )
-                
-                
 
                 garnishment_type = record.get("garnishment_type")
 
                 if garnishment_type == self.CHILSUPPORT:
-                    # Validate child support fields
-                    # required_child_support_fields = [
-                    #     "child_support", "arrears_greater_than_12_weeks", "support_second_family", "gross_pay", "state"
-                    # ]
-                    # missing_child_support_fields = [
-                    #     field for field in required_child_support_fields if field not in record
-                    # ]
-                    # if missing_child_support_fields:
-                    #     return Response(
-                    #         {"error": f"Missing fields in record: {', '.join(missing_child_support_fields)}"},
-                    #         status=status.HTTP_400_BAD_REQUEST
-                    #     )
+                    #Validate child support fields
+                    required_child_support_fields = [
+                        "child_support", "arrears_greater_than_12_weeks", "support_second_family", "gross_pay", "state"
+                    ]
 
-                    # Perform calculations
-                    tcsa = ChildSupport().get_list_supportAmt(record)
-                    result = MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record)
+                    missing_child_support_fields = [
+                        field for field in required_child_support_fields if field not in set(record.keys())
+                    ]
+
+                    if len(missing_child_support_fields)==0:
+                        tcsa = ChildSupport().get_list_supportAmt(record)
+                        result = MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record)
+                    else:
+                        result={"error": f"Missing fields in record: {', '.join(missing_child_support_fields)}"}
 
                 elif garnishment_type == "federal_tax":
                     # Validate federal tax fields
-                    required_federal_tax_fields = ["filing_status", "gross_pay", "no_of_exception_for_Self"]
+                    required_federal_tax_fields = ["filing_status","pay_period" ,"net_pay", "no_of_exception_for_Self","age","blind"]
                     missing_federal_tax_fields = [
-                        field for field in required_federal_tax_fields if field not in record
+                        field for field in required_federal_tax_fields if field not in set(record.keys())
                     ]
-                    if missing_federal_tax_fields:
-                        return Response(
-                            {"error": f"Missing fields in record: {', '.join(missing_federal_tax_fields)}"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                    # Perform calculations
-                    gross_pay = record.get("gross_pay")
-                    state = record.get("state")
-                    result = federal_tax().calculate(record)
+
+                    if len(missing_federal_tax_fields)==0:
+                        result = federal_tax().calculate(record)
+                    else:
+                        result={"error": f"Missing fields in record: {', '.join(missing_federal_tax_fields)}"}
+
 
                 elif garnishment_type == "student_loan":
                     # Validate student loan fields
@@ -136,11 +129,11 @@ class CalculationDataView(APIView):
                 {"error": "Employee details not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        except Exception as e:
-            return Response(
-                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        # except Exception as e:
+        #     return Response(
+        #         {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        #     )
 
 
 # record=   {

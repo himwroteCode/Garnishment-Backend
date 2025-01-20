@@ -161,7 +161,7 @@ class federal_tax(federal_tax_calculation):
 
     def calculate(self, record):
 
-        gross_pay = record.get('gross_pay')
+        net_pay = record.get('net_pay')
 
         exempt_amount_self=self.get_additional_exempt_for_self(record)
         # print("exempt_amount_self",exempt_amount_self)
@@ -179,7 +179,7 @@ class federal_tax(federal_tax_calculation):
         total_exempt_amt=standard_exempt_amt+exempt_amount_self+exempt_amount_dependent
         # print("total_exempt_amt",total_exempt_amt)
 
-        amount_deduct = round((gross_pay-total_exempt_amt), 2)
+        amount_deduct = round((net_pay-total_exempt_amt), 2)
         # print("amount_deduct",amount_deduct)
 
         amount_deduct = amount_deduct if amount_deduct > 0 else 0
