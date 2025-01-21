@@ -1,96 +1,92 @@
 from rest_framework import status
-from django.contrib import messages
-from auth_project.config import ccpa_limit
-from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from User_app.models import *
-from django.contrib.auth import authenticate, login as auth_login ,get_user_model
-from django.contrib.auth.hashers import check_password
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Count
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
 from User_app.serializers import *
-from rest_framework.decorators import api_view
-from django.utils.decorators import method_decorator
-from django.core.mail import send_mail
-import csv
-from rest_framework.views import APIView
 from auth_project.garnishment_library.child_support import ChildSupport
 
 
 
-class studentloan():
+class StudentLoan():
     """ Calculate Student Loan garnishment amount based on the provided data."""
     
     def __init__(self):
         self.fmw = 7.25 * 30
 
-    def get_de(self, record):
-        gross_pay = record.get("gross_pay")
-
-        de=ChildSupport().calculate_de(record)
-
-        return(gross_pay-de)
-
-    def get_percentage(self, percentage,allowable_disposable_earning):
-        return round(allowable_disposable_earning*percentage / 100  ,2) 
-
-    def get_single_student_amount(self, record):  
-        # Calculate disposable earnings
-        get_de = self.get_de(record)
-
-        # Calculate percentages earnings
-        fifteen_percent_of_earning = self.get_percentage(15,get_de)
-        twentyfive_percent_of_earning = self.get_percentage(25,get_de)
-
-        #Calculate student loan amount
-        student_loan_amt= self.get_de(record)-self.fmw
-
-        # Calculate garnishment amount
-        student_loan_amt=max(0,student_loan_amt)
+    def get_percentage(self, percentage,record):
+        disposable_earning = ChildSupport().calculate_de(record)
+        return round(disposable_earning*percentage / 100  ,2) 
     
-    def get_multiple_student_amount(self, record):
+    
+    def  get_single_student_amount(self, record): 
         # Calculate disposable earnings
-        get_de = self.get_de(record)
+        disposable_earning = ChildSupport().calculate_de(record)
+        garnishment_type=record.get("garnishment_type")
+
 
         # Calculate percentages earnings
-        fifteen_percent_of_earning = self.get_percentage(15,get_de)
-        twentyfive_percent_of_earning = self.get_percentage(25,get_de)
+        fifteen_percent_of_earning = self.get_percentage(15,record)
+        twentyfive_percent_of_earning = self.get_percentage(25,record)
+        fmw = 7.25 * 30
+        difference_of_de_and_fmw=disposable_earning-fmw
+        
+        if difference_of_de_and_fmw<0:
+            student_loan_amt = 0
+ 
+        elif difference_of_de_and_fmw>0 :
+            student_loan_amt = difference_of_de_and_fmw
+            if len(garnishment_type)==0:
+                loan_amt = fifteen_percent_of_earning
+            elif len(garnishment_type)>0:
+                if garnishment_type == "child_support":
+                    difference_amt1 = disposable_earning - twentyfive_percent_of_earning
+                    difference_amt2 = disposable_earning - student_loan_amt
+                    loan_amt=min(fifteen_percent_of_earning,difference_amt1,difference_amt2)
+                elif garnishment_type == "state_tax":
+                    state_tax = StateTax().calculate_de(record)
+                    difference_amt1 = state_tax - twentyfive_percent_of_earning
+                    difference_amt2 = state_tax - student_loan_amt
+                    loan_amt=min(fifteen_percent_of_earning,difference_amt1,difference_amt2)
+            else:
+                pass
 
-        #Calculate student loan amount
-        student_loan_amt= self.get_de(record)-self.fmw
+        return ({"student_loan_amt":loan_amt})
+    
 
-        # Calculate garnishment amount
-        student_loan_amt=max(0,student_loan_amt)
-   
+    def get_multiple_student_amount(self, record):
+        fmw = 7.25 * 30
+
+
+        difference_of_de_and_fmw=disposable_earning-fmw
+        
+        if difference_of_de_and_fmw<0:
+            student_loan_amt1 = 0
+            student_loan_amt2 = 0
+
+        elif difference_of_de_and_fmw>0 :
+            disposable_earning = ChildSupport().calculate_de(record)
+            # Calculate student loan amt.
+            student_loan_amt1 = self.get_percentage(15,disposable_earning)
+            student_loan_amt2 = self.get_percentage(10,disposable_earning)
+        
+
+        return ({"student_loan_amt1":student_loan_amt1,"student_loan_amt2":student_loan_amt2})
+    
+class student_loan_calculate():
         
     def calculate(self, record):
-        garnishment_fees = record.get("garnishment_fees", 0)
-        disposable_income = record.get("disposable_income")  
-        garnishment_type = record.get("garnishment_type")  
-        
-        # Save the record to the `single_student_loan_data` table
-        # user = single_student_loan_data.objects.create(**record)  
-        
-        if garnishment_type == "single_student_loan":
-            # Calculate garnishment amount
-            garnishment_amount = self.get_percentage(15,disposable_income)
-        elif garnishment_type == "multiple_student_loan":
-            # Calculate garnishment amount
-            allowable_disposable_earning = round(disposable_income - garnishment_fees, 2)
-            twentyfive_percent_of_earning = round(allowable_disposable_earning * 0.25, 2)
-            
+        garnishment_type = record.get("garnishment_type") 
 
-            StudentLoanAmount1 = self.get_percentage(15,disposable_income)
-            StudentLoanAmount2 = self.get_percentage(10,disposable_income)
-            StudentLoanAmount3 = self.get_percentage(0,disposable_income)
+        if len(garnishment_type)==0:
+            student_loan_amt=StudentLoan().get_single_student_amount(record)
+        elif len(garnishment_type)>0:
+            student_loan_amt=StudentLoan().get_multiple_student_amount(record)
 
-            net_pay = max(0, round(disposable_income - garnishment_amount, 2))
-            garnishment_amount = self.get_percentage(25,disposable_income)
-
-        return garnishment_amount
+        return student_loan_amt
     
 
 
+print("get_percentages:",StudentLoan().get_percentage)
+print("get_single_student_amount",StudentLoan().get_single_student_amount)
+print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount)
+print("student_loan",student_loan_calculate().calculate)

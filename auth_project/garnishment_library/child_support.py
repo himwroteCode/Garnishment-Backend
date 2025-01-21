@@ -62,9 +62,9 @@ class ChildSupport:
         """
         gross_pay = record.get("gross_pay")
         state = record.get("state")
-        tax = record.get("tax")
+        taxes = record.get("taxes")
 
-        if gross_pay is None or state is None or tax is None:
+        if gross_pay is None or state is None or taxes is None:
             raise ValueError("Record must include 'gross_pay', 'state', and 'tax' fields.")
 
         de_rule = self.calculate_de_rule(record)
@@ -76,7 +76,7 @@ class ChildSupport:
         mandatory_deductions = 0
         if de_rule.lower() == "ccpa":
             mandatory_tax_keys = ccpa_rules.get("Mandatory_deductions", [])
-            tax_amt = [tax.get(k, 0) for tax in tax for k in mandatory_tax_keys if k in tax]
+            tax_amt = [tax.get(k, 0) for tax in taxes for k in mandatory_tax_keys if k in tax]
             mandatory_deductions = sum(tax_amt)
 
 
