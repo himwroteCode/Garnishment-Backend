@@ -24,6 +24,11 @@ from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken ,AccessToken, TokenError
 import csv
 from rest_framework.views import APIView
+#from django.views.decorators.csrf import csrf_exempt
+#from django.http import JsonResponse
+import csv
+import openpyxl
+from User_app.models import Employee_Detail
 
 @csrf_exempt
 def login(request):
@@ -922,3 +927,107 @@ class APICallCountView(APIView):
     def get(self, request):
         logs = APICallLog.objects.values('date', 'endpoint', 'count')
         return Response(logs)
+
+#upsert the employee data
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from User_app.models import Employee_Detail
+import csv
+import io
+
+@csrf_exempt
+def import_employees_api(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']  # Uploaded file
+        updated_employees = []
+        added_employees = []
+
+        try:
+            # Wrap the file in a TextIOWrapper for CSV reading
+            text_file = io.TextIOWrapper(file, encoding='utf-8')
+            reader = csv.DictReader(text_file)
+
+            for row in reader:
+                # Check if the employee exists
+                employee = Employee_Detail.objects.filter(employee_id=row['employee_id']).first()
+
+                if employee:
+                    # Detect changes in employee data
+                    has_changes = (
+                        employee.company_id != row['company_id'] or
+                        employee.age != int(row['age']) or
+                        employee.social_security_number != row['social_security_number'] or
+                        employee.blind != (row['blind'].lower() == 'true') or
+                        employee.home_state != row['home_state'] or
+                        employee.work_state != row['work_state'] or
+                        employee.gender != row.get('gender', None) or
+                        employee.pay_period != row['pay_period'] or
+                        employee.number_of_exemptions != int(row['number_of_exemptions']) or
+                        employee.filing_status != row['filing_status'] or
+                        employee.marital_status != row['marital_status'] or
+                        employee.number_of_student_default_loan != int(row['number_of_student_default_loan']) or
+                        employee.support_second_family != (row['support_second_family'].lower() == 'true') or
+                        employee.spouse_age != int(row.get('spouse_age', 0)) or
+                        employee.is_spouse_blind != (row.get('is_spouse_blind', '').lower() == 'true')
+                    )
+
+                    if has_changes:
+                        # Update employee details
+                        employee.company_id = row['company_id']
+                        employee.age = int(row['age'])
+                        employee.social_security_number = row['social_security_number']
+                        employee.blind = row['blind'].lower() == 'true'
+                        employee.home_state = row['home_state']
+                        employee.work_state = row['work_state']
+                        employee.gender = row.get('gender', None)
+                        employee.pay_period = row['pay_period']
+                        employee.number_of_exemptions = int(row['number_of_exemptions'])
+                        employee.filing_status = row['filing_status']
+                        employee.marital_status = row['marital_status']
+                        employee.number_of_student_default_loan = int(row['number_of_student_default_loan'])
+                        employee.support_second_family = row['support_second_family'].lower() == 'true'
+                        employee.spouse_age = int(row.get('spouse_age', 0))
+                        employee.is_spouse_blind = row.get('is_spouse_blind', '').lower() == 'true'
+                        employee.save()
+                        updated_employees.append(employee.employee_id)
+                else:
+                    # Add new employee
+                    Employee_Detail.objects.create(
+                        employee_id=row['employee_id'],
+                        company_id=row['company_id'],
+                        age=int(row['age']),
+                        social_security_number=row['social_security_number'],
+                        blind=row['blind'].lower() == 'true',
+                        home_state=row['home_state'],
+                        work_state=row['work_state'],
+                        gender=row.get('gender', None),
+                        pay_period=row['pay_period'],
+                        number_of_exemptions=int(row['number_of_exemptions']),
+                        filing_status=row['filing_status'],
+                        marital_status=row['marital_status'],
+                        number_of_student_default_loan=int(row['number_of_student_default_loan']),
+                        support_second_family=row['support_second_family'].lower() == 'true',
+                        spouse_age=int(row.get('spouse_age', 0)),
+                        is_spouse_blind=row.get('is_spouse_blind', '').lower() == 'true'
+                    )
+                    added_employees.append(row['employee_id'])
+
+            # Prepare response
+            response_data = []
+            if added_employees:
+                response_data.append({
+                    'message': 'Employee(s) imported successfully',
+                    'added_employees': added_employees
+                })
+            if updated_employees:
+                response_data.append({
+                    'message': 'Employee details updated successfully',
+                    'updated_employees': updated_employees
+                })
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
