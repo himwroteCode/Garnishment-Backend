@@ -4,7 +4,7 @@ from django.db import models
 
 
 
-# Employer_Profile details
+# # Employer_Profile details
 # class Employer_Profile(AbstractBaseUser):
 #     employer_id = models.CharField(max_length=100,primary_key=True)
 #     company_name = models.CharField(max_length=100)
@@ -44,10 +44,18 @@ class Employer_Profile(AbstractBaseUser):
 
     def __str__(self):
         return self.username
+
+class peo_table(AbstractBaseUser):
+    peo_id= models.AutoField(primary_key=True)
+    peo_name=models.CharField(max_length=255)
+    email=models.EmailField(unique=True)
+    password1=models.CharField(max_length=255)
+    password2=models.CharField(max_length=255)
+
     
 class Calculation_data_results(models.Model):
-    employee_id=models.IntegerField()
-    employer_id=models.IntegerField()
+    employee_id=models.CharField(max_length=255)
+    cid=models.CharField(max_length=255)
     state=models.CharField(max_length=255)
     support_second_family=models.BooleanField()
     disposable_income =models.FloatField()
@@ -74,7 +82,8 @@ class Calculation_data_results(models.Model):
 
 class Employee_Detail(models.Model):
     employee_id = models.CharField(max_length=255)
-    employer_id =models.CharField(max_length=255)
+
+    cid=models.CharField(max_length=255)
     company_id = models.CharField(max_length=255)
     age = models.IntegerField()
     social_security_number = models.CharField(max_length=255)
@@ -405,16 +414,16 @@ class multiple_garnishment_case_result(models.Model):
     net_pay = models.FloatField()  
     timestamp = models.DateTimeField(auto_now_add=True)
 
-# class company_details(models.Model):
-#     co_id= models.IntegerField(max_length=255) 
-#     ein = models.IntegerField(max_length=255)
-#     company_name = models.CharField(max_length=255)
-#     zipcode= models.IntegerField(max_length=255)
-#     state= models.CharField(max_length=255)
-#     DBA_name= models.CharField(max_length=255)
-#     bank_name = models.CharField(max_length=255, null=True, blank=True)
-#     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
-#     location = models.CharField(max_length=255, null=True, blank=True)
+class company_details(models.Model):
+    co_id= models.IntegerField(max_length=255) 
+    ein = models.IntegerField(max_length=255)
+    company_name = models.CharField(max_length=255)
+    zipcode= models.IntegerField(max_length=255)
+    state= models.CharField(max_length=255)
+    DBA_name= models.CharField(max_length=255)
+    bank_name = models.CharField(max_length=255, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
 
 
 

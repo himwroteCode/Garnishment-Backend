@@ -182,7 +182,7 @@ def EmployerProfile(request):
             
             user = Employer_Profile.objects.create(**data)
 
-            employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
+            employee = get_object_or_404(Employer_Profile, cid=user.employer_id)
             LogEntry.objects.create(
                 action='Employer details added',
                 details=f'Employer details with ID {employee.employer_id}'
@@ -531,7 +531,7 @@ class EmployeeDeleteAPIView(DestroyAPIView):
         self.perform_destroy(instance)
         LogEntry.objects.create(
             action='Employee details Deleted',
-            details=f'Employee details Deleted successfully with Employee ID {instance.employee_id} and Employer ID {instance.employer_id}'
+            details=f'Employee details Deleted successfully with Employee ID {instance.employee_id} and Employer ID {instance.cid}'
         )
         response_data = {
             'success': True,

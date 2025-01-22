@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Employer_Profile,multiple_student_loan_data,multiple_garnishment_case_result,Calculation_data_results,single_student_loan_data,federal_loan_case_data,setting,Employee_Detail,multiple_student_loan_data_and_result,single_student_loan_data_and_result,IWO_Details_PDF,federal_tax_data_and_result,LogEntry
-
+from .models import *
 
 # class EmployerProfileSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -119,4 +118,10 @@ class APICallCountSerializer(serializers.Serializer):
     date = serializers.DateField()
     count = serializers.IntegerField()
 
-        
+
+
+
+class company_details_serializer(serializers.ModelSerializer):
+    class Meta:
+        model = company_details
+        fields = ["co_id","ein","company_name","zipcode","state","DBA_name","bank_name","bank_account_name","location"]
