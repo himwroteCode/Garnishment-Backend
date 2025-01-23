@@ -35,7 +35,7 @@ class CalculationDataView(APIView):
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
     
             for cid, cid_info in cid_data.items():
-                cid_summary = {"CID": cid, "Employees": []}
+                cid_summary = {"CID": cid, "employees": []}
     
                 for record in cid_info.get("employees", []):
                     orders = []
@@ -92,13 +92,13 @@ class CalculationDataView(APIView):
                         orders.append({
                             "order_id": record.get("order_id"),
                             "garnishment_type": garnishment_type,
-                            "withhuolding_amt": result
+                            "withhoulding_amt": result
                         })
     
                     # Append employee data with all their orders
                     
-                    cid_summary["Employees"].append({
-                        "employee_id": record.get("employee_id"),
+                    cid_summary["employees"].append({
+                        "ee_id": record.get("ee_id"),
                         "garnishment": orders
                     })
     
@@ -109,7 +109,7 @@ class CalculationDataView(APIView):
                     action="Calculation data added",
                     details=(
                         f"Calculation data added successfully with employer ID "
-                        f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
+                        f"{record.get('employer_id')} and employee ID {record.get('ee_id')}"
                     )
                 )
     
@@ -117,7 +117,7 @@ class CalculationDataView(APIView):
                 {
                     "message": "Calculations successfully registered",
                     "status_code": status.HTTP_200_OK,
-                    "Batch_id": batch_id,
+                    "batch_id": batch_id,
                     "results": output
                 },
                 status=status.HTTP_200_OK
@@ -138,7 +138,7 @@ class CalculationDataView(APIView):
 
 
 # record=   {
-#       "employee_id": "EMP009",
+#       "ee_id": "EMP009",
 #       "employer_id" :"EMP001",
 #       "gross_pay": 600,
 #       "employee_name": "Michael Johnson",
