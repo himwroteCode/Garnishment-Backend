@@ -413,16 +413,10 @@ class multiple_garnishment_case_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class company_details(models.Model):
-<<<<<<< HEAD
-    co_id= models.IntegerField() 
-    ein = models.IntegerField()
-    company_name = models.CharField(max_length=255)
-=======
     cid= models.IntegerField() 
     ein = models.IntegerField() 
     company_name = models.CharField(max_length=255)
     registered_address= models.CharField(max_length=255, null=True, blank=True)
->>>>>>> c995dbe6b9f953dcf271daf86c34505e40a2c51d
     zipcode= models.IntegerField()
     state= models.CharField(max_length=255)
     dba_name= models.CharField(max_length=255)
@@ -430,15 +424,4 @@ class company_details(models.Model):
     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
 
-#garnishment_order_table
-class garnishment_order(models.Model):
-    cid = models.IntegerField()
-    eeid= models.IntegerField()
-    state= models.CharField(max_length=255)
-    case_id= models.CharField(max_length=255, null=True, blank=True)
-    sdu= models.CharField(max_length=255, null=True, blank=True)
-    type= models.CharField(max_length=255)
-    start_date= models.DateField(max_length=255, null=True, blank=True)
-    end_date= models.DateField(max_length=255, null=True, blank=True)
-    amount= models.DecimalField(max_length=255)
 
