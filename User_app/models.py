@@ -81,8 +81,7 @@ class Calculation_data_results(models.Model):
 
 
 class Employee_Detail(models.Model):
-    employee_id = models.CharField(max_length=255)
-
+    ee_id = models.CharField(max_length=255)
     cid=models.CharField(max_length=255)
     company_id = models.CharField(max_length=255)
     age = models.IntegerField()
@@ -416,8 +415,9 @@ class multiple_garnishment_case_result(models.Model):
 
 class company_details(models.Model):
     co_id= models.IntegerField(max_length=255) 
-    ein = models.IntegerField(max_length=255)
+    ein = models.IntegerField(max_length=255) 
     company_name = models.CharField(max_length=255)
+    registered_address= models.CharField(max_length=255, null=True, blank=True)
     zipcode= models.IntegerField(max_length=255)
     state= models.CharField(max_length=255)
     DBA_name= models.CharField(max_length=255)
@@ -425,5 +425,15 @@ class company_details(models.Model):
     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
 
-
+#garnishment_order_table
+# class garnishment_order(models.Model):
+#     cid = models.IntegerField(max_length=255)
+#     eeid= models.IntegerField(max_length=255)
+#     state= models.CharField(max_length=255)
+#     case_id= models.CharField(max_length=255, null=True, blank=True)
+#     sdu= models.CharField(max_length=255, null=True, blank=True)
+#     type= models.CharField(max_length=255)
+#     start_date= models.DateField(max_length=255, null=True, blank=True)
+#     end_date= models.DateField(max_length=255, null=True, blank=True)
+#     amount= models.DecimalField(max_length=255)
 

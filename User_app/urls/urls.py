@@ -30,7 +30,7 @@ urlpatterns = [
     path('TaxDelete/<int:tax_id>/<int:employer_id>/',TaxDeleteAPIView.as_view(), name='Tax-Delete-APIView'),
     path('DepartmentDelete/<int:department_id>/<int:employer_id>/',DepartmentDeleteAPIView.as_view(), name='Department-Delete-APIView'),
     path('LocationDelete/<int:location_id>/<int:employer_id>/',LocationDeleteAPIView.as_view(), name='Department-Delete-APIView'),
-    path('ExportEmployees/<int:employer_id>/', export_employee_data, name='export-employee-data'),
+    path('ExportEmployees/<str:cid>/', export_employee_data, name='export-employee-data'),
     path('EmployeeImportView/<int:employer_id>/', EmployeeImportView.as_view(), name='Employee-Import-View'),
     path('logdata', LastFiveLogsView.as_view(), name=' Garnishment Calculation'),
     path('GetAllemployerdetail', EmployerProfileList.as_view(), name='employer-profile-list'),
@@ -45,11 +45,11 @@ urlpatterns = [
     path('multiple_garnishment_case/',multiple_case_calculation, name='state_tax_case'),
     path('multiple_garnishment_result/<str:employer_id>/<str:employee_id>/',get_multiple_garnishment_case_result.as_view(), name='state_tax_case'),
     #path('ChildSupportBatchResult/<str:batch_id>', ChildSupportGarnishmentBatchResult.as_view(), name='Calculation Data'),
-    path('upsert-employees-details/', import_employees_api, name='import_employees_api')
+    path('upsert-employees-details/', import_employees_api, name='import_employees_api'),
+    path('upsert-company-details/', upsert_company_details_api, name='upsert_company_details_api')
+    
 
 ]
-
-
 
 
 
