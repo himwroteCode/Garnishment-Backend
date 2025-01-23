@@ -645,7 +645,7 @@ def export_employee_data(request, cid):
 
         # Updated header fields
         header_fields = [
-            'employee_id', 'cid', 'company_id', 'age', 'social_security_number',
+            'ee_id', 'cid', 'age', 'social_security_number',
             'blind', 'home_state', 'work_state', 'gender', 'pay_period',
             'number_of_exemptions', 'filing_status', 'marital_status',
             'number_of_student_default_loan', 'support_second_family',
