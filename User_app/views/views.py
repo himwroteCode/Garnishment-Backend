@@ -1190,7 +1190,7 @@ def import_employees_api(request):
                 if employee:
                     # Detect changes in employee data
                     has_changes = (
-                        employee.company_id != row['company_id'] or
+                        employee.cid != row['cid'] or
                         employee.age != int(row['age']) or
                         employee.social_security_number != row['social_security_number'] or
                         employee.blind != (str(row['blind']).lower() == 'true') or
@@ -1209,7 +1209,7 @@ def import_employees_api(request):
 
                     if has_changes:
                         # Update employee details
-                        employee.company_id = row['company_id']
+                        employee.cid = row['cid']
                         employee.age = int(row['age'])
                         employee.social_security_number = row['social_security_number']
                         employee.blind = str(row['blind']).lower() == 'true'
@@ -1225,12 +1225,12 @@ def import_employees_api(request):
                         employee.spouse_age = int(row.get('spouse_age', 0))
                         employee.is_spouse_blind = str(row.get('is_spouse_blind', '')).lower() == 'true'
                         employee.save()
-                        updated_employees.append(employee.employee_id)
+                        updated_employees.append(employee.ee_id)
                 else:
                     # Add new employee
                     Employee_Detail.objects.create(
                         ee_id=row['ee_id'],
-                        company_id=row['company_id'],
+                        cid=row['cid'],
                         age=int(row['age']),
                         social_security_number=row['social_security_number'],
                         blind=str(row['blind']).lower() == 'true',
@@ -1290,7 +1290,7 @@ def upsert_company_details_api(request):
             
             for _, row in df.iterrows():
                 
-                company = company_details.objects.filter(co_id=row['co_id']).first()
+                company = company_details.objects.filter(cid=row['cid']).first()
 
                 if company:
                    
@@ -1299,7 +1299,7 @@ def upsert_company_details_api(request):
                         company.company_name != row['company_name'] or
                         company.zipcode != row['zipcode'] or
                         company.state != row['state'] or
-                        company.DBA_name != row['DBA_name'] or
+                        company.DBA_name != row['dba_name'] or
                         company.bank_name != row.get('bank_name', None) or
                         company.bank_account_number != row.get('bank_account_number', None) or
                         company.location != row.get('location', None)
@@ -1311,7 +1311,7 @@ def upsert_company_details_api(request):
                         company.company_name = row['company_name']
                         company.zipcode = row['zipcode']
                         company.state = row['state']
-                        company.DBA_name = row['DBA_name']
+                        company.dba_name = row['dba_name']
                         company.bank_name = row.get('bank_name', None)
                         company.bank_account_number = row.get('bank_account_number', None)
                         company.location = row.get('location', None)
@@ -1320,12 +1320,12 @@ def upsert_company_details_api(request):
                 else:
                     
                     company_details.objects.create(
-                        co_id=row['co_id'],
+                        co_id=row['cid'],
                         ein=row['ein'],
                         company_name=row['company_name'],
                         zipcode=row['zipcode'],
                         state=row['state'],
-                        DBA_name=row['DBA_name'],
+                        DBA_name=row['dba_name'],
                         bank_name=row.get('bank_name', None),
                         bank_account_number=row.get('bank_account_number', None),
                         location=row.get('location', None)
