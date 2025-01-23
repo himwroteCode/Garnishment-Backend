@@ -55,10 +55,11 @@ def login(request):
                 'message': 'Invalid credentials',
                 'status code': status.HTTP_400_BAD_REQUEST
             })
-
+        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
         if check_password(password, user.password):
             auth_login(request, user)
             user_data = {
+                "employer_id":employee.employer_id,
                 'username': user.username,
                 'name': user.employer_name,
                 'email': user.email,
@@ -66,7 +67,7 @@ def login(request):
             try:
                 refresh = RefreshToken.for_user(user)
 
-                employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+
                 application_activity.objects.create(
                 action='Employer Login',
                 details=f'Employer {employee.employer_name} Login successfully with ID {employee.employer_id}. '
@@ -74,7 +75,7 @@ def login(request):
                 response_data = {
                     'success': True,
                     'message': 'Login successfully',
-                    "employer_id":employee.employer_id,
+                   
                     'user_data': user_data,
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
@@ -375,8 +376,8 @@ def get_employee_by_employer_id(self, employer_id):
 
 
 @api_view(['GET'])
-def get_employee_by_employer_id(request, employer_id):
-    employees=Employee_Detail.objects.filter(employer_id=employer_id)
+def get_employee_by_employer_id(request, cid):
+    employees=Employee_Detail.objects.filter(cid=cid)
     if employees.exists():
         try:
             serializer = EmployeeDetailsSerializer(employees, many=True)
@@ -624,32 +625,35 @@ class DepartmentDeleteAPIView(DestroyAPIView):
 
 # Export employee details into the csv
 @api_view(['GET'])
-def export_employee_data(request, employer_id):
+def export_employee_data(request, cid):
     try:
-        employees = Employee_Detail.objects.filter(employer_id=employer_id)
+        employees = Employee_Detail.objects.filter(cid=cid)
         if not employees.exists():
             return JsonResponse({'detail': 'No employees found for this employer ID', 'status': status.HTTP_404_NOT_FOUND})
 
         serializer = EmployeeDetailsSerializer(employees, many=True)
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="employees_{employer_id}.csv"'
+        response['Content-Disposition'] = f'attachment; filename="employees_{cid}.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(['employer_id', 'employee_id', 'employee_name', 'department', 'net_pay', 'minimun_wages', 'pay_cycle', 'number_of_garnishment', 'location'])
 
+        # Updated header fields
+        header_fields = [
+            'employee_id', 'cid', 'company_id', 'age', 'social_security_number',
+            'blind', 'home_state', 'work_state', 'gender', 'pay_period',
+            'number_of_exemptions', 'filing_status', 'marital_status',
+            'number_of_student_default_loan', 'support_second_family',
+            'spouse_age', 'is_spouse_blind'
+        ]
+        writer.writerow(header_fields)
+
+        # Write rows dynamically
         for employee in serializer.data:
-            writer.writerow([
-                employee.get('employer_id', ''),
-                employee.get('employee_id', ''),
-                employee.get('employee_name', ''),
-                employee.get('department', ''),
-                employee.get('net_pay', ''),
-                employee.get('minimum_wages', ''),
-                employee.get('pay_cycle', ''),
-                employee.get('number_of_garnishment ', ''),
-                employee.get('location', '')
-            ])
+            row = [employee.get(field, '') for field in header_fields]
+            writer.writerow(row)
+
         return response
+
     except Exception as e:
         return JsonResponse({'detail': str(e), 'status code ': status.HTTP_500_INTERNAL_SERVER_ERROR})
 

@@ -10,13 +10,14 @@ from auth_project.garnishment_library.student_loan import student_loan_calculate
 from django.utils.decorators import method_decorator
 from auth_project.garnishment_library.federal_case import federal_tax
 import json
+
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CalculationDataView(APIView):
     """
     API View to handle Garnishment calculations and save data to the database.
     """
-    CHILSUPPORT = "child_support"
-
     def post(self, request, *args, **kwargs):
         try:
             # Use request.data directly
@@ -24,76 +25,85 @@ class CalculationDataView(APIView):
             batch_id = data.get("batch_id")
             cid_data = data.get("CID", {})
             output = []
-
+    
             # Validate batch_id
             if not batch_id:
                 return Response({"error": "batch_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
+    
             # Validate rows
             if not cid_data:
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
-
+    
             for cid, cid_info in cid_data.items():
                 cid_summary = {"CID": cid, "Employees": []}
-
+    
                 for record in cid_info.get("employees", []):
-                    garnishment_type = record.get("garnishment_type")
-
-                    if garnishment_type == self.CHILSUPPORT:
-                        # Validate child support fields
-                        required_child_support_fields = [
-                            "child_support", "arrears_greater_than_12_weeks",
-                            "support_second_family", "gross_pay", "state", "taxes"
-                        ]
-                        missing_child_support_fields = [
-                            field for field in required_child_support_fields if field not in record
-                        ]
-
-                        if not missing_child_support_fields:
-                            tcsa = ChildSupport().get_list_supportAmt(record)
-                            result = MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record)
+                    orders = []
+                    garnishment_data = record.get("garnishment_data", [])
+    
+                    for garnishment in garnishment_data:
+                        garnishment_type = list(garnishment.keys())[0]
+    
+                        if garnishment_type == "child_support_order":
+                            # Validate child support fields
+                            required_fields = [
+                                "arrears_greater_than_12_weeks",
+                                "support_second_family", "gross_pay", "payroll_taxes"
+                            ]
+                            missing_fields = [field for field in required_fields if field not in record]
+    
+                            if not missing_fields:
+                                tcsa = ChildSupport().get_list_supportAmt(record)
+                                result = (
+                                    MultipleChild().calculate(record)
+                                    if len(tcsa) > 1
+                                    else ChildSupport().calculate(record)
+                                )
+                            else:
+                                result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
+    
+                        elif garnishment_type == "federal_tax":
+                            # Validate federal tax fields
+                            required_fields = ["filing_status", "pay_period", "net_pay", "age", "is_blind"]
+                            missing_fields = [field for field in required_fields if field not in record]
+    
+                            if not missing_fields:
+                                result = federal_tax().calculate(record)
+                            else:
+                                result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
+    
+                        elif garnishment_type == "student_loan":
+                            # Validate student loan fields
+                            required_fields = ["gross_pay", "pay_period", "no_of_student_default_loan", "payroll_taxes"]
+                            missing_fields = [field for field in required_fields if field not in record]
+    
+                            if not missing_fields:
+                                result = student_loan_calculate().calculate(record)
+                            else:
+                                result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
+    
                         else:
-                            result = {"error": f"Missing fields in record: {', '.join(missing_child_support_fields)}"}
-
-                    elif garnishment_type == "federal_tax":
-                        # Validate federal tax fields
-                        required_federal_tax_fields = [
-                            "filing_status", "pay_period", "net_pay",
-                            "no_of_exception_for_Self", "age", "blind"
-                        ]
-                        missing_federal_tax_fields = [
-                            field for field in required_federal_tax_fields if field not in record
-                        ]
-
-                        if not missing_federal_tax_fields:
-                            result = federal_tax().calculate(record)
-                        else:
-                            result = {"error": f"Missing fields in record: {', '.join(missing_federal_tax_fields)}"}
-
-                    elif "student_loan" in garnishment_type:
-                        # Validate student loan fields
-                        required_student_loan_fields = ["gross_pay", "state"]
-                        missing_student_loan_fields = [
-                            field for field in required_student_loan_fields if field not in record
-                        ]
-
-                        disposable_earning = ChildSupport().calculate_de(record)
-                        result = disposable_earning
-
-                    else:
-                        return Response(
-                            {"error": f"Unsupported garnishment_type: {garnishment_type}"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
+                            return Response(
+                                {"error": f"Unsupported garnishment_type: {garnishment_type}"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+    
+                        # Append each order to the orders list
+                        orders.append({
+                            "order_id": record.get("order_id"),
+                            "garnishment_type": garnishment_type,
+                            "withhuolding_amt": result
+                        })
+    
+                    # Append employee data with all their orders
+                    
                     cid_summary["Employees"].append({
                         "employee_id": record.get("employee_id"),
-                        "garnishment_type": garnishment_type,
-                        "withhuolding_amt": result
+                        "garnishment": orders
                     })
-
+    
                 output.append(cid_summary)
-
+    
                 # Log the action
                 LogEntry.objects.create(
                     action="Calculation data added",
@@ -102,17 +112,17 @@ class CalculationDataView(APIView):
                         f"{record.get('employer_id')} and employee ID {record.get('employee_id')}"
                     )
                 )
-
+    
             return Response(
                 {
                     "message": "Calculations successfully registered",
                     "status_code": status.HTTP_200_OK,
-                    "Batch_id" :batch_id,
+                    "Batch_id": batch_id,
                     "results": output
                 },
                 status=status.HTTP_200_OK
             )
-
+    
         except Employee_Detail.DoesNotExist:
             return Response(
                 {"error": "Employee details not found"},
@@ -123,6 +133,7 @@ class CalculationDataView(APIView):
                 {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 
 
@@ -154,3 +165,15 @@ class CalculationDataView(APIView):
 # print("calculate_wa",ChildSupport().calculate_wa(record))
 
 
+    
+                    # elif len(garnishment_data)>1:
+                    #     # Validate student loan fields
+                    #     required_student_loan_fields = ["gross_pay", "pay_period","no_of_student_default_loan","taxes"]
+                    #     missing_student_loan_fields = [
+                    #         field for field in required_student_loan_fields if field not in record
+                    #     ]
+                        
+                    #     if not missing_student_loan_fields:
+                    #          result = multiple_garnishment_case().calculate(record)
+                    #     else:
+                    #         result = {"error": f"Missing fields in record: {', '.join(missing_student_loan_fields)}"}    

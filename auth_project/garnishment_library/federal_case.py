@@ -22,27 +22,27 @@ class federal_tax_calculation():
     def get_total_exemption_self(self, request):
       age = request.get('age')
         
-      blind = request.get('blind')
+      is_blind = request.get('is_blind')
       number_of_exemption = 0
 
-      if (age>=65 and blind==True) :
+      if (age>=65 and is_blind==True) :
           number_of_exemption=2
-      elif (age<65 and blind==True) :
+      elif (age<65 and is_blind==True) :
           number_of_exemption=1
-      elif(age>=65 and blind==False) :
+      elif(age>=65 and is_blind==False) :
           number_of_exemption=1
       return number_of_exemption
 
     def get_total_exemption_dependent(self, request):  
 
-      dependent_age= request.get('dependent_age')
-      dependent_disability = request.get('dependent_disability')
+      is_spouse_blind= request.get('is_spouse_blind')
+      is_spouse_blind = request.get('is_spouse_blind')
       number_of_exemption = 0
-      if (dependent_age>=65 and dependent_disability==True) :
+      if (is_spouse_blind>=65 and is_spouse_blind==True) :
           number_of_exemption=2
-      elif (dependent_age<65 and dependent_disability==True):
+      elif (is_spouse_blind<65 and is_spouse_blind==True):
           number_of_exemption=1
-      elif(dependent_age>=65 and dependent_disability==False):
+      elif(is_spouse_blind>=65 and is_spouse_blind==False):
           number_of_exemption=1
       return number_of_exemption  
 
@@ -53,7 +53,7 @@ class federal_tax_calculation():
 
         file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/additional_exempt_amount.json')
         age=record.get('age')
-        blind=record.get('blind')
+        is_blind=record.get('is_blind')
         result = 0
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -92,8 +92,8 @@ class federal_tax_calculation():
         filing_status=record.get('filing_status')
         no_of_exemption=self.get_total_exemption_self(record)
         file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/additional_exempt_amount.json')
-        dependent_age=record.get('dependent_age')
-        dependent_disability=record.get('dependent_disability')
+        is_spouse_blind=record.get('is_spouse_blind')
+        is_spouse_blind=record.get('is_spouse_blind')
         result = 0
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -129,11 +129,11 @@ class federal_tax_calculation():
     def get_standard_exempt_amt(self, record):
 
         filing_status=record.get('filing_status')
-        no_of_exception_for_Self=record.get('no_of_exception_for_Self')
+        no_of_exemption_for_self=record.get('no_of_exemption_for_self')
         pay_period=record.get('pay_period')
 
         # Check if the number of exceptions is greater than 5
-        exempt= 6 if no_of_exception_for_Self >5 else no_of_exception_for_Self
+        exempt= 6 if no_of_exemption_for_self >5 else no_of_exemption_for_self
 
         file_path=os.path.join(settings.BASE_DIR, 'User_app', f'configuration files/{filing_status}.json')
         data = self.get_file_data(file_path)
@@ -141,10 +141,10 @@ class federal_tax_calculation():
 
 
         # Accessing federal tax data
-        if no_of_exception_for_Self <=5:
+        if no_of_exemption_for_self <=5:
             semimonthly_data = next((item for item in status_data if item["Pay Period"].lower() == pay_period.lower()), None)
             exempt_amount = semimonthly_data.get(str(exempt))
-        elif no_of_exception_for_Self >5:
+        elif no_of_exemption_for_self >5:
             semimonthly_data = next((item for item in status_data if item["Pay Period"].lower() == pay_period.lower()), None)
             # print("semimonthly_data",semimonthly_data)
             exemp_amt = semimonthly_data.get(str(exempt))
@@ -152,7 +152,7 @@ class federal_tax_calculation():
             exempt_amount  = re.findall(r'\d+\.?\d*',exemp_amt)
             exempt1=float(exempt_amount[0])
             exempt2=float(exempt_amount[1])
-            exempt_amount=round((exempt1+(exempt2*no_of_exception_for_Self)),2)
+            exempt_amount=round((exempt1+(exempt2*no_of_exemption_for_self)),2)
             # print("Single exempt_amount",exempt_amount)
         return exempt_amount
 
@@ -187,3 +187,48 @@ class federal_tax(federal_tax_calculation):
 
         # except Exception as e:
         #     return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+
+
+
+# record = {
+#           "employee_id": "EMP009",
+#           "gross_pay": 800,
+#           "states": {
+#             "home": "Florida",
+#             "work": "Florida"
+#           },
+#           "no_of_exemption_for_self":1,
+#           "pay_period": "weekly",
+#           "filing_status": "single_filing_status",
+#           "net_pay": 17575.2,
+#           "payroll_taxes": {
+#             "federal_income_tax": 10,
+#             "social_security_tax": 20,
+#             "medicare_tax": 5,
+#             "state_tax": 5,
+#             "local_tax": 10
+#           },
+#           "payroll_deductions": {
+#             "medical_insurance": 400
+#           },
+#           "age": 64,
+#           "is_blind": True,
+#           "is_spouse_blind": True,
+#           "spouse_age": 35,
+#           "support_second_family": "No",
+#           "arrears_greater_than_12_weeks": "No",
+#           "garnishment_data": [
+#             {
+#               "federal_tax": True
+#             }
+#           ]
+#         }
+
+
+# print(record.get("pay_period"))
+
+
+# print("get_single_exempt_amt",federal_tax_calculation().get_standard_exempt_amt(record))
+# print("get_additional_exempt_for_self",federal_tax().get_additional_exempt_for_self(record))
+# print("get_additional_exempt_for_dependent")
+# print(federal_tax().calculate(record))

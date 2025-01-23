@@ -415,10 +415,10 @@ class multiple_garnishment_case_result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class company_details(models.Model):
-    co_id= models.IntegerField(max_length=255) 
-    ein = models.IntegerField(max_length=255)
+    co_id= models.IntegerField() 
+    ein = models.IntegerField()
     company_name = models.CharField(max_length=255)
-    zipcode= models.IntegerField(max_length=255)
+    zipcode= models.IntegerField()
     state= models.CharField(max_length=255)
     DBA_name= models.CharField(max_length=255)
     bank_name = models.CharField(max_length=255, null=True, blank=True)
