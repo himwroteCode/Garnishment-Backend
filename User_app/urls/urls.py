@@ -45,7 +45,7 @@ urlpatterns = [
     path('multiple_garnishment_case/',multiple_case_calculation, name='state_tax_case'),
     path('multiple_garnishment_result/<str:employer_id>/<str:employee_id>/',get_multiple_garnishment_case_result.as_view(), name='state_tax_case'),
     #path('ChildSupportBatchResult/<str:batch_id>', ChildSupportGarnishmentBatchResult.as_view(), name='Calculation Data'),
-
+    path('upsert-employees-details/', import_employees_api, name='import_employees_api')
 
 ]
 
