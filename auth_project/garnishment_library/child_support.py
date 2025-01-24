@@ -21,9 +21,8 @@ class ChildSupport:
     CHILDSUPPORT = "child_support"
     
     def __init__(self):
-        self.de_rules_file  = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/disposable earning rules.json')
-        self.ccpa_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/ccpa_rules.json')
-
+        self.de_rules_file  = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/disposable earning rules.json')
+        self.ccpa_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/ccpa_rules.json')
     def _load_json_file(self, file_path):
         """
         Helper method to load a JSON file.

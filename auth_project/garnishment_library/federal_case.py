@@ -51,7 +51,7 @@ class federal_tax_calculation():
         filing_status=record.get('filing_status')
         no_of_exemption=self.get_total_exemption_self(record)
 
-        file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/additional_exempt_amount.json')
+        file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/federal tables/additional_exempt_amount.json')
         age=record.get('age')
         is_blind=record.get('is_blind')
         result = 0
@@ -91,7 +91,7 @@ class federal_tax_calculation():
         pay_period=record.get('pay_period').lower()
         filing_status=record.get('filing_status')
         no_of_exemption=self.get_total_exemption_self(record)
-        file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/additional_exempt_amount.json')
+        file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/federal tables/additional_exempt_amount.json')
         is_spouse_blind=record.get('is_spouse_blind')
         is_spouse_blind=record.get('is_spouse_blind')
         result = 0
@@ -135,7 +135,7 @@ class federal_tax_calculation():
         # Check if the number of exceptions is greater than 5
         exempt= 6 if no_of_exemption_for_self >5 else no_of_exemption_for_self
 
-        file_path=os.path.join(settings.BASE_DIR, 'User_app', f'configuration files/{filing_status}.json')
+        file_path=os.path.join(settings.BASE_DIR, 'User_app', f'configuration files/federal tables/{filing_status}.json')
         data = self.get_file_data(file_path)
         status_data = data.get(filing_status, [])
 

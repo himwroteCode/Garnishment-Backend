@@ -23,7 +23,7 @@ class CalculationDataView(APIView):
             # Use request.data directly
             data = request.data
             batch_id = data.get("batch_id")
-            cid_data = data.get("CID", {})
+            cid_data = data.get("cid", {})
             output = []
     
             # Validate batch_id
@@ -35,17 +35,16 @@ class CalculationDataView(APIView):
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
     
             for cid, cid_info in cid_data.items():
-                cid_summary = {"CID": cid, "employees": []}
+                cid_summary = {"cid": cid, "employees": []}
     
                 for record in cid_info.get("employees", []):
-                    orders = []
                     garnishment_results=[]
                     garnishment_data = record.get("garnishment_data", [])
     
                     for garnishment in garnishment_data:
                         garnishment_type = list(garnishment.values())[0]
     
-                        if garnishment_type == "child_support":
+                        if garnishment_type.lower() == "child support":
                             # Validate child support fields
                             required_fields = [
                                 "arrears_greater_than_12_weeks",
@@ -78,7 +77,7 @@ class CalculationDataView(APIView):
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     
-                        elif garnishment_type == "federal_tax":
+                        elif garnishment_type.lower() == "federal tax levy":
                             # Validate federal tax fields
                             required_fields = ["filing_status", "pay_period", "net_pay", "age", "is_blind"]
                             missing_fields = [field for field in required_fields if field not in record]
@@ -94,7 +93,7 @@ class CalculationDataView(APIView):
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     
-                        elif garnishment_type == "student_loan":
+                        elif garnishment_type.lower() == "student default loan":
                             # Validate student loan fields
                             required_fields = ["gross_pay", "pay_period", "no_of_student_default_loan", "payroll_taxes"]
                             missing_fields = [field for field in required_fields if field not in record]
