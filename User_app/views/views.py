@@ -759,6 +759,21 @@ class EmployeeDetailsList(APIView):
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
+class CompanyDetails(APIView):
+    def get(self, request, format=None):
+        try:
+            employees = company_details.objects.all()
+            serializer = company_details_serializer(employees, many=True)
+            response_data = {
+                        'success': True,
+                        'message': 'Data Get successfully',
+                        'status code': status.HTTP_200_OK,
+                        'data' : serializer.data}
+            return JsonResponse(response_data)
+        except Exception as e:
+            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
+
+
 
 
 #Get the single employee details

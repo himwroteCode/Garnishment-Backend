@@ -413,8 +413,11 @@ class multiple_garnishment_case_result(models.Model):
     net_pay = models.FloatField()  
     timestamp = models.DateTimeField(auto_now_add=True)
 
+
+
+
 class company_details(models.Model):
-    cid= models.IntegerField() 
+    cid= models.CharField(max_length=255) 
     ein = models.IntegerField() 
     company_name = models.CharField(max_length=255)
     registered_address= models.CharField(max_length=255, null=True, blank=True)
@@ -424,5 +427,3 @@ class company_details(models.Model):
     bank_name = models.CharField(max_length=255, null=True, blank=True)
     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
-
-

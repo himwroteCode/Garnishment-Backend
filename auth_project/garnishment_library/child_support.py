@@ -68,7 +68,7 @@ class ChildSupport:
             raise ValueError("Record must include 'gross_pay', 'state', and 'taxs' fields.")
 
         de_rule = self.calculate_de_rule(record)
-        print(f"Disposable Earnings Rule: {de_rule}")
+
 
         data = self._load_json_file(self.ccpa_rules_file)
         ccpa_rules = data.get("CCPA_Rules", {})
