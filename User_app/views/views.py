@@ -218,7 +218,7 @@ class EmployeeDetailsAPIView(APIView):
             # Log the action
             LogEntry.objects.create(
                 action='Employee details added',
-                details=f'Employee details added successfully with employee ID {employee.employee_id}'
+                details=f'Employee details added successfully with employee ID {employee.ee_id}'
             )
             
             return Response(

@@ -38,6 +38,7 @@ class CalculationDataView(APIView):
                 cid_summary = {"cid": cid, "employees": []}
     
                 for record in cid_info.get("employees", []):
+
                     garnishment_results=[]
                     garnishment_data = record.get("garnishment_data", [])
     
@@ -57,14 +58,17 @@ class CalculationDataView(APIView):
                                 result = (
                                     MultipleChild().calculate(record)
                                     if len(tcsa) > 1
-                                    else ChildSupport().calculate(record)
+                                    else SingleChild().calculate(record)
                                 )
                                 child_support_data = result[0]
+                                print("child_support_data",child_support_data)
                                 arrear_amount_data = result[1]
+                                print("arrear_amount_data",arrear_amount_data)
                                 case_id_get=garnishment_data[0]["data"]
 
                                 # Transform data into the desired format
                                 garnishment = []
+
                                 for i in range(1, len(child_support_data) + 1):
                                     garnishment_results.append({
                                         "case_id":case_id_get[i-1]["case_id"],
@@ -100,18 +104,28 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
+                                print("len_of_student _result",len(result))
                             
 
                                 case_id_get=garnishment_data[0]["data"]
+                                
+                                
                                 # Transform data into the desired format
 
-                                for i in range(1, len(result) + 1):
+                                if len(result)==1:
                                     garnishment_results.append({
-                                        "case_id":case_id_get[i-1]["case_id"],
+                                        "case_id":list(garnishment_data[0]["data"][0].values())[0],
                                         "garnishment_type":garnishment_type,
-                                        "student loan": result[f'student_loan_amt{i}'],
+                                        "student loan": result['student_loan_amt'],
                                     })
-
+                                else:
+                                    for i in range(1, len(result) + 1):
+                                        garnishment_results.append({
+                                            "case_id":case_id_get[i-1]["case_id"],
+                                            "garnishment_type":garnishment_type,
+                                            "student loan": result[f'student_loan_amt{i}'],
+                                        })
+    
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     

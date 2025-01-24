@@ -85,7 +85,7 @@ class student_loan_calculate():
         return student_loan_amt
     
 # record={
-#             "employee_id": "EMP011",
+#             "ee_id": "EMP011",
 #             "gross_pay": 670,
 #             "state": "Alabama",
 #             "work": "Indiana",

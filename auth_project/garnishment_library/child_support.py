@@ -22,6 +22,7 @@ class ChildSupport:
     
     def __init__(self):
         self.de_rules_file  = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/disposable earning rules.json')
+
         self.ccpa_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/ccpa_rules.json')
     def _load_json_file(self, file_path):
         """
@@ -192,8 +193,9 @@ class SingleChild(ChildSupport):
             # ADE is not sufficient to cover the child support amount
             withholding_amount = ade
             arrear_amount = 0
-
-        return withholding_amount, arrear_amount
+        result_amt={"child support amount1":withholding_amount}
+        arrear_amt={"arrear amount1":arrear_amount}
+        return result_amt,arrear_amt
 
 class MultipleChild(ChildSupport):
     """
@@ -281,12 +283,11 @@ class MultipleChild(ChildSupport):
 #               {" type": "child_support",
 #               "data":[
        
-#                   { "amount": 190, "arrear": 0 ,"case_id":101},
-#                   { "amount": 140, "arrear": 10 ,"case_id":201}
+#                   { "amount": 190, "arrear": 0 ,"case_id":101}
 #                 ]
 #             }
 #           ]}
     
 # tcsa = ChildSupport().get_list_supportAmt(record)
-# print(MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record))
+# print("result",MultipleChild().calculate(record) if len(tcsa) > 1 else SingleChild().calculate(record))
 

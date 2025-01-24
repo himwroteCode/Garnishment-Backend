@@ -93,7 +93,6 @@ class federal_tax_calculation():
         no_of_exemption=self.get_total_exemption_self(record)
         file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/federal tables/additional_exempt_amount.json')
         is_spouse_blind=record.get('is_spouse_blind')
-        is_spouse_blind=record.get('is_spouse_blind')
         result = 0
         with open(file_path, 'r') as file:
             data = json.load(file)
