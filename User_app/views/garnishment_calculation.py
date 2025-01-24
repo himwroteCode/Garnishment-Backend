@@ -39,12 +39,13 @@ class CalculationDataView(APIView):
     
                 for record in cid_info.get("employees", []):
                     orders = []
+                    garnishment_results=[]
                     garnishment_data = record.get("garnishment_data", [])
     
                     for garnishment in garnishment_data:
-                        garnishment_type = list(garnishment.keys())[0]
+                        garnishment_type = list(garnishment.values())[0]
     
-                        if garnishment_type == "child_support_order":
+                        if garnishment_type == "child_support":
                             # Validate child support fields
                             required_fields = [
                                 "arrears_greater_than_12_weeks",
@@ -59,6 +60,21 @@ class CalculationDataView(APIView):
                                     if len(tcsa) > 1
                                     else ChildSupport().calculate(record)
                                 )
+                                child_support_data = result[0]
+                                arrear_amount_data = result[1]
+                                case_id_get=garnishment_data[0]["data"]
+
+                                # Transform data into the desired format
+                                garnishment = []
+                                for i in range(1, len(child_support_data) + 1):
+                                    garnishment_results.append({
+                                        "case_id":case_id_get[i-1]["case_id"],
+                                        "garnishment_type": garnishment_type,
+                                        "child_support": child_support_data[f'child support amount{i}'],
+                                        "arrear_amount": arrear_amount_data[f'arrear amount{i}']
+                                    })
+
+
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     
@@ -69,6 +85,12 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = federal_tax().calculate(record)
+                                garnishment_results.append({
+                                        "case_id":"101",
+                                        "garnishment_type": garnishment_type,
+                                        "withholding_amt": result,
+                                    })
+
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     
@@ -79,6 +101,18 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
+                            
+
+                                case_id_get=garnishment_data[0]["data"]
+                                # Transform data into the desired format
+
+                                for i in range(1, len(result) + 1):
+                                    garnishment_results.append({
+                                        "case_id":case_id_get[i-1]["case_id"],
+                                        "garnishment_type":garnishment_type,
+                                        "student loan": result[f'student_loan_amt{i}'],
+                                    })
+
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
     
@@ -87,19 +121,22 @@ class CalculationDataView(APIView):
                                 {"error": f"Unsupported garnishment_type: {garnishment_type}"},
                                 status=status.HTTP_400_BAD_REQUEST
                             )
+                        
+
+
     
-                        # Append each order to the orders list
-                        orders.append({
-                            "order_id": record.get("order_id"),
-                            "garnishment_type": garnishment_type,
-                            "withhoulding_amt": result
-                        })
+                        # # Append each order to the orders list
+                        # garnishment_results.append({
+                        #     "order_id": record.get("order_id"),
+                        #     "garnishment_type": garnishment_type,
+                        #     "withholding_amt": result
+                        # })
     
                     # Append employee data with all their orders
                     
                     cid_summary["employees"].append({
                         "ee_id": record.get("ee_id"),
-                        "garnishment": orders
+                        "garnishment": garnishment_results
                     })
     
                 output.append(cid_summary)
@@ -128,11 +165,11 @@ class CalculationDataView(APIView):
                 {"error": "Employee details not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        except Exception as e:
-            return Response(
-                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        # except Exception as e:
+        #     return Response(
+        #         {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        #     )
 
 
 
@@ -177,3 +214,22 @@ class CalculationDataView(APIView):
                     #          result = multiple_garnishment_case().calculate(record)
                     #     else:
                     #         result = {"error": f"Missing fields in record: {', '.join(missing_student_loan_fields)}"}    
+
+
+                            #             if not missing_fields:
+                            #     tcsa = ChildSupport().get_list_supportAmt(record)
+                            #     result = (
+                            #         MultipleChild().calculate(record)
+                            #         if len(tcsa) > 1
+                            #         else ChildSupport().calculate(record)
+                            #     )
+                            #     for idx, item in enumerate(result):
+                            #         garnishment_results.append({
+                            #             "order_id": f"{record.get('order_id', 'DE')}-{idx + 1}",
+                            #             "garnishment_type": garnishment_type,
+                            #             "withholding_amt": item
+                            #         })
+                            # else:
+                            #     garnishment_results.append({
+                            #         "error": f"Missing fields in record: {', '.join(missing_fields)}"
+                            #     })

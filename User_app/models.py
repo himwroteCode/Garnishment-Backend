@@ -22,9 +22,10 @@ from django.db import models
 
 #     def __str__(self):
 #         return self.username
-    
+
 class Employer_Profile(AbstractBaseUser):
     employer_id = models.AutoField(primary_key=True)
+    cid=models.CharField(max_length=100,default="ABS")
     employer_name = models.CharField(max_length=100,default="ABS")
     email = models.EmailField(unique=True,default="rtt@gmail.com")
     username = models.CharField(max_length=100, unique=True,default="USN")

@@ -60,11 +60,12 @@ def login(request):
                 'message': 'Invalid credentials',
                 'status code': status.HTTP_400_BAD_REQUEST
             })
-        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id,cid=user.cid)
         if check_password(password, user.password):
             auth_login(request, user)
             user_data = {
                 "employer_id":employee.employer_id,
+                "cid":employee.cid,
                 'username': user.username,
                 'name': user.employer_name,
                 'email': user.email,

@@ -92,7 +92,7 @@ class ChildSupport:
         return gross_pay - mandatory_deductions
     
     def get_list_supportAmt(self, record):
-        child_support_data = record["garnishment_data"][0]["child_support_order"]["child_support"]
+        child_support_data = record["garnishment_data"][0]["data"]
 
         return [
             value 
@@ -103,7 +103,7 @@ class ChildSupport:
 
 
     def get_list_support_arrearAmt(self, record):
-        child_support_data = record["garnishment_data"][0]["child_support_order"]["child_support"]
+        child_support_data = record["garnishment_data"][0]["data"]
         return [
             value
             for Amt_dict in child_support_data
@@ -255,37 +255,38 @@ class MultipleChild(ChildSupport):
         return child_support_amount, arrear_amount
     
 # record=   {
-#           "employee_id": "EMP011",
+#           "ee_id": "EMP002",
 #           "gross_pay": 670,
 #           "state": "Alabama",
-#             "work": "Indiana"
-#           ,
-#           "payroll_taxes": [{"federal_income_tax": 12},
-#             {"social_security_tax": 18},
-#             {"medicare_tax": 5},
-#             {"state_tax": 5},
-#             {"local_tax": 10}],
-#             "payroll_deductions": {
-#                 "medical_insurance":400
-#             },
-#            "support_second_family": "Yes",
-#             "arrears_greater_than_12_weeks": "Yes",
+#           "pay_period": "weekly",
+#           "order_id":"DE101",
+          
+#           "payroll_taxes": [
+#             { "federal_income_tax": 12 },
+#             { "social_security_tax": 18 },
+#             { "medicare_tax": 5 },
+#             { "state_tax": 5 },
+#             { "local_tax": 10 }
+#           ],
+#           "payroll_deductions": {
+#             "medical_insurance": 400
+#           },
+#           "no_of_student_default_loan": 2,
+#           "support_second_family": "Yes",
+#           "arrears_greater_than_12_weeks": "Yes",
 #           "age": 43,
 #           "is_blind": True,
 #           "is_spouse_blind": True,
 #           "spouse_age": 38,
 #           "garnishment_data": [
-#             {
-#               "child_support_order": {
+#               {" type": "child_support",
+#               "data":[
        
-#                 "child_support": [
-#                   { "amount": 190, "arrear": 0 },
-#                   { "amount": 140, "arrear": 10 }
+#                   { "amount": 190, "arrear": 0 ,"case_id":101},
+#                   { "amount": 140, "arrear": 10 ,"case_id":201}
 #                 ]
-#               }
 #             }
-#           ]
-#         }
+#           ]}
     
 # tcsa = ChildSupport().get_list_supportAmt(record)
 # print(MultipleChild().calculate(record) if len(tcsa) > 1 else ChildSupport().calculate(record))

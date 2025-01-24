@@ -116,3 +116,38 @@ class WLIdentifier:
         
         return f"No matching WL found for this employee: {employee_id}"
 
+
+class ChangeResultStructure:
+    def __init__(self,result,case_id,garnishment_type):
+        self.result=result
+        self.case_id=case_id
+        self.garnishment_type=garnishment_type
+        pass
+    def structurechange(self):
+        garnishment={}
+        if len(self.result)>1:
+            for i in range(len(self.result)):
+                garnishment[f"withholding_amt_SL{i+1}"] =self.result[i]
+            
+
+
+
+            garnishment
+
+{
+  "ee_id": "EMP011",
+  "garnishment": [
+      {
+          "order_id": "DE102-1",
+          "garnishment_type": "student_loan",
+          "withhoulding_amt": 93.0
+      },
+      {
+          "order_id": "DE102-2",
+          "garnishment_type": "student_loan",
+          "withhoulding_amt": 62.0
+      }
+  ]
+
+
+}
