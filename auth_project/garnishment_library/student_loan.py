@@ -1,6 +1,3 @@
-from rest_framework import status
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from User_app.models import *
 from User_app.serializers import *
 from auth_project.garnishment_library.child_support import ChildSupport
@@ -63,7 +60,7 @@ class StudentLoan():
             mandatory_tax_keys = ccpa_rules.get("Mandatory_deductions", [])
             tax_amt = [tax.get(k, 0) for tax in payroll_taxes for k in mandatory_tax_keys if k in tax]
             mandatory_deductions = sum(tax_amt)
-        print("jhyyyyy",gross_pay - mandatory_deductions)
+
     
         # Calculate and return disposable earnings
         return gross_pay - mandatory_deductions
@@ -84,13 +81,11 @@ class StudentLoan():
     def get_single_student_amount(self, record):
         # Calculate disposable earnings
         disposable_earning = self.calculate_disposable_earnings(record)
-        print(disposable_earning, "111disposable_earning")
 
         # Calculate percentages earnings
         fifteen_percent_of_earning = disposable_earning *.15
-        print("fifteen_percent_of_earning", fifteen_percent_of_earning)
         twentyfive_percent_of_earning =disposable_earning*.25
-        print(twentyfive_percent_of_earning, "twentyfive_percent_of_earning")
+
         fmw =self.get_fmw(record)
         difference_of_de_and_fmw=disposable_earning-fmw
         
@@ -101,9 +96,8 @@ class StudentLoan():
         elif difference_of_de_and_fmw<0:
             loan_amt = 0
         
-        print("loan_amt",loan_amt)
 
-        return ({"student_loan_amt":loan_amt})
+        return ({"student_loan_amt":round(loan_amt,2)})
     
 
     def get_multiple_student_amount(self, record):
@@ -111,7 +105,7 @@ class StudentLoan():
         disposable_earning = self.calculate_disposable_earnings(record)
 
         difference_of_de_and_fmw = disposable_earning - fmw
-        print("difference_of_de_and_fmw", difference_of_de_and_fmw)
+
 
         if fmw >= disposable_earning:
             student_loan_amt1 = "Student loan withholding cannot be applied because Disposable Earnings are less than or equal to $217.5, the exempt amount."
@@ -123,7 +117,7 @@ class StudentLoan():
             student_loan_amt1 = .15* disposable_earning
             student_loan_amt2 = .10* disposable_earning
 
-        return ({"student_loan_amt1": student_loan_amt1, "student_loan_amt2": student_loan_amt2})
+        return ({"student_loan_amt1": round(student_loan_amt1,2), "student_loan_amt2": round(student_loan_amt2,2)})
     
 class student_loan_calculate():
         
@@ -193,61 +187,3 @@ class student_loan_calculate():
 # print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
 # print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
 # print("student_loan",student_loan_calculate().calculate( record ))
-
-
-
-
-    
-record= {
-          "ee_id": "EE005114",
-          "gross_pay": 1000,
-          "state": "Texas",
-          "no_of_exemption_for_self": 1,
-          "pay_period": "Weekly",
-          "filing_status": "single_filing_status",
-          "net_pay": 858.8,
-          "payroll_taxes": [
-            {
-              "federal_income_tax": 80
-            },
-            {
-              "social_security_tax": 49.6
-            },
-            {
-              "medicare_tax": 11.6
-            },
-            {
-              "state_tax": 0
-            },
-            {
-              "local_tax": 0
-            }
-          ],
-          "payroll_deductions": {
-            "medical_insurance": 0
-          },
-          "age": 50,
-          "is_blind": True,
-          "is_spouse_blind": True,
-          "spouse_age": 39,
-          "support_second_family": "Yes",
-          "no_of_student_default_loan": 1,
-          "arrears_greater_than_12_weeks": "No",
-          "garnishment_data": [
-            {
-              "type": "student default loan",
-              "data": [
-                {
-                  "case_id": "C13278",
-                  "amount": 128.82,
-                  "arrear": 0
-                }
-              ]
-            }
-          ]
-}
-
-# print("get_percentages:",StudentLoan().get_percentage)
-print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
-print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
-print("student_loan",student_loan_calculate().calculate( record ))

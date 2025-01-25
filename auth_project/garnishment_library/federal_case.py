@@ -1,10 +1,6 @@
-from django.http import JsonResponse
 from User_app.models import *
 from django.contrib.auth import  login as auth_login ,get_user_model
-from rest_framework.response import Response
 from User_app.serializers import *
-from rest_framework.views import APIView
-from rest_framework import status
 import json
 import os
 from auth_project import settings
@@ -53,7 +49,7 @@ class federal_tax_calculation():
     def get_additional_exempt_for_self(self, record):
         pay_period=record.get('pay_period').lower()
         filing_status=record.get('filing_status')
-        print("filing_status",filing_status)
+
         no_of_exemption=self.get_total_exemption_self(record)
 
         file_path=os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/federal tables/additional_exempt_amount.json')
@@ -136,7 +132,7 @@ class federal_tax_calculation():
         filing_status=record.get('filing_status')
         no_of_exemption_for_self=record.get('no_of_exemption_for_self')
         pay_period=record.get('pay_period')
-        print("no_of_exemption_for_self",no_of_exemption_for_self)
+
 
         # Check if the number of exceptions is greater than 5
         exempt= 6 if no_of_exemption_for_self >5 else no_of_exemption_for_self
@@ -209,57 +205,57 @@ class federal_tax(federal_tax_calculation):
 
 
 
-record =    {
-          "ee_id": "EE005114",
-          "gross_pay": 1000,
-          "state": "Texas",
-          "no_of_exemption_for_self": 1,
-          "pay_period": "Weekly",
-          "filing_status": "single_filing_status",
-          "net_pay": 858.8,
-          "payroll_taxes": [
-            {
-              "federal_income_tax": 80
-            },
-            {
-              "social_security_tax": 49.6
-            },
-            {
-              "medicare_tax": 11.6
-            },
-            {
-              "state_tax": 0
-            },
-            {
-              "local_tax": 0
-            }
-          ],
-          "payroll_deductions": {
-            "medical_insurance": 0
-          },
-          "age": 50,
-          "is_blind": True,
-          "is_spouse_blind": True,
-          "spouse_age": 39,
-          "support_second_family": "Yes",
-          "no_of_student_default_loan": 1,
-          "arrears_greater_than_12_weeks": "No",
-          "garnishment_data": [
-            {
-              "type": "student default loan",
-              "data": [
-                {
-                  "case_id": "C13278",
-                  "amount": 128.82,
-                  "arrear": 0
-                }
-              ]
-            }
-          ]
-        }
+# record =    {
+#           "ee_id": "EE005114",
+#           "gross_pay": 1000,
+#           "state": "Texas",
+#           "no_of_exemption_for_self": 1,
+#           "pay_period": "Weekly",
+#           "filing_status": "single_filing_status",
+#           "net_pay": 858.8,
+#           "payroll_taxes": [
+#             {
+#               "federal_income_tax": 80
+#             },
+#             {
+#               "social_security_tax": 49.6
+#             },
+#             {
+#               "medicare_tax": 11.6
+#             },
+#             {
+#               "state_tax": 0
+#             },
+#             {
+#               "local_tax": 0
+#             }
+#           ],
+#           "payroll_deductions": {
+#             "medical_insurance": 0
+#           },
+#           "age": 50,
+#           "is_blind": True,
+#           "is_spouse_blind": True,
+#           "spouse_age": 39,
+#           "support_second_family": "Yes",
+#           "no_of_student_default_loan": 1,
+#           "arrears_greater_than_12_weeks": "No",
+#           "garnishment_data": [
+#             {
+#               "type": "student default loan",
+#               "data": [
+#                 {
+#                   "case_id": "C13278",
+#                   "amount": 128.82,
+#                   "arrear": 0
+#                 }
+#               ]
+#             }
+#           ]
+#         }
 
 
 
 
 
-print("amt",federal_tax().calculate(record))
+# print("amt",federal_tax().calculate(record))
