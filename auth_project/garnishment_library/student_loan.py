@@ -8,7 +8,7 @@ import os
 import json 
 from django.conf import settings
 
-print("ddddd",ChildSupport().calculate_de(record))
+# print("ddddd",ChildSupport().calculate_de(record))
 
 class StudentLoan():
     """ Calculate Student Loan garnishment amount based on the provided data."""
