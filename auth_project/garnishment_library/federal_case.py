@@ -191,8 +191,6 @@ class federal_tax(federal_tax_calculation):
 
             # print("dependent_exempt_amt", exempt_amount_dependent)
         
-          
-
 
         # Calculate the amount to deduct
         total_exempt_amt=standard_exempt_amt+exempt_amount_self+exempt_amount_dependent
@@ -202,7 +200,7 @@ class federal_tax(federal_tax_calculation):
         # print("amount_deduct",amount_deduct)
 
         amount_deduct = amount_deduct if amount_deduct > 0 else 0
-        return (amount_deduct)
+        return (round(amount_deduct,2))
 
 
 
@@ -211,57 +209,57 @@ class federal_tax(federal_tax_calculation):
 
 
 
-# record =   {
-#           "ee_id": "EE005127",
-#           "gross_pay": 850,
-#           "state": "North Carolina",
-#           "no_of_exemption_for_self": 1,
-#           "pay_period": "Weekly",
-#           "filing_status": "single_filing_status",
-#           "net_pay": 618.97,
-#           "payroll_taxes": [
-#             {
-#               "federal_income_tax": 85
-#             },
-#             {
-#               "social_security_tax": 52.7
-#             },
-#             {
-#               "medicare_tax": 12.33
-#             },
-#             {
-#               "state_tax": 24
-#             },
-#             {
-#               "local_tax": 7
-#             }
-#           ],
-#           "payroll_deductions": {
-#             "medical_insurance": 50
-#           },
-#           "age": 43,
-#           "is_blind": False,
-#           "is_spouse_blind": False,
-#           "spouse_age": 39,
-#           "support_second_family": "Yes",
-#           "no_of_student_default_loan": 0,
-#           "arrears_greater_than_12_weeks": "No",
-#           "garnishment_data": [
-#             {
-#               "type": "Federal Tax Levy",
-#               "data": [
-#                 {
-#                   "case_id": "C59615",
-#                   "amount": 232.43,
-#                   "arrear": 0
-#                 }
-#               ]
-#             }
-#           ]
-#         }
+record =    {
+          "ee_id": "EE005114",
+          "gross_pay": 1000,
+          "state": "Texas",
+          "no_of_exemption_for_self": 1,
+          "pay_period": "Weekly",
+          "filing_status": "single_filing_status",
+          "net_pay": 858.8,
+          "payroll_taxes": [
+            {
+              "federal_income_tax": 80
+            },
+            {
+              "social_security_tax": 49.6
+            },
+            {
+              "medicare_tax": 11.6
+            },
+            {
+              "state_tax": 0
+            },
+            {
+              "local_tax": 0
+            }
+          ],
+          "payroll_deductions": {
+            "medical_insurance": 0
+          },
+          "age": 50,
+          "is_blind": True,
+          "is_spouse_blind": True,
+          "spouse_age": 39,
+          "support_second_family": "Yes",
+          "no_of_student_default_loan": 1,
+          "arrears_greater_than_12_weeks": "No",
+          "garnishment_data": [
+            {
+              "type": "student default loan",
+              "data": [
+                {
+                  "case_id": "C13278",
+                  "amount": 128.82,
+                  "arrear": 0
+                }
+              ]
+            }
+          ]
+        }
 
 
-# print(record.get("pay_period"))
 
 
-# print("amt",federal_tax().calculate(record))
+
+print("amt",federal_tax().calculate(record))

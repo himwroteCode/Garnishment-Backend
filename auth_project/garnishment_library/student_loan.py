@@ -7,11 +7,67 @@ from auth_project.garnishment_library.child_support import ChildSupport
 import os
 import json 
 from django.conf import settings
-
-# print("ddddd",ChildSupport().calculate_de(record))
-
+import json
 class StudentLoan():
     """ Calculate Student Loan garnishment amount based on the provided data."""
+
+
+    def calculate_disposable_earnings(self,record):
+        """
+        Calculate Disposable Earnings (DE) based on state and rules.
+        """
+        # Define file paths
+        de_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/disposable earning rules.json')
+        ccpa_rules_file = os.path.join(settings.BASE_DIR, 'User_app', 'configuration files/child support tables/ccpa_rules.json')
+    
+        def _load_json_file(file_path):
+            """Helper function to load a JSON file."""
+            try:
+                with open(file_path, 'r') as file:
+                    return json.load(file)
+            except FileNotFoundError:
+                raise Exception(f"File not found: {file_path}")
+            except json.JSONDecodeError:
+                raise Exception(f"Invalid JSON format in file: {file_path}")
+    
+        # Extract values from the record
+        state = record.get("state")
+        gross_pay = record.get("gross_pay")
+        payroll_taxes = record.get("payroll_taxes")
+    
+        if not state:
+            raise ValueError("State information is missing in the record.")
+        if gross_pay is None or payroll_taxes is None:
+            raise ValueError("Record must include 'gross_pay', 'state', and 'taxes' fields.")
+    
+        # Load DE rules
+        de_data = _load_json_file(de_rules_file)
+        de_rules = de_data.get("de", [])
+        de_rule = None
+    
+        # Find matching state in DE rules
+        for rule in de_rules:
+            if rule['State'] == state:
+                de_rule = rule['Disposable Earnings']
+                break
+        if de_rule is None:
+            raise ValueError(f"No DE rule found for state: {state}")
+    
+        # Load CCPA rules
+        ccpa_data = _load_json_file(ccpa_rules_file)
+        ccpa_rules = ccpa_data.get("CCPA_Rules", {})
+    
+        # Calculate mandatory deductions
+        mandatory_deductions = 0
+        if de_rule.lower() == "ccpa":
+            mandatory_tax_keys = ccpa_rules.get("Mandatory_deductions", [])
+            tax_amt = [tax.get(k, 0) for tax in payroll_taxes for k in mandatory_tax_keys if k in tax]
+            mandatory_deductions = sum(tax_amt)
+        print("jhyyyyy",gross_pay - mandatory_deductions)
+    
+        # Calculate and return disposable earnings
+        return gross_pay - mandatory_deductions
+    
 
     
     def get_fmw(self,record):
@@ -27,7 +83,7 @@ class StudentLoan():
 
     def get_single_student_amount(self, record):
         # Calculate disposable earnings
-        disposable_earning = ChildSupport().calculate_de(record)
+        disposable_earning = self.calculate_disposable_earnings(record)
         print(disposable_earning, "111disposable_earning")
 
         # Calculate percentages earnings
@@ -52,7 +108,7 @@ class StudentLoan():
 
     def get_multiple_student_amount(self, record):
         fmw = self.get_fmw(record)
-        disposable_earning = ChildSupport().calculate_de(record)
+        disposable_earning = self.calculate_disposable_earnings(record)
 
         difference_of_de_and_fmw = disposable_earning - fmw
         print("difference_of_de_and_fmw", difference_of_de_and_fmw)
@@ -79,7 +135,6 @@ class student_loan_calculate():
 
         elif no_of_student_default_loan>1:
             student_loan_amt=StudentLoan().get_multiple_student_amount(record)
-
 
         return student_loan_amt
 
