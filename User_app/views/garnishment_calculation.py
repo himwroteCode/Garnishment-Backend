@@ -61,19 +61,17 @@ class CalculationDataView(APIView):
                                     else SingleChild().calculate(record)
                                 )
                                 child_support_data = result[0]
-                                print("child_support_data",child_support_data)
+ 
                                 arrear_amount_data = result[1]
-                                print("arrear_amount_data",arrear_amount_data)
+
                                 case_id_get=garnishment_data[0]["data"]
 
-                                # Transform data into the desired format
-                                garnishment = []
 
                                 for i in range(1, len(child_support_data) + 1):
                                     garnishment_results.append({
                                         "case_id":case_id_get[i-1]["case_id"],
                                         "garnishment_type": garnishment_type,
-                                        "child_support": child_support_data[f'child support amount{i}'],
+                                        "child_support_withhold_amt": child_support_data[f'child support amount{i}'],
                                         "arrear_amount": arrear_amount_data[f'arrear amount{i}']
                                     })
 
@@ -91,7 +89,7 @@ class CalculationDataView(APIView):
                                 garnishment_results.append({
                                         "case_id":"101",
                                         "garnishment_type": garnishment_type,
-                                        "withholding_amt": result,
+                                        "federal_tax_withhold_amt": result,
                                     })
 
                             else:
@@ -116,14 +114,14 @@ class CalculationDataView(APIView):
                                     garnishment_results.append({
                                         "case_id":list(garnishment_data[0]["data"][0].values())[0],
                                         "garnishment_type":garnishment_type,
-                                        "student loan": result['student_loan_amt'],
+                                        "student_loan_withhold_amt": result['student_loan_amt'],
                                     })
                                 else:
                                     for i in range(1, len(result) + 1):
                                         garnishment_results.append({
                                             "case_id":case_id_get[i-1]["case_id"],
                                             "garnishment_type":garnishment_type,
-                                            "student loan": result[f'student_loan_amt{i}'],
+                                            "student_loan_withhold_amt": result[f'student_loan_amt{i}'],
                                         })
     
                             else:
