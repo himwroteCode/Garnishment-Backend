@@ -30,7 +30,10 @@ class ChildSupport:
         """
         try:
             with open(file_path, 'r') as file:
-                return json.load(file)
+                # Load and return the JSON data in one step
+                data = json.load(file)  # Load the JSON data once
+ # Print if needed
+                return data  # Return the loaded data
         except FileNotFoundError:
             raise Exception(f"File not found: {file_path}")
         except json.JSONDecodeError:
@@ -289,5 +292,53 @@ class MultipleChild(ChildSupport):
 #           ]}
     
 # tcsa = ChildSupport().get_list_supportAmt(record)
-# print("result",MultipleChild().calculate(record) if len(tcsa) > 1 else SingleChild().calculate(record))
+# record={
+#           "ee_id": "EE005114",
+#           "gross_pay": 1000,
+#           "state": "Alabama",
+#           "no_of_exemption_for_self": 1,
+#           "pay_period": "Weekly",
+#           "filing_status": "Single Filing Status",
+#           "net_pay": 858.8,
+#           "payroll_taxes": [
+#             {
+#               "federal_income_tax": 80
+#             },
+#             {
+#               "social_security_tax": 49.6
+#             },
+#             {
+#               "medicare_tax": 11.6
+#             },
+#             {
+#               "state_tax": 0
+#             },
+#             {
+#               "local_tax": 0
+#             }
+#           ],
+#           "payroll_deductions": {
+#             "medical_insurance": 0
+#           },
+#           "age": 50,
+#           "is_blind": True,
+#           "is_spouse_blind": True,
+#           "spouse_age": 39,
+#           "support_second_family": "Yes",
+#           "no_of_student_default_loan": 1,
+#           "arrears_greater_than_12_weeks": "No",
+#           "garnishment_data": [
+#             {
+#               "type": "student default loan",
+#               "data": [
+#                 {
+#                   "case_id": "C13278"
+#                 }
+#               ]
+#             }
+#           ]
+#         }
+# print("11111rrr",ChildSupport().calculate_de_rule(record))
+# # print("result",MultipleChild().calculate(record) if len(tcsa) > 1 else SingleChild().calculate(record))
 
+# print("11111ddd",ChildSupport().calculate_de(record))

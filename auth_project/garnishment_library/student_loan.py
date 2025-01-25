@@ -4,7 +4,9 @@ from django.views.decorators.csrf import csrf_exempt
 from User_app.models import *
 from User_app.serializers import *
 from auth_project.garnishment_library.child_support import ChildSupport
-
+import os
+from auth_project import settings
+import json
 
 class StudentLoan():
     """ Calculate Student Loan garnishment amount based on the provided data."""
@@ -13,7 +15,8 @@ class StudentLoan():
         disposable_earning = record.get("gross_pay") if isinstance(record, dict) else record
         
         if disposable_earning is None and isinstance(record, dict):
-            disposable_earning = ChildSupport().calculate_de(record)  
+            disposable_earning = ChildSupport().calculate_de(record) 
+
         
         return round(disposable_earning * percentage / 100  ,2) 
     
@@ -33,13 +36,13 @@ class StudentLoan():
     def  get_single_student_amount(self, record): 
         # Calculate disposable earnings
         disposable_earning = ChildSupport().calculate_de(record)
-        print(disposable_earning,"disposable_earning")
+
 
         # Calculate percentages earnings
-        fifteen_percent_of_earning = self.get_percentage(15,record)
-        print("fifteen_percent_of_earning",fifteen_percent_of_earning)
+        fifteen_percent_of_earning = disposable_earning*.15
+
         twentyfive_percent_of_earning = self.get_percentage(25,record)
-        print(twentyfive_percent_of_earning,"twentyfive_percent_of_earning")
+
         fmw =self.get_fmw(record)
         difference_of_de_and_fmw=disposable_earning-fmw
         
@@ -50,9 +53,8 @@ class StudentLoan():
         elif difference_of_de_and_fmw<0:
             loan_amt = 0
         
-        print("loan_amt",loan_amt)
 
-        return ({"student_loan_amt":loan_amt})
+        return ({"student_loan_amt":round(loan_amt,2)})
     
 
     def get_multiple_student_amount(self, record):
@@ -61,7 +63,6 @@ class StudentLoan():
         disposable_earning = ChildSupport().calculate_de(record)
 
         difference_of_de_and_fmw=disposable_earning-fmw
-
 
         if  fmw>=disposable_earning:
             student_loan_amt1 = "Student loan withholding cannot be applied because Disposable Earnings are less than or equal to $217.5, the exempt amount."
@@ -73,7 +74,7 @@ class StudentLoan():
             student_loan_amt1 = self.get_percentage(15,disposable_earning)
             student_loan_amt2 = self.get_percentage(10,disposable_earning)
 
-        return ({"student_loan_amt1":student_loan_amt1,"student_loan_amt2":student_loan_amt2})
+        return ({"student_loan_amt1":round(student_loan_amt1,2),"student_loan_amt2":round(student_loan_amt2,2)})
     
 class student_loan_calculate():
         
@@ -89,56 +90,56 @@ class student_loan_calculate():
 
         return student_loan_amt
     
-record={
-          "ee_id": "EE005114",
-          "gross_pay": 1000,
-          "state": "Texas",
-          "no_of_exemption_for_self": 1,
-          "pay_period": "Weekly",
-          "filing_status": "Single Filing Status",
-          "net_pay": 858.8,
-          "payroll_taxes": [
-            {
-              "federal_income_tax": 80
-            },
-            {
-              "social_security_tax": 49.6
-            },
-            {
-              "medicare_tax": 11.6
-            },
-            {
-              "state_tax": 0
-            },
-            {
-              "local_tax": 0
-            }
-          ],
-          "payroll_deductions": {
-            "medical_insurance": 0
-          },
-          "age": 50,
-          "is_blind": True,
-          "is_spouse_blind": True,
-          "spouse_age": 39,
-          "support_second_family": "Yes",
-          "no_of_student_default_loan": 1,
-          "arrears_greater_than_12_weeks": "No",
-          "garnishment_data": [
-            {
-              "type": "student default loan",
-              "data": [
-                {
-                  "case_id": "C13278",
-                  "amount": 128.82,
-                  "arrear": 0
-                }
-              ]
-            }
-          ]
-        }
+# record= {
+#           "ee_id": "EE005791",
+#           "gross_pay": 1200,
+#           "state": "Pennsylvania",
+#           "no_of_exemption_for_self": 2,
+#           "pay_period": "Weekly",
+#           "filing_status": "married_filing_separate Return",
+#           "net_pay": 993.3,
+#           "payroll_taxes": [
+#             {
+#               "federal_income_tax": 95
+#             },
+#             {
+#               "social_security_tax": 58.9
+#             },
+#             {
+#               "medicare_tax": 13.8
+#             },
+#             {
+#               "state_tax": 29
+#             },
+#             {
+#               "local_tax": 10
+#             }
+#           ],
+#           "payroll_deductions": {
+#             "medical_insurance": 0
+#           },
+#           "age": 26,
+#           "is_blind": False,
+#           "is_spouse_blind": False,
+#           "spouse_age": 33,
+#           "support_second_family": "Yes",
+#           "no_of_student_default_loan": 1,
+#           "arrears_greater_than_12_weeks": "Yes",
+#           "garnishment_data": [
+#             {
+#               "type": "student default loan",
+#               "data": [
+#                 {
+#                   "case_id": "C47930",
+#                   "amount": 148.995,
+#                   "arrear": 0
+#                 }
+#               ]
+#             }
+#           ]
+#         }
 
-# print("get_percentages:",StudentLoan().get_percentage)
-print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
-print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
-print("student_loan",student_loan_calculate().calculate( record ))
+# # print("get_percentages:",StudentLoan().get_percentage)
+# print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
+# print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
+# print("student_loan",student_loan_calculate().calculate( record ))
