@@ -9,7 +9,7 @@ from auth_project.garnishment_library.child_support import ChildSupport,Multiple
 from auth_project.garnishment_library.student_loan import student_loan_calculate
 from django.utils.decorators import method_decorator
 from auth_project.garnishment_library.federal_case import federal_tax
-import json
+
 
 
 
@@ -102,14 +102,9 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
-                                print("len_of_student _result",len(result))
-                            
-
-                                case_id_get=garnishment_data[0]["data"]
-                                
+                                case_id_get=garnishment_data[0]["data"]                                
                                 
                                 # Transform data into the desired format
-
                                 if len(result)==1:
                                     garnishment_results.append({
                                         "case_id":list(garnishment_data[0]["data"][0].values())[0],
@@ -163,7 +158,7 @@ class CalculationDataView(APIView):
     
             return Response(
                 {
-                    "message": "Calculations successfully registered",
+                    "message": "Result Generated Successfully",
                     "status_code": status.HTTP_200_OK,
                     "batch_id": batch_id,
                     "results": output
