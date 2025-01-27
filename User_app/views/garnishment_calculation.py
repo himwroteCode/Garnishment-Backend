@@ -70,7 +70,7 @@ class CalculationDataView(APIView):
                                 case_id_get=garnishment_data[0]["data"]
 
                                  # Transform data into the desired format
-                                if len(result)==1+1:
+                                if len(result)==2:
                                         
                                         garnishment_results.append({
                                             "case_id":list(garnishment_data[0]["data"][0].values())[0],
@@ -87,10 +87,6 @@ class CalculationDataView(APIView):
                                             "child_support_withhold_amt": child_support_data[f'child support amount{i}'],
                                             "arrear_amount": arrear_amount_data[f'arrear amount{i}']
                                         })
-
-
-
-
 
                             else:
                                 result = {"error": f"Missing fields in record: {', '.join(missing_fields)}"}
@@ -118,9 +114,12 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
-                                case_id_get=garnishment_data[0]["data"] 
-                  
                                 
+                                case_id_get=garnishment_data[0]["data"] 
+                                print("case_id_get",case_id_get)
+
+                                case_id_get.append({"case_id": "C13278"})
+                                                  
                                 # Transform data into the desired format
                                 if len(result)==1:
                                     garnishment_results.append({
@@ -131,8 +130,7 @@ class CalculationDataView(APIView):
                                 else:
                                     for i in range(1, len(result) + 1):
                                         garnishment_results.append({
-                                            # case_id_get[i-1]["case_id"]
-                                            "case_id":"COO1",
+                                            "case_id":case_id_get[i-1]["case_id"],
                                             "garnishment_type":garnishment_type,
                                             "student_loan_withhold_amt": result[f'student_loan_amt{i}'],
                                         })
