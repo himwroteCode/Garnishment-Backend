@@ -81,8 +81,6 @@ class CalculationDataView(APIView):
 
                                 else:
                                     for i in range(1, len(child_support_data) + 1):
-                                        # print("key",child_support_data[f'amount{i}'])
-                                        # print("keyss", arrear_amount_data[f'arrear{i}'])
                                         garnishment_results.append({
                                             "case_id":list(garnishment_data[0]["data"][0].values())[0],
                                             "garnishment_type": garnishment_type,
@@ -120,7 +118,6 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
-                                print("result len",len(result))
                                 case_id_get=garnishment_data[0]["data"] 
                   
                                 
@@ -192,11 +189,11 @@ class CalculationDataView(APIView):
                 {"error": "Employee details not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        # except Exception as e:
-        #     return Response(
-        #         {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
-        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        #     )
+        except Exception as e:
+            return Response(
+                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 
