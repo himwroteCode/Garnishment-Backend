@@ -86,7 +86,7 @@ class Employee_Detail(models.Model):
     cid=models.CharField(max_length=255)
     age = models.IntegerField()
     social_security_number = models.CharField(max_length=255)
-    blind = models.BooleanField(null=True, blank=True)
+    is_blind = models.BooleanField(null=True, blank=True)
     home_state=models.CharField(max_length=255)
     work_state=models.CharField(max_length=255)
     gender=models.CharField(max_length=255,null=True, blank=True)
