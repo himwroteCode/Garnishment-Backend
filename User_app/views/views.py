@@ -23,6 +23,7 @@ from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken ,AccessToken, TokenError
 import csv
+from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from User_app.models import Employee_Detail
 import pandas as pd
@@ -1001,38 +1002,96 @@ class GETSettingDetails(APIView):
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
-@csrf_exempt
-def convert_excel_to_json(request):
-    if request.method == 'POST' and request.FILES.get('file'):
+
+
+class convert_excel_to_json(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
         try:
-            # Save the uploaded file temporarily
-            uploaded_file = request.FILES['file']
-            file_path = default_storage.save(uploaded_file.name, uploaded_file)
-
+            if not file:
+                return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+    
+            # try:
             # Load the Excel workbook
-            employee_details = pd.read_excel(file_path, sheet_name='Employee Details ').head(36)
-            garnishment_order_details = pd.read_excel(file_path, sheet_name='Garnishment Order details').head(36)
-            payroll_batch_details = pd.read_excel(file_path, sheet_name='Payroll Batch Details', header=[0, 1]).head(36)
-
-            # Concatenate the dataframes
+    
+            employee_details = pd.read_excel(file, sheet_name='Employee Details ').head(36)
+            garnishment_order_details = pd.read_excel(file, sheet_name='Garnishment Order details').head(36)
+            payroll_batch_details = pd.read_excel(file, sheet_name='Payroll Batch Details', header=[0, 1]).head(36)
+            # Concatenate the DataFrames
             concatenated_df = pd.concat([employee_details, garnishment_order_details, payroll_batch_details], axis=1)
-
-            # Clean and transform the DataFrame (similar to your script)
+            # Column cleanup
             concatenated_df.columns = concatenated_df.columns.map(
                 lambda x: '_'.join(str(i) for i in x) if isinstance(x, tuple) else x
             )
-            concatenated_df.rename(
-                columns={
-                    "Deductions 401K": 'Deductions 401(K)',
-                    "Deductions_MedicalInsurance": 'medical_insurance',
-                    "GrossPay_Unnamed: 6_level_1": 'gross_pay',
-                    # Add all other column mappings here
-                },
-                inplace=True
-            )
+            print("new columns",concatenated_df.columns)
+            concatenated_df.rename(columns={
+                "Deductions 401K": 'Deductions 401(K)',
+                "Deductions_MedicalInsurance": 'medical_insurance',
+                "Deductions_SDI": 'SDI',
+                "Deductions_UnionDues": 'union_dues',
+                "Deductions_Voluntary": 'voluntary',
+                "GrossPay_Unnamed: 6_level_1": 'gross_pay',
+                "NetPay_Unnamed: 17_level_1": 'net_pay',
+                "PayPeriod_Unnamed: 3_level_1": 'Pay cycle',
+                "PayPeriod": "pay_period",
+                "PayDate_Unnamed: 5_level_1": 'Pay Date',
+                "PayrollDate_Unnamed: 4_level_1": 'Payroll Date',
+                "State Unnamed: 2_level_1": 'state',
+                'Taxes_FederalIncomeTax': 'federal_income_tax',
+                'Taxes_StateTax': 'state_tax',
+                'Taxes_LocalTax': 'local_tax',
+                "FilingStatus":'filing_status',
+    
+                'Taxes_SocialSecurityTax': 'social_security_tax',
+                'Taxes_MedicareTax': 'medicare_tax',
+            }, inplace=True)
+    
+    
+            # Create a dictionary mapping merged_df column names to JSON keys
+            column_mapping = {
+                'EEID': 'ee_id',
+                "CID": 'cid',
+                'IsBlind': 'is_blind',
+                'Age': 'age',
+                'FilingStatus': 'filing_status',
+                'SupportSecondFamily': 'support_second_family',
+                'SpouseAge ': 'spouse_age',
+                'IsSpouseBlind': 'is_spouse_blind',
+                'Amount': 'amount',
+                'ArrearsGreaterThan12Weeks?': 'arrears_greater_than_12_weeks',
+                "CaseID":'case_id',
+                'TotalExemptions':'no_of_exception_for_self',
+                'WorkState':'Work State',
+                'HomeState':'Home State',
+                'NumberofStudentLoan' : 'no_of_student_default_loan',
+                'No.OFExemptionIncludingSelf':'no_of_exception_for_self',
+                "Type":"garnishment_type",
+                "ArrearAmount":"arrear",
+                "State":"state"
+            }
+            concatenated_df = concatenated_df.rename(columns=column_mapping)
+            concatenated_df = concatenated_df.loc[:, ~concatenated_df.columns.duplicated(keep='first')] 
+    
+    
+            # print(concatenated_df.columns)
+            # Data preparation
+            concatenated_df['filing_status'] = concatenated_df['filing_status'].str.lower().str.replace(' ', '_')
             concatenated_df['batch_id'] = "B001A"
-
-            # Convert DataFrame to JSON
+            concatenated_df['arrears_greater_than_12_weeks'] = concatenated_df['arrears_greater_than_12_weeks'].replace(
+                {True: "Yes", False: "No"}
+            )
+            concatenated_df['support_second_family'] = concatenated_df['support_second_family'].replace(
+                {True: "Yes", False: "No"}
+            )
+            concatenated_df['garnishment_type'] = concatenated_df['garnishment_type'].replace(
+                {'Student Loan': "student default loan"}
+            )
+            concatenated_df['filing_status'] = concatenated_df['filing_status'].apply(
+                lambda x: 'married_filing_separate' if x == 'married_filing_separate_return' else x
+            )
+            # Create JSON structure
             output_json = {}
             for (batch_id, cid), group in concatenated_df.groupby(["batch_id", "cid"]):
                 employees = []
@@ -1041,21 +1100,57 @@ def convert_excel_to_json(request):
                         "ee_id": row["ee_id"],
                         "gross_pay": row["gross_pay"],
                         "state": row["state"],
-                        # Add all other fields here
+                        "no_of_exemption_for_self": row["no_of_exception_for_self"],
+                        "pay_period": row["pay_period"],
+                        "filing_status": row["filing_status"],
+                        "net_pay": row["net_pay"],
+                        "payroll_taxes": [
+                            {"federal_income_tax": row["federal_income_tax"]},
+                            {"social_security_tax": row["social_security_tax"]},
+                            {"medicare_tax": row["medicare_tax"]},
+                            {"state_tax": row["state_tax"]},
+                            {"local_tax": row["local_tax"]}
+                        ],
+                        "payroll_deductions": {
+                            "medical_insurance": row["medical_insurance"]
+                        },
+                        "age": row["age"],
+                        "is_blind": row["is_blind"],
+                        "is_spouse_blind": row["is_spouse_blind"],
+                        "spouse_age": row["spouse_age"],
+                        "support_second_family": row["support_second_family"],
+                        "no_of_student_default_loan": row["no_of_student_default_loan"],
+                        "arrears_greater_than_12_weeks": row["arrears_greater_than_12_weeks"],
+                        "garnishment_data": [
+                            {
+                                "type": row["garnishment_type"],
+                                "data": [
+                                    {
+                                        "case_id": row["case_id"],
+                                        "amount": row["Amount1"],
+                                        "arrear": row["ArrearAmount1"]
+                                    },
+                                    {
+                                        "case_id": row["case_id"],
+                                        "amount": row["Amount2"],
+                                        "arrear": row["ArrearAmount2"]
+                                    }
+                                ]
+                            }
+                        ]
                     }
                     employees.append(employee)
-
-                if batch_id not in output_json:
-                    output_json[batch_id] = {}
-                output_json[batch_id][cid] = {"employees": employees}
-
-            # Return the JSON response
-            return JsonResponse(output_json, safe=False)
+    
+                output_json["batch_id"] = batch_id  # Add batch_id key as a top-level key
+                if "cid" not in output_json:
+                    output_json["cid"] = {}  # Create "cid" as a top-level key
+                output_json["cid"][cid] = {"employees": employees}
+            return Response(output_json, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # return JsonResponse({"error": "Invalid request"}, status=400)
+
 
 
 
