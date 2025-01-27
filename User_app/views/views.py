@@ -31,6 +31,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
+from User_app.models import garnishment_order, Employee_Detail, company_details
 
 
 @csrf_exempt
@@ -1555,88 +1556,6 @@ def import_employees_api(request):
 
 #Upsert the company details
 
-@csrf_exempt
-def upsert_company_details_api(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        file = request.FILES['file']  
-        file_name = file.name  
-        updated_companies = []
-        added_companies = []
-
-        try:
-            
-            if file_name.endswith('.csv'):
-                df = pd.read_csv(file)
-            elif file_name.endswith(('.xlsx', '.xls', '.xlsm', '.xlsb', '.odf', '.ods', '.odt')):
-                df = pd.read_excel(file)
-            else:
-                return JsonResponse({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=400)
-
-            
-            for _, row in df.iterrows():
-                
-                company = company_details.objects.filter(cid=row['cid']).first()
-
-                if company:
-                   
-                    has_changes = (
-                        company.ein != row['ein'] or
-                        company.company_name != row['company_name'] or
-                        company.zipcode != row['zipcode'] or
-                        company.state != row['state'] or
-                        company.DBA_name != row['dba_name'] or
-                        company.bank_name != row.get('bank_name', None) or
-                        company.bank_account_number != row.get('bank_account_number', None) or
-                        company.location != row.get('location', None)
-                    )
-
-                    if has_changes:
-                        
-                        company.ein = row['ein']
-                        company.company_name = row['company_name']
-                        company.zipcode = row['zipcode']
-                        company.state = row['state']
-                        company.dba_name = row['dba_name']
-                        company.bank_name = row.get('bank_name', None)
-                        company.bank_account_number = row.get('bank_account_number', None)
-                        company.location = row.get('location', None)
-                        company.save()
-                        updated_companies.append(company.co_id)
-                else:
-                    
-                    company_details.objects.create(
-                        co_id=row['cid'],
-                        ein=row['ein'],
-                        company_name=row['company_name'],
-                        zipcode=row['zipcode'],
-                        state=row['state'],
-                        DBA_name=row['dba_name'],
-                        bank_name=row.get('bank_name', None),
-                        bank_account_number=row.get('bank_account_number', None),
-                        location=row.get('location', None)
-                    )
-                    added_companies.append(row['co_id'])
-
-            
-            response_data = []
-            if added_companies:
-                response_data.append({
-                    'message': 'Company details imported successfully',
-                    'added_companies': added_companies
-                })
-            if updated_companies:
-                response_data.append({
-                    'message': 'Company details updated successfully',
-                    'updated_companies': updated_companies
-                })
-
-            return JsonResponse({'responses': response_data}, status=200)
-
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
-
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
 
 
 @csrf_exempt
@@ -1836,9 +1755,10 @@ def upsert_garnishment_order(request):
                         )
                         added_orders.append({'cid': row['cid'], 'eeid': row['eeid']})
 
-                except Exception as e:
-                    return JsonResponse({'error': str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-                
+                except Exception as row_error:
+                    # Error is no longer printed in terminal, only logged in exception handling
+                    continue
+
             # Prepare response data
             if added_orders or updated_orders:
                 response_data = []
@@ -1867,3 +1787,112 @@ def upsert_garnishment_order(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+@csrf_exempt
+def upsert_company_details(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']  
+        file_name = file.name  
+        updated_companies = []
+        added_companies = []
+        unchanged_companies = []  
+        new_data_found = False 
+
+        try:
+            
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx', '.xls', '.xlsm', '.xlsb', '.odf', '.ods', '.odt')):
+                df = pd.read_excel(file)
+            else:
+                return JsonResponse({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=400)
+
+            
+            for _, row in df.iterrows():
+                company = company_details.objects.filter(cid=row['cid']).first()
+
+                if company:
+                    
+                    existing_data = {
+                        'ein': str(company.ein).strip() if company.ein else '',
+                        'company_name': str(company.company_name).strip() if company.company_name else '',
+                        'zipcode': str(company.zipcode).strip() if company.zipcode else '',
+                        'state': str(company.state).strip() if company.state else '',
+                        'dba_name': str(company.dba_name).strip() if company.dba_name else '',
+                        'bank_name': str(company.bank_name).strip() if company.bank_name else '',
+                        'bank_account_number': str(company.bank_account_number).strip() if company.bank_account_number else '',
+                        'location': str(company.location).strip() if company.location else '',
+                        'registered_address': str(company.registered_address).strip() if company.registered_address else ''
+                    }
+
+                    file_data = {
+                        'ein': str(row['ein']).strip() if row['ein'] else '',
+                        'company_name': str(row['company_name']).strip() if row['company_name'] else '',
+                        'zipcode': str(row['zipcode']).strip() if row['zipcode'] else '',
+                        'state': str(row['state']).strip() if row['state'] else '',
+                        'dba_name': str(row['dba_name']).strip() if row['dba_name'] else '',
+                        'bank_name': str(row.get('bank_name', '')).strip() if row.get('bank_name') else '',
+                        'bank_account_number': str(row.get('bank_account_number', '')).strip() if row.get('bank_account_number') else '',
+                        'location': str(row.get('location', '')).strip() if row.get('location') else '',
+                        'registered_address': str(row.get('registered_address', '')).strip() if row.get('registered_address') else ''
+                    }
+
+                    
+                    has_changes = any(existing_data[key] != file_data[key] for key in existing_data)
+
+                    if has_changes:
+                        
+                        company.ein = row['ein']
+                        company.company_name = row['company_name']
+                        company.zipcode = row['zipcode']
+                        company.state = row['state']
+                        company.dba_name = row['dba_name']
+                        company.bank_name = row.get('bank_name', None)
+                        company.bank_account_number = row.get('bank_account_number', None)
+                        company.location = row.get('location', None)
+                        company.registered_address = row.get('registered_address', None)
+                        company.save()
+                        updated_companies.append(company.cid)
+                    else:
+                        
+                        unchanged_companies.append(company.cid)
+                else:
+                    
+                    company_details.objects.create(
+                        cid=row['cid'],
+                        ein=row['ein'],
+                        company_name=row['company_name'],
+                        zipcode=row['zipcode'],
+                        state=row['state'],
+                        dba_name=row['dba_name'],
+                        bank_name=row.get('bank_name', None),
+                        bank_account_number=row.get('bank_account_number', None),
+                        location=row.get('location', None),
+                        registered_address=row.get('registered_address', None)
+                    )
+                    added_companies.append(row['cid'])
+                    new_data_found = True  
+
+            
+            response_data = []
+            if added_companies:
+                response_data.append({
+                    'message': 'Company details imported successfully',
+                    'added_companies': added_companies
+                })
+            
+            if updated_companies:
+                response_data.append({
+                    'message': 'Company details updated successfully',
+                    'updated_companies': updated_companies
+                })
+            
+            
+            if not added_companies and not updated_companies:
+                response_data.append({'message': 'No changes are found'})
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
