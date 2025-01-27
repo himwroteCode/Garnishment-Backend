@@ -291,24 +291,24 @@ class MultipleChild(ChildSupport):
 #             }
 #           ]}
     
-# tcsa = ChildSupport().get_list_supportAmt(record)
-# record={
-#           "ee_id": "EE005114",
-#           "gross_pay": 1000,
-#           "state": "Alabama",
-#           "no_of_exemption_for_self": 1,
+
+# record= {
+#           "ee_id": "EE005665",
+#           "gross_pay": 950,
+#           "state": "Florida",
 #           "pay_period": "Weekly",
-#           "filing_status": "Single Filing Status",
-#           "net_pay": 858.8,
+#           "no_of_exception_for_self": 2,
+#           "filing_status": "head_of_household",
+#           "net_pay": 732.3,
 #           "payroll_taxes": [
 #             {
-#               "federal_income_tax": 80
+#               "federal_income_tax": 95
 #             },
 #             {
-#               "social_security_tax": 49.6
+#               "social_security_tax": 58.9
 #             },
 #             {
-#               "medicare_tax": 11.6
+#               "medicare_tax": 13.8
 #             },
 #             {
 #               "state_tax": 0
@@ -318,27 +318,30 @@ class MultipleChild(ChildSupport):
 #             }
 #           ],
 #           "payroll_deductions": {
-#             "medical_insurance": 0
+#             "medical_insurance": 50
 #           },
 #           "age": 50,
-#           "is_blind": True,
-#           "is_spouse_blind": True,
-#           "spouse_age": 39,
-#           "support_second_family": "Yes",
-#           "no_of_student_default_loan": 1,
-#           "arrears_greater_than_12_weeks": "No",
+#           "is_blind": False,
+#           "is_spouse_blind": False,
+#           "spouse_age": 21,
+#           "support_second_family": "No",
+#           "arrears_greater_than_12_weeks": "Yes",
 #           "garnishment_data": [
 #             {
-#               "type": "student default loan",
+#               "type": "child support",
 #               "data": [
 #                 {
-#                   "case_id": "C13278"
+#                   "amount": 100,
+#                   "arrear": 0,
+#                   "case_id": "C81426"
 #                 }
 #               ]
 #             }
 #           ]
 #         }
-# print("11111rrr",ChildSupport().calculate_de_rule(record))
-# # print("result",MultipleChild().calculate(record) if len(tcsa) > 1 else SingleChild().calculate(record))
+
+# tcsa = ChildSupport().get_list_supportAmt(record)
+# # print("11111rrr",ChildSupport().calculate_de_rule(record))
+# print("result",MultipleChild().calculate(record) if len(tcsa) > 1 else SingleChild().calculate(record))
 
 # print("11111ddd",ChildSupport().calculate_de(record))

@@ -1,3 +1,4 @@
+from requests import Response
 from User_app.models import *
 from User_app.serializers import *
 from auth_project.garnishment_library.child_support import ChildSupport
@@ -5,6 +6,7 @@ import os
 import json 
 from django.conf import settings
 import json
+from rest_framework import status
 class StudentLoan():
     """ Calculate Student Loan garnishment amount based on the provided data."""
 
@@ -101,6 +103,7 @@ class StudentLoan():
     
 
     def get_multiple_student_amount(self, record):
+
         fmw = self.get_fmw(record)
         disposable_earning = self.calculate_disposable_earnings(record)
 
@@ -122,25 +125,30 @@ class StudentLoan():
 class student_loan_calculate():
         
     def calculate(self, record):
+        try:
 
-        no_of_student_default_loan=record.get("no_of_student_default_loan")
-        if no_of_student_default_loan==1:
-            student_loan_amt=StudentLoan().get_single_student_amount(record)
+            no_of_student_default_loan=record.get("no_of_student_default_loan")
+            if no_of_student_default_loan==1:
+                student_loan_amt=StudentLoan().get_single_student_amount(record)
 
-        elif no_of_student_default_loan>1:
-            student_loan_amt=StudentLoan().get_multiple_student_amount(record)
+            elif no_of_student_default_loan>1:
+                student_loan_amt=StudentLoan().get_multiple_student_amount(record)
+            print("loan_amt",student_loan_amt)
+            return student_loan_amt
+        except Exception as e:
+            return Response(
+                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,"ee_id":record.get("ee_id")}
+            )
 
-        return student_loan_amt
 
 
-
-# record={
+# record=        {
 #           "ee_id": "EE005114",
 #           "gross_pay": 1000,
 #           "state": "Alabama",
-#           "no_of_exemption_for_self": 1,
 #           "pay_period": "Weekly",
-#           "filing_status": "Single Filing Status",
+#           "no_of_exception_for_self": 1,
+#           "filing_status": "single_filing_status",
 #           "net_pay": 858.8,
 #           "payroll_taxes": [
 #             {
@@ -163,27 +171,26 @@ class student_loan_calculate():
 #             "medical_insurance": 0
 #           },
 #           "age": 50,
-#           "is_is_blind": True,
-#           "is_spouse_is_blind": True,
+#           "is_blind": True,
+#           "is_spouse_blind": True,
 #           "spouse_age": 39,
-#           "support_second_family": "Yes",
-#           "no_of_student_default_loan": 1,
-#           "arrears_greater_than_12_weeks": "No",
+#           "support_second_family": True,
+#           "arrears_greater_than_12_weeks": 0,
 #           "garnishment_data": [
 #             {
 #               "type": "student default loan",
 #               "data": [
 #                 {
-#                   "case_id": "C13278",
-#                   "amount": 128.82,
-#                   "arrear": 0
+#                   "amount": 200,
+#                   "arrear": 0,
+#                   "case_id": "C13278"
 #                 }
 #               ]
 #             }
 #           ]
 #         }
 
-# # print("get_percentages:",StudentLoan().get_percentage)
-# print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
-# print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
+# # # print("get_percentages:",StudentLoan().get_percentage)
+# # print("get_single_student_amount",StudentLoan().get_single_student_amount(record))
+# # print("get_multiple_student_amount",StudentLoan().get_multiple_student_amount(record))
 # print("student_loan",student_loan_calculate().calculate( record ))

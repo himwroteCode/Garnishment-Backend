@@ -61,19 +61,37 @@ class CalculationDataView(APIView):
                                     else SingleChild().calculate(record)
                                 )
                                 child_support_data = result[0]
+                                print("child_support_data",child_support_data)
+                                print("l",len(result))
  
                                 arrear_amount_data = result[1]
+                                print("arrear_amount_data",arrear_amount_data)
 
                                 case_id_get=garnishment_data[0]["data"]
 
+                                 # Transform data into the desired format
+                                if len(result)==1+1:
+                                        
+                                        garnishment_results.append({
+                                            "case_id":list(garnishment_data[0]["data"][0].values())[0],
+                                            "garnishment_type": garnishment_type,
+                                            "child_support_withhold_amt": child_support_data[f'child support amount1'],
+                                            "arrear_amount": arrear_amount_data[f'arrear amount1']
+                                        })
 
-                                for i in range(1, len(child_support_data) + 1):
-                                    garnishment_results.append({
-                                        "case_id":case_id_get[i-1]["case_id"],
-                                        "garnishment_type": garnishment_type,
-                                        "child_support_withhold_amt": child_support_data[f'child support amount{i}'],
-                                        "arrear_amount": arrear_amount_data[f'arrear amount{i}']
-                                    })
+                                else:
+                                    for i in range(1, len(child_support_data) + 1):
+                                        # print("key",child_support_data[f'amount{i}'])
+                                        # print("keyss", arrear_amount_data[f'arrear{i}'])
+                                        garnishment_results.append({
+                                            "case_id":list(garnishment_data[0]["data"][0].values())[0],
+                                            "garnishment_type": garnishment_type,
+                                            "child_support_withhold_amt": child_support_data[f'child support amount{i}'],
+                                            "arrear_amount": arrear_amount_data[f'arrear amount{i}']
+                                        })
+
+
+
 
 
                             else:
@@ -87,7 +105,7 @@ class CalculationDataView(APIView):
                             if not missing_fields:
                                 result = federal_tax().calculate(record)
                                 garnishment_results.append({
-                                        "case_id":"101",
+                                        "case_id":list(garnishment_data[0]["data"][0].values())[0],
                                         "garnishment_type": garnishment_type,
                                         "federal_tax_withhold_amt": result,
                                     })
@@ -102,7 +120,9 @@ class CalculationDataView(APIView):
     
                             if not missing_fields:
                                 result = student_loan_calculate().calculate(record)
-                                case_id_get=garnishment_data[0]["data"]                                
+                                print("result len",len(result))
+                                case_id_get=garnishment_data[0]["data"] 
+                  
                                 
                                 # Transform data into the desired format
                                 if len(result)==1:
@@ -114,7 +134,8 @@ class CalculationDataView(APIView):
                                 else:
                                     for i in range(1, len(result) + 1):
                                         garnishment_results.append({
-                                            "case_id":case_id_get[i-1]["case_id"],
+                                            # case_id_get[i-1]["case_id"]
+                                            "case_id":"COO1",
                                             "garnishment_type":garnishment_type,
                                             "student_loan_withhold_amt": result[f'student_loan_amt{i}'],
                                         })
@@ -239,3 +260,59 @@ class CalculationDataView(APIView):
                             #     garnishment_results.append({
                             #         "error": f"Missing fields in record: {', '.join(missing_fields)}"
                             #     })
+
+
+
+# {
+#           "ee_id": "EE005254",
+#           "gross_pay": 1600,
+#           "state": "Massachusetts",
+#           "no_of_exemption_for_self": 1,
+#           "pay_period": "Semimonthly",
+#           "filing_status": "single_filing_status",
+#           "net_pay": 1369.5,
+#           "payroll_taxes": [
+#             {
+#               "federal_income_tax": 160.0
+#             },
+#             {
+#               "social_security_tax": 45.0
+#             },
+#             {
+#               "medicare_tax": 10.5
+#             },
+#             {
+#               "state_tax": 15.0
+#             },
+#             {
+#               "local_tax": 0.0
+#             }
+#           ],
+#           "payroll_deductions": {
+#             "medical_insurance": 0
+#           },
+#           "age": 41,
+#           "is_blind": false,
+#           "is_spouse_blind": true,
+#           "spouse_age": 46,
+#           "support_second_family": "No",
+#           "no_of_student_default_loan": 0,
+#           "arrears_greater_than_12_weeks": "Yes",
+#           "garnishment_data": [
+#             {
+#               "type": "Federal Tax Levy",
+#               "data": [
+#                 {
+#                   "case_id": "C72296",
+#                   "amount1": 0,
+#                   "arrear1": 0
+#                 },
+#                 {
+#                   "case_id": "C72296",
+#                   "amount2": 0,
+#                   "arrear2": 0
+#                 }
+#               ]
+#             }
+#           ]
+#         }
