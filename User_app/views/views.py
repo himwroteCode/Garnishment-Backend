@@ -24,11 +24,13 @@ from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken ,AccessToken, TokenError
 import csv
 from rest_framework.views import APIView
-#from django.views.decorators.csrf import csrf_exempt
-#from django.http import JsonResponse
-import csv
-import openpyxl
 from User_app.models import Employee_Detail
+import pandas as pd
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+
 
 @csrf_exempt
 def login(request):
@@ -997,7 +999,65 @@ class GETSettingDetails(APIView):
                 return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-    
+
+
+@csrf_exempt
+def convert_excel_to_json(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        try:
+            # Save the uploaded file temporarily
+            uploaded_file = request.FILES['file']
+            file_path = default_storage.save(uploaded_file.name, uploaded_file)
+
+            # Load the Excel workbook
+            employee_details = pd.read_excel(file_path, sheet_name='Employee Details ').head(36)
+            garnishment_order_details = pd.read_excel(file_path, sheet_name='Garnishment Order details').head(36)
+            payroll_batch_details = pd.read_excel(file_path, sheet_name='Payroll Batch Details', header=[0, 1]).head(36)
+
+            # Concatenate the dataframes
+            concatenated_df = pd.concat([employee_details, garnishment_order_details, payroll_batch_details], axis=1)
+
+            # Clean and transform the DataFrame (similar to your script)
+            concatenated_df.columns = concatenated_df.columns.map(
+                lambda x: '_'.join(str(i) for i in x) if isinstance(x, tuple) else x
+            )
+            concatenated_df.rename(
+                columns={
+                    "Deductions 401K": 'Deductions 401(K)',
+                    "Deductions_MedicalInsurance": 'medical_insurance',
+                    "GrossPay_Unnamed: 6_level_1": 'gross_pay',
+                    # Add all other column mappings here
+                },
+                inplace=True
+            )
+            concatenated_df['batch_id'] = "B001A"
+
+            # Convert DataFrame to JSON
+            output_json = {}
+            for (batch_id, cid), group in concatenated_df.groupby(["batch_id", "cid"]):
+                employees = []
+                for _, row in group.iterrows():
+                    employee = {
+                        "ee_id": row["ee_id"],
+                        "gross_pay": row["gross_pay"],
+                        "state": row["state"],
+                        # Add all other fields here
+                    }
+                    employees.append(employee)
+
+                if batch_id not in output_json:
+                    output_json[batch_id] = {}
+                output_json[batch_id][cid] = {"employees": employees}
+
+            # Return the JSON response
+            return JsonResponse(output_json, safe=False)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    # return JsonResponse({"error": "Invalid request"}, status=400)
+
+
 
 # class GETallcalculationresult(APIView):
 #     def get(self, request, employer_id):
