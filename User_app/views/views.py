@@ -437,7 +437,7 @@ def get_order_details(request, cid):
             return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR})  
 
     else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
+        return JsonResponse({'message': 'Company ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
 
 @api_view(['GET'])
