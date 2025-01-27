@@ -13,7 +13,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
 
 class EmployeeDetailsSerializer(serializers.ModelSerializer):
 
-    blind = serializers.BooleanField(required=False, allow_null=True)
+    is_blind = serializers.BooleanField(required=False, allow_null=True)
     support_second_family = serializers.BooleanField(required=False, allow_null=True)
     spouse_age = serializers.IntegerField(required=False, allow_null=True)
     is_spouse_blind = serializers.BooleanField(required=False, allow_null=True)

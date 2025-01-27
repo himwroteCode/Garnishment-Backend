@@ -48,7 +48,9 @@ urlpatterns = [
     #path('ChildSupportBatchResult/<str:batch_id>', ChildSupportGarnishmentBatchResult.as_view(), name='Calculation Data'),
     path('upsert-employees-details/', import_employees_api, name='import_employees_api'),
     path('upsert-company-details/', upsert_company_details_api, name='upsert_company_details_api'),
-    path('CompanyDetails/', CompanyDetails.as_view(), name='CompanyDetails')
+    path('CompanyDetails/', CompanyDetails.as_view(), name='CompanyDetails'),
+    path('ExportCompany/', export_company_data, name='export_company_data'),
+    
 
     
 

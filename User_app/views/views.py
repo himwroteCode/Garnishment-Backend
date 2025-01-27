@@ -723,6 +723,36 @@ def export_employee_data(request, cid):
         return JsonResponse({'detail': str(e), 'status code ': status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
+@api_view(['GET'])
+def export_company_data(request):
+    try:
+        employees = company_details.objects.all()
+        if not employees.exists():
+            return JsonResponse({'detail': 'No employees found for this employer ID', 'status': status.HTTP_404_NOT_FOUND})
+
+        serializer = company_details_serializer(employees, many=True)
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="company_data.csv"'
+
+        writer = csv.writer(response)
+
+        # Updated header fields
+        header_fields = ['cid','ein','company_name','registered_address','zipcode','state','dba_name','bank_name','bank_account_number','location']
+        writer.writerow(header_fields)
+
+        # Write rows dynamically
+        for employee in serializer.data:
+            row = [employee.get(field, '') for field in header_fields]
+            writer.writerow(row)
+
+        return response
+
+    except Exception as e:
+        return JsonResponse({'detail': str(e), 'status code ': status.HTTP_500_INTERNAL_SERVER_ERROR})
+
+
+
+
 #Import employee details using the Excel file
 class EmployeeImportView(APIView):
     def post(self, request, employer_id):
