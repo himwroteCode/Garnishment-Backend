@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ..models import *
+import math
 import pandas 
 from User_app.models import *
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
@@ -893,26 +894,6 @@ class CompanyDetails(APIView):
 
 
 
-# #Get the single employee details
-# @api_view(['GET'])
-# def get_single_Employee_Detail(request, employer_id, employee_id):
-#     try:
-#         employee = Employee_Detail.objects.get(employer_id=employer_id, employee_id=employee_id)
-#         serializer = EmployeeDetailsSerializer(employee)
-#         response_data = {
-#             'success': True,
-#             'message': 'Employee Data retrieved successfully',
-#             'status code': status.HTTP_200_OK,
-#             'data': serializer.data
-#         }
-#         return JsonResponse(response_data)
-#     except Employee_Detail.DoesNotExist:
-#         return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-
-    
-
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class PasswordResetRequestView(APIView):
     def post(self, request):
@@ -1154,11 +1135,6 @@ class APICallCountView(APIView):
         logs = APICallLog.objects.values('date', 'endpoint', 'count')
         return Response(logs)
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from User_app.models import Employee_Detail
-import pandas as pd
-import io
 
 @csrf_exempt
 def import_employees_api(request):
@@ -1264,9 +1240,6 @@ def import_employees_api(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 #Upsert the company details
-
-
-
 @csrf_exempt
 def upsert_employees_data(request):
     if request.method == 'POST' and request.FILES.get('file'):
@@ -1342,7 +1315,7 @@ def upsert_employees_data(request):
                         cid=updated_row['cid'],
                         age=updated_row.get('age'),
                         social_security_number=updated_row.get('social_security_number'),
-                        is_blind=updated_row.get('blind').lower() in ['true', '1', 'yes'] if isinstance(updated_row.get('blind'), str) else updated_row.get('blind'),
+                        is_blind=updated_row.get('is_blind').lower() in ['true', '1', 'yes'] if isinstance(updated_row.get('is_blind'), str) else updated_row.get('is_blind'),
                         home_state=updated_row.get('home_state'),
                         work_state=updated_row.get('work_state'),
                         gender=updated_row.get('gender'),
@@ -1381,7 +1354,6 @@ def upsert_employees_data(request):
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
  
 @csrf_exempt
 def upsert_garnishment_order(request):
