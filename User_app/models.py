@@ -183,8 +183,8 @@ class IWOPDFFile(models.Model):
  
 class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
-    employer_id=models.IntegerField(unique=True)
-    employee_id=models.IntegerField()
+    cid=models.CharField(max_length=250)
+    ee_id=models.CharField(max_length=250)
     IWO_Status =models.CharField(max_length=250)
 
 
