@@ -98,8 +98,13 @@ class StudentLoan():
         elif difference_of_de_and_fmw<0:
             loan_amt = 0
         
+        if isinstance(loan_amt, (float,int)):
+            loan_amt=round(loan_amt,2)
+        else:
+            loan_amt=loan_amt
+        
 
-        return ({"student_loan_amt":round(loan_amt,2)})
+        return ({"student_loan_amt":loan_amt})
     
 
     def get_multiple_student_amount(self, record):
@@ -126,13 +131,12 @@ class student_loan_calculate():
         
     def calculate(self, record):
         try:
-
             no_of_student_default_loan=record.get("no_of_student_default_loan")
             if no_of_student_default_loan==1:
                 student_loan_amt=StudentLoan().get_single_student_amount(record)
-
             elif no_of_student_default_loan>1:
                 student_loan_amt=StudentLoan().get_multiple_student_amount(record)
+            print("loan_amt",student_loan_amt)
             return student_loan_amt
         except Exception as e:
             return Response(

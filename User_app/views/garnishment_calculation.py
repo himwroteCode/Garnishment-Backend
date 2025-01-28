@@ -172,6 +172,6 @@ class CalculationDataView(APIView):
             )
         except Exception as e:
             return Response(
-                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+                {"error": str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,"ee_id":record.get('ee_id')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

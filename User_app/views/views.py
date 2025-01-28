@@ -998,9 +998,9 @@ class convert_excel_to_json(APIView):
             # try:
             # Load the Excel workbook
 
-            employee_details = pd.read_excel(file, sheet_name='Employee Details ').head(36)
-            garnishment_order_details = pd.read_excel(file, sheet_name='Garnishment Order details').head(36)
-            payroll_batch_details = pd.read_excel(file, sheet_name='Payroll Batch Details', header=[0, 1]).head(36)
+            employee_details = pd.read_excel(file, sheet_name='Employee Details ')
+            garnishment_order_details = pd.read_excel(file, sheet_name='Garnishment Order details')
+            payroll_batch_details = pd.read_excel(file, sheet_name='Payroll Batch Details', header=[0, 1])
             # Concatenate the DataFrames
             concatenated_df = pd.concat([employee_details, garnishment_order_details, payroll_batch_details], axis=1)
             # Column cleanup
@@ -1073,6 +1073,7 @@ class convert_excel_to_json(APIView):
             concatenated_df['filing_status'] = concatenated_df['filing_status'].apply(
                 lambda x: 'married_filing_separate' if x == 'married_filing_separate_return' else x
             )
+            concatenated_df = concatenated_df.fillna(0)
             # print(concatenated_df.columns)
             # Create JSON structure
             output_json = {}
