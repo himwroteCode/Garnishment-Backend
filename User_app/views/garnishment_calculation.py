@@ -30,7 +30,7 @@ class CalculationDataView(APIView):
             if not batch_id:
                 return Response({"error": "batch_id is required"}, status=status.HTTP_400_BAD_REQUEST)
     
-            # Validate rows
+            # Validate cid_data
             if not cid_data:
                 return Response({"error": "No rows provided"}, status=status.HTTP_400_BAD_REQUEST)
     

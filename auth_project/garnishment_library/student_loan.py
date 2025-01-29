@@ -136,7 +136,6 @@ class student_loan_calculate():
                 student_loan_amt=StudentLoan().get_single_student_amount(record)
             elif no_of_student_default_loan>1:
                 student_loan_amt=StudentLoan().get_multiple_student_amount(record)
-            print("loan_amt",student_loan_amt)
             return student_loan_amt
         except Exception as e:
             return Response(
