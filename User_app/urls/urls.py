@@ -4,6 +4,7 @@ from ..views.views import *
 from django.urls import include, path
 from ..views.view_state_tax import *
 from ..views.view_multiple_garnishment import *
+from ..views.view_upsert_time import *
 
 urlpatterns = [
     path('', include('User_app.urls.url_federal_tax')),
