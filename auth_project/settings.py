@@ -161,11 +161,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL')
+#     )
+# }
+#azure sql database
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL')
-    )
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'garnishment',
+        'Trusted_Connection': 'no',
+        'USER': 'garnish',
+        'PASSWORD': 'Gar@#350',
+        'HOST': 'garserver.database.windows.net',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+
+    },
 }
+}
+
 LANGUAGE_CODE = 'en-us'
 USE_I18N = False
 
