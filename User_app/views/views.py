@@ -1,10 +1,10 @@
 from rest_framework import status
-from django.contrib import messages
-from auth_project.config import ccpa_limit
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ..models import *
+import math
+import pandas 
 from User_app.models import *
 from django.contrib.auth import authenticate, login as auth_login ,get_user_model
 from django.contrib.auth.hashers import check_password
@@ -12,11 +12,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 import json
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework.generics import DestroyAPIView ,RetrieveUpdateAPIView
-from rest_framework import viewsets ,generics
 from ..serializers import *
 from django.http import HttpResponse
 from ..forms import PDFUploadForm
@@ -26,7 +24,16 @@ from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken ,AccessToken, TokenError
 import csv
+from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
+from User_app.models import Employee_Detail
+import pandas as pd
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+from User_app.models import garnishment_order, Employee_Detail, company_details
+
 
 @csrf_exempt
 def login(request):
@@ -58,11 +65,12 @@ def login(request):
                 'message': 'Invalid credentials',
                 'status code': status.HTTP_400_BAD_REQUEST
             })
-
+        employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id,cid=user.cid)
         if check_password(password, user.password):
             auth_login(request, user)
             user_data = {
-                'employer_id': user.employer_id,
+                "employer_id":employee.employer_id,
+                "cid":employee.cid,
                 'username': user.username,
                 'name': user.employer_name,
                 'email': user.email,
@@ -70,7 +78,7 @@ def login(request):
             try:
                 refresh = RefreshToken.for_user(user)
 
-                employee = get_object_or_404(Employer_Profile, employer_name=user.employer_name, employer_id=user.employer_id)
+
                 application_activity.objects.create(
                 action='Employer Login',
                 details=f'Employer {employee.employer_name} Login successfully with ID {employee.employer_id}. '
@@ -78,6 +86,7 @@ def login(request):
                 response_data = {
                     'success': True,
                     'message': 'Login successfully',
+                   
                     'user_data': user_data,
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
@@ -185,7 +194,7 @@ def EmployerProfile(request):
             
             user = Employer_Profile.objects.create(**data)
 
-            employee = get_object_or_404(Employer_Profile, employer_id=user.employer_id)
+            employee = get_object_or_404(Employer_Profile, cid=user.employer_id)
             LogEntry.objects.create(
                 action='Employer details added',
                 details=f'Employer details with ID {employee.employer_id}'
@@ -197,38 +206,36 @@ def EmployerProfile(request):
         return JsonResponse({'message': 'Please use POST method','status code':status.HTTP_400_BAD_REQUEST})
 
 
-@csrf_exempt
-def EmployeeDetails(request):
-    if request.method == 'POST' :
+class EmployeeDetailsAPIView(APIView):
+    def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
-            required_fields = ['employee_name','department', 'pay_cycle', 'number_of_child_support_order', 'location']
-            missing_fields = [field for field in required_fields if field not in data or not data[field]]
+            # Deserialize and validate data using the serializer
+            serializer = EmployeeDetailsSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': 'Validation error', 'details': serializer.errors,
+                    "status":status.HTTP_400_BAD_REQUEST }
+                )
             
-            if missing_fields:
-                return JsonResponse({'error': f'Required fields are missing: {", ".join(missing_fields)}', 'status_code':status.HTTP_400_BAD_REQUEST})
+            # Save validated data to the database
+            employee = serializer.save()
             
-            # if Employee_Details.objects.filter(employee_id=data['employee_id']).exists():
-            #     return JsonResponse({'error': 'Employee ID already exists', 'status_code':status.HTTP_400_BAD_REQUEST})
- 
-            user=Employee_Details.objects.create(**data)
-            user.save()
-
-            employee = get_object_or_404(Employee_Details, employee_id=user.employee_id)
+            # Log the action
             LogEntry.objects.create(
                 action='Employee details added',
-                details=f'Employee details added successfully with employee ID {employee.employee_id}'
+                details=f'Employee details added successfully with employee ID {employee.ee_id}'
             )
-            return JsonResponse({'message': 'Employee Details Successfully Registered', 'status code':status.HTTP_201_CREATED})
+            
+            return Response(
+                {'message': 'Employee Details Successfully Registered',
+                "status":status.HTTP_201_CREATED}
+            )
         
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON format','status code':status.HTTP_400_BAD_REQUEST})
-        
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR})
-    else:
-        return JsonResponse({'message': 'Please use POST method ', 'status code':status.HTTP_400_BAD_REQUEST})
-
+        except Exception as e:  # Handle general errors
+            return Response(
+                {'error': str(e),
+                "status":status.HTTP_500_INTERNAL_SERVER_ERROR}
+            )
 
 
 @csrf_exempt
@@ -260,24 +267,6 @@ def TaxDetails(request):
         return JsonResponse({'message': 'Please use POST method ', 'status code':status.HTTP_400_BAD_REQUEST})
 
 
-@api_view(['GET'])
-def get_Location_Deatils(request, employer_id):
-    employees=LocationSerializer.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-
-
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
 
 
@@ -326,101 +315,95 @@ class EmployerProfileEditView(RetrieveUpdateAPIView):
 #update employee Details
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Employee_Details.objects.all()
+    queryset = Employee_Detail.objects.all()
     serializer_class = EmployeeDetailsSerializer
-    lookup_field = 'employee_id'  
+    lookup_fields = ('ee_id', 'cid')  # Corrected to a tuple for multiple fields
+
+    def get_object(self):
+        """
+        Overriding `get_object` to fetch the instance based on multiple fields.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        filter_kwargs = {field: self.kwargs[field] for field in self.lookup_fields}
+        obj = queryset.filter(**filter_kwargs).first()
+        if not obj:
+            raise Exception(f"Object not found with {filter_kwargs}")
+        return obj
+
     def put(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
+            # Logging the update action
             LogEntry.objects.create(
-            action='Employee details Updated',
-            details=f'Employee details Updated successfully for Employee ID {instance.employee_id}'
-                )
+                action='Employee details updated',
+                details=f'Employee details updated successfully for Employee ID {instance.ee_id}'
+            )
+
+            # Preparing the response data
             response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
+                'success': True,
+                'message': 'Data updated successfully',
+                'status_code': status.HTTP_200_OK
+            }
+            return JsonResponse(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
+            return JsonResponse(
+                {'error': str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
-#update Tax Details
-@method_decorator(csrf_exempt, name='dispatch')
-class TaxDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Tax_details.objects.all()
-    serializer_class = TaxSerializer
-    lookup_field = 'tax_id'  
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-            LogEntry.objects.create(
-            action='Tax details Updated',
-            details=f'Tax details Updated successfully for tax ID {instance.tax_id}'
-                )
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
 
-
-#update Location Details
-@method_decorator(csrf_exempt, name='dispatch')
-class LocatiionDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    lookup_field = 'location_id'  
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            LogEntry.objects.create(
-            action='Location details Updated',
-            details=f'LOcation details Updated successfully added for Location ID {instance.location_id}'
-                )
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
     
-
-#update Department Details
+#update employee Details
 @method_decorator(csrf_exempt, name='dispatch')
-class DepartmentDetailsUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Department.objects.all()
-    serializer_class = DepartmentSerializer
-    lookup_field = 'department_id'  
+class CompanyDetailsUpdateAPIView(RetrieveUpdateAPIView):
+    queryset = company_details.objects.all()
+    serializer_class = company_details_serializer
+    lookup_fields = ('cid')  # Corrected to a tuple for multiple fields
+
+    def get_object(self):
+        """
+        Overriding `get_object` to fetch the instance based on multiple fields.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        filter_kwargs = {field: self.kwargs[field] for field in self.lookup_fields}
+        obj = queryset.filter(**filter_kwargs).first()
+        if not obj:
+            raise Exception(f"Object not found with {filter_kwargs}")
+        return obj
+
     def put(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            LogEntry.objects.create(
-            action='Department details Updated',
-            details=f'Department details has been successfully Updated for Department ID {instance.department_id}')
-            response_data = {
-                    'success': True,
-                    'message': 'Data Updated successfully',
-                    'status code': status.HTTP_200_OK}
-        except Exception as e:
-            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        return JsonResponse(response_data)
 
+            # Logging the update action
+            LogEntry.objects.create(
+                action='Company details updated',
+                details=f'Company details updated successfully for Employee ID {instance.cid}'
+            )
+
+            # Preparing the response data
+            response_data = {
+                'success': True,
+                'message': 'Data updated successfully',
+                'status_code': status.HTTP_200_OK
+            }
+            return JsonResponse(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JsonResponse(
+                {'error': str(e), "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 #PDF upload view
 @transaction.atomic
@@ -447,12 +430,9 @@ def PDFFileUploadView(request, employer_id):
     return render(request, 'upload_pdf.html', {'form': form})
 
 
-
-#Get Employer Details on the bases of Employer_ID
 @api_view(['GET'])
-def get_employee_by_employer_id(self, employer_id):
-    employees=Employee_Details.objects.filter(employer_id=employer_id)
-    instance = self.get_object()
+def get_employee_by_employer_id(request, cid):
+    employees=Employee_Detail.objects.filter(cid=cid)
     if employees.exists():
         try:
             serializer = EmployeeDetailsSerializer(employees, many=True)
@@ -462,73 +442,36 @@ def get_employee_by_employer_id(self, employer_id):
                     'status code': status.HTTP_200_OK}
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
-
-        except Employee_Details.DoesNotExist:
+        except Employee_Detail.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
+    
 
 @api_view(['GET'])
-def get_Tax_details(request,employer_id):
-    employees=Tax_details.objects.filter(employer_id=employer_id)
+def get_order_details(request, cid):
+    employees=garnishment_order.objects.filter(cid=cid)
     if employees.exists():
         try:
-            serializer = TaxSerializer(employees, many=True)
+            serializer = garnishment_order_serializer(employees, many=True)
             response_data = {
                     'success': True,
                     'message': 'Data Get successfully',
                     'status code': status.HTTP_200_OK}
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
-
-        except Tax_details.DoesNotExist:
+        except Employee_Detail.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
+        except Exception as e:
+            return JsonResponse({'error': str(e), status:status.HTTP_500_INTERNAL_SERVER_ERROR})  
+
     else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
+        return JsonResponse({'message': 'Company ID not found', 'status code':status.HTTP_404_NOT_FOUND})
 
 
 @api_view(['GET'])
-def get_Location_details(request, employer_id):
-    employees=Location.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-@api_view(['GET'])
-def get_Department_details(request, employer_id):
-    employees=Department.objects.filter(employer_id=employer_id)
-    if employees.exists():
-        try:
-            serializer = DepartmentSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Tax_details.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-
-@api_view(['GET'])
-def get_employee_by_employer_id(request, employer_id):
-    employees=Employee_Details.objects.filter(employer_id=employer_id)
+def get_single_employee_details(request, cid,ee_id):
+    employees=Employee_Detail.objects.filter(cid=cid,ee_id=ee_id)
     if employees.exists():
         try:
             serializer = EmployeeDetailsSerializer(employees, many=True)
@@ -538,11 +481,10 @@ def get_employee_by_employer_id(request, employer_id):
                     'status code': status.HTTP_200_OK}
             response_data['data'] = serializer.data
             return JsonResponse(response_data)
-        except Employee_Details.DoesNotExist:
+        except Employee_Detail.DoesNotExist:
             return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
     else:
         return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
 
 #Get Employer Details from employer ID
 @api_view(['GET'])
@@ -569,18 +511,18 @@ def insert_iwo_detail(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            employer_id = data.get('employer_id')
-            employee_id = data.get('employee_id')
+            cid = data.get('cid')
+            ee_id = data.get('ee_id')
             IWO_Status = data.get('IWO_Status')
 
             # Validate required fields
-            if employer_id is None or employee_id is None or IWO_Status is None:
+            if cid is None or ee_id is None or IWO_Status is None:
                 return JsonResponse({'error': 'Missing required fields','code':status.HTTP_400_BAD_REQUEST})
 
             # Create a new IWO_Details_PDF instance and save it to the database
             iwo_detail = IWO_Details_PDF(
-                employer_id=employer_id,
-                employee_id=employee_id,
+                cid=cid,
+                ee_id=ee_id,
                 IWO_Status=IWO_Status
             )
             iwo_detail.save()
@@ -599,9 +541,9 @@ def get_dashboard_data(request):
     try:
         total_iwo = IWO_Details_PDF.objects.count()
     
-        employees_with_single_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count=1).count()
+        employees_with_single_iwo = IWO_Details_PDF.objects.values('cid').annotate(iwo_count=Count('cid')).filter(iwo_count=1).count()
     
-        employees_with_multiple_iwo = IWO_Details_PDF.objects.values('employee_id').annotate(iwo_count=Count('employee_id')).filter(iwo_count__gt=1).count()
+        employees_with_multiple_iwo = IWO_Details_PDF.objects.values('cid').annotate(iwo_count=Count('cid')).filter(iwo_count__gt=1).count()
     
         active_employees = IWO_Details_PDF.objects.filter(IWO_Status='active').count()
     
@@ -669,83 +611,84 @@ def LocationViewSet(request):
 # For  Deleting the Employee Details
 @method_decorator(csrf_exempt, name='dispatch')
 class EmployeeDeleteAPIView(DestroyAPIView):
-    queryset = Employee_Details.objects.all()
-    lookup_field = 'employee_id'
 
-    def get_object(self):
-        employee_id = self.kwargs.get('employee_id')
-        employer_id = self.kwargs.get('employer_id')
-        return Employee_Details.objects.get(employee_id=employee_id, employer_id=employer_id)
-    
-    @csrf_exempt
-    def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        LogEntry.objects.create(
-            action='Employee details Deleted',
-            details=f'Employee details Deleted successfully with Employee ID {instance.employee_id} and Employer ID {instance.employer_id}'
-        )
-        response_data = {
-            'success': True,
-            'message': 'Location Data Deleted successfully',
-            'status code': status.HTTP_200_OK
-        }
-        return JsonResponse(response_data)
+        queryset = Employee_Detail.objects.all()
+        lookup_field = 'ee_id'
+
+        def get_object(self):
+            ee_id = self.kwargs.get('ee_id')
+            cid = self.kwargs.get('cid')
+            return Employee_Detail.objects.get(ee_id=ee_id, cid=cid)
+
+        @csrf_exempt
+        def delete(self, request, *args, **kwargs):
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            LogEntry.objects.create(
+                action='Employee details Deleted',
+                details=f'Employee details Deleted successfully with Employee ID {instance.ee_id} and Employer ID {instance.cid}'
+            )
+            response_data = {
+                'success': True,
+                'message': 'Employee Data Deleted successfully',
+                'status code': status.HTTP_200_OK
+            }
+            return JsonResponse(response_data)
+        
 
            
 # For Deleting the Tax Details
 @method_decorator(csrf_exempt, name='dispatch')
-class TaxDeleteAPIView(DestroyAPIView):
-    queryset = Tax_details.objects.all()
-    lookup_field = 'tax_id'
+class CompanyDeleteAPIView(DestroyAPIView):
+    queryset = company_details.objects.all()
+    lookup_field = 'cid'
     @csrf_exempt
     def get_object(self):
-        tax_id = self.kwargs.get('tax_id')
-        employer_id = self.kwargs.get('employer_id')
-        return Tax_details.objects.get(tax_id=tax_id, employer_id=employer_id)
+        cid = self.kwargs.get('cid')
+
+        return company_details.objects.get(cid=cid)
     
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
-        action='Tax details Deleted',
-        details=f'Tax details Deleted successfully with ID {instance.tax_id} and Employer ID {instance.employer_id}'
+        action='Company details deleted',
+        details=f'Company details Deleted successfully with Company ID {instance.cid}'
             ) 
         response_data = {
                 'success': True,
-                'message': 'Tax Data Deleted successfully',
+                'message': 'Company Data Deleted successfully',
                 'status code': status.HTTP_200_OK}
         return JsonResponse(response_data)
     
 
-    
 
 # For Deleting the Location Details
 @method_decorator(csrf_exempt, name='dispatch')
-class LocationDeleteAPIView(DestroyAPIView):
-    queryset = Location.objects.all()
-    lookup_field = 'location_id'
+class GarOrderDeleteAPIView(DestroyAPIView):
+    queryset = garnishment_order.objects.all()
+    lookup_field = 'case_id'
     @csrf_exempt
     def get_object(self):
-        location_id = self.kwargs.get('location_id')
-        employer_id = self.kwargs.get('employer_id')  
-        return self.queryset.filter(location_id=location_id, employer_id=employer_id).first()  
+        case_id = self.kwargs.get('case_id')
+        return self.queryset.filter(case_id=case_id)
 
     @csrf_exempt
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         LogEntry.objects.create(
-            action='Location details Deleted',
-            details=f'Location details Deleted successfully with ID {instance.location_id} and Employer ID {instance.employer_id}'
+            action='Garnishment order details Deleted',
+            details=f'Garnishment order deleted successfully with Case ID'
         )
         response_data = {
             'success': True,
-            'message': 'Location Data Deleted successfully',
+            'message': 'Garnishment order Data Deleted successfully',
             'status code': status.HTTP_200_OK
         }
         return JsonResponse(response_data)
+    
 
 
 # For Deleting the Department Details
@@ -775,82 +718,114 @@ class DepartmentDeleteAPIView(DestroyAPIView):
     
 
 # Export employee details into the csv
+# Export employee details into the csv
 @api_view(['GET'])
-def export_employee_data(request, employer_id):
+def export_employee_data(request, cid):
     try:
-        employees = Employee_Details.objects.filter(employer_id=employer_id)
+        employees = Employee_Detail.objects.filter(cid=cid)
         if not employees.exists():
             return JsonResponse({'detail': 'No employees found for this employer ID', 'status': status.HTTP_404_NOT_FOUND})
 
         serializer = EmployeeDetailsSerializer(employees, many=True)
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="employees_{employer_id}.csv"'
+        response['Content-Disposition'] = f'attachment; filename="employees_{cid}.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(['employer_id', 'employee_id', 'employee_name', 'department', 'net_pay', 'minimun_wages', 'pay_cycle', 'number_of_garnishment', 'location'])
 
+        # Updated header fields
+        header_fields = [
+            'ee_id', 'cid', 'age', 'social_security_number',
+            'blind', 'home_state', 'work_state', 'gender', 'pay_period',
+            'number_of_exemptions', 'filing_status', 'marital_status',
+            'number_of_student_default_loan', 'support_second_family',
+            'spouse_age', 'is_spouse_blind'
+        ]
+        writer.writerow(header_fields)
+
+        # Write rows dynamically
         for employee in serializer.data:
-            writer.writerow([
-                employee.get('employer_id', ''),
-                employee.get('employee_id', ''),
-                employee.get('employee_name', ''),
-                employee.get('department', ''),
-                employee.get('net_pay', ''),
-                employee.get('minimum_wages', ''),
-                employee.get('pay_cycle', ''),
-                employee.get('number_of_garnishment ', ''),
-                employee.get('location', '')
-            ])
+            row = [employee.get(field, '') for field in header_fields]
+            writer.writerow(row)
+
         return response
+
+    except Exception as e:
+        return JsonResponse({'detail': str(e), 'status code ': status.HTTP_500_INTERNAL_SERVER_ERROR})
+
+
+@api_view(['GET'])
+def export_company_data(request):
+    try:
+        employees = company_details.objects.all()
+        if not employees.exists():
+            return JsonResponse({'detail': 'No employees found for this employer ID', 'status': status.HTTP_404_NOT_FOUND})
+
+        serializer = company_details_serializer(employees, many=True)
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="company_data.csv"'
+
+        writer = csv.writer(response)
+
+        # Updated header fields
+        header_fields = ['cid','ein','company_name','registered_address','zipcode','state','dba_name','bank_name','bank_account_number','location']
+        writer.writerow(header_fields)
+
+        # Write rows dynamically
+        for employee in serializer.data:
+            row = [employee.get(field, '') for field in header_fields]
+            writer.writerow(row)
+
+        return response
+
     except Exception as e:
         return JsonResponse({'detail': str(e), 'status code ': status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
 
-# #Import employee details using the Excel file
-# class EmployeeImportView(APIView):
-#     def post(self, request, employer_id):
-#         try:
-#             if 'file' not in request.FILES:
-#                 return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-            
-#             file = request.FILES['file']
-#             file_name = file.name
-    
-#             # Check the file extension
-#             if file_name.endswith('.csv'):
-#                 df = pd.read_csv(file)
-#             elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
-#                 df = pd.read_excel(file)
-#             else:
-#                 return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
-#             df['employer_id'] = employer_id        
-#             employees = []
-#             for _, row in df.iterrows():
-#                 employee_data={
-#                 'employee_name':row['employee_name'],
-#                 'department':row['department'],
-#                 'pay_cycle':row['pay_cycle'],
-#                 'number_of_garnishment':row['number_of_garnishment'],
-#                 'location':row['location'],
-#                 'employer_id': row['employer_id'] 
-#                 }
-#                 # employer = get_object_or_404(Employee_Details, employer_id=employer_id)
-    
-#                 serializer = EmployeeDetailsSerializer(data=employee_data)
-#                 if serializer.is_valid():
-#                     employees.append(serializer.save())   
-#                 else:
-#                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-#             LogEntry.objects.create(
-#             action='Employee details Imported',
-#             details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
-#         except Exception as e:
-#             return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
-        
-#         return Response({"message": "File processed successfully", "status code" :status.HTTP_201_CREATED})
 
+#Import employee details using the Excel file
+class EmployeeImportView(APIView):
+    def post(self, request, employer_id):
+        try:
+            if 'file' not in request.FILES:
+                return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            file = request.FILES['file']
+            file_name = file.name
+    
+            # Check the file extension
+            if file_name.endswith('.csv'):
+                df = pandas.read_csv(file)
+            elif file_name.endswith(('.xlsx','.xls', '.xlsm', '.xlsb', '.odf', '.ods','.odt')):
+                df = pandas.read_excel(file)
+            else:
+                return Response({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=status.HTTP_400_BAD_REQUEST)
+            df['employer_id'] = employer_id        
+            employees = []
+            for _, row in df.iterrows():
+                employee_data={
+                'employee_name':row['employee_name'],
+                'department':row['department'],
+                'pay_cycle':row['pay_cycle'],
+                'number_of_child_support_order':row['number_of_child_support_order'],
+                'location':row['location'],
+                'employer_id': row['employer_id'] 
+                }
+                # employer = get_object_or_404(Employee_Detail, employer_id=employer_id)
+    
+                serializer = EmployeeDetailsSerializer(data=employee_data)
+                if serializer.is_valid():
+                    employees.append(serializer.save())   
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+            LogEntry.objects.create(
+            action='Employee details Imported',
+            details=f'Employee details Imported successfully using excel file with empployer ID {employer_id}')
+        except Exception as e:
+            return JsonResponse({'error': str(e), "status code":status.HTTP_500_INTERNAL_SERVER_ERROR}) 
+        
+        return Response({"message": "File processed successfully", "status code" :status.HTTP_201_CREATED})
 
 
 #Extracting the Last Five record from the Log Table
@@ -890,7 +865,7 @@ class EmployerProfileList(APIView):
 class EmployeeDetailsList(APIView):
     def get(self, request, format=None):
         try:
-            employees = Employee_Details.objects.all()
+            employees = Employee_Detail.objects.all()
             serializer = EmployeeDetailsSerializer(employees, many=True)
             response_data = {
                         'success': True,
@@ -901,28 +876,12 @@ class EmployeeDetailsList(APIView):
         except Exception as e:
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
-#Extracting the ALL Tax Details
-class TaxDetailsList(APIView):
-    def get(self, request, format=None):
-        try:
-            queryset = Tax_details.objects.all()
-            serializer = TaxSerializer(queryset, many=True)
-            response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
-    
 
-#Extracting the ALL Location Details
-class LocationDetailsList(APIView):
+class CompanyDetails(APIView):
     def get(self, request, format=None):
         try:
-            queryset = Location.objects.all()
-            serializer = LocationSerializer(queryset, many=True)
+            employees = company_details.objects.all()
+            serializer = company_details_serializer(employees, many=True)
             response_data = {
                         'success': True,
                         'message': 'Data Get successfully',
@@ -933,96 +892,7 @@ class LocationDetailsList(APIView):
             return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
 
-#Extracting the ALL Department Details
-class DepartmentDetailsList(APIView):
-    def get(self, request, format=None):
-        try:
-            queryset = Department.objects.all()
-            serializer = DepartmentSerializer(queryset, many=True)
-            response_data = {
-                        'success': True,
-                        'message': 'Data Get successfully',
-                        'status code': status.HTTP_200_OK,
-                        'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Exception as e:
-            return Response({"error": str(e), "status code" :status.HTTP_500_INTERNAL_SERVER_ERROR})
 
-
-#Get the single employee details
-@api_view(['GET'])
-def get_single_employee_details(request, employer_id, employee_id):
-    try:
-        employee = Employee_Details.objects.get(employer_id=employer_id, employee_id=employee_id)
-        serializer = EmployeeDetailsSerializer(employee)
-        response_data = {
-            'success': True,
-            'message': 'Employee Data retrieved successfully',
-            'status code': status.HTTP_200_OK,
-            'data': serializer.data
-        }
-        return JsonResponse(response_data)
-    except Employee_Details.DoesNotExist:
-        return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
-
-    
-
-#Get the singal Tax details  
-@api_view(['GET'])
-def get_single_tax_details(request, employer_id,tax_id):
-    employees=Tax_details.objects.filter(employer_id=employer_id,tax_id=tax_id)
-    if employees.exists():
-        try:
-            serializer = TaxSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-#Get the singal Location details  
-@api_view(['GET'])
-def get_single_location_details(request, employer_id,location_id):
-    employees=Location.objects.filter(employer_id=employer_id,location_id=location_id)
-    if employees.exists():
-        try:
-            serializer = LocationSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data' : serializer.data}
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})
-
-
-#Get the singal Department details  
-@api_view(['GET'])
-def get_single_department_details(request, employer_id,department_id):
-    employees=Department.objects.filter(employer_id=employer_id,department_id=department_id).order_by('-timestamp')[0:1]
-    if employees.exists():
-        try:
-            serializer = DepartmentSerializer(employees, many=True)
-            response_data = {
-                    'success': True,
-                    'message': 'Data Get successfully',
-                    'status code': status.HTTP_200_OK}
-            response_data['data'] = serializer.data
-            return JsonResponse(response_data)
-        except Employer_Profile.DoesNotExist:
-            return JsonResponse({'message': 'Data not found', 'status code':status.HTTP_404_NOT_FOUND})
-    else:
-        return JsonResponse({'message': 'Employer ID not found', 'status code':status.HTTP_404_NOT_FOUND})   
-    
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PasswordResetRequestView(APIView):
@@ -1112,66 +982,599 @@ class GETSettingDetails(APIView):
                 return JsonResponse({'message': 'Data not found', 'status code': status.HTTP_404_NOT_FOUND})
         else:
             return JsonResponse({'message': 'Employee ID not found', 'status code': status.HTTP_404_NOT_FOUND})
-    
-
-class GETallcalculationresult(APIView):
-    def get(self, request, employer_id):
-        
-        # Retrieve data for each model
-        calculation_data_result = CalculationResult.objects.filter(employer_id=employer_id)
-        single_student_loan_results = single_student_loan_result.objects.filter(employer_id=employer_id)
-        multiple_student_loan_results = multiple_student_loan_result.objects.filter(employer_id=employer_id)
-        federal_case_results = federal_case_result.objects.filter(employer_id=employer_id)
-
-        if calculation_data_result.exists() or single_student_loan_results.exists() or multiple_student_loan_results.exists() or federal_case_results.exists():
-            try:
-                # Serialize the data using the correct serializer classes
-                calculatoinserializer = ResultSerializer(calculation_data_result, many=True)
-                singlestudentserializer = SingleStudentLoanSerializer(single_student_loan_results, many=True)
-                multiplestudentserializer = MultipleStudentLoanSerializer(multiple_student_loan_results, many=True)
-                federalcaseserializer = federal_case_result_Serializer(federal_case_results, many=True)
-
-                # Adding the case field to each serialized data
-                for item in calculatoinserializer.data:
-                    item['Garnishment case'] = 'Child Support Calculation Result'
-                for item in singlestudentserializer.data:
-                    item['Garnishment case'] = 'Single Student Loan Result'
-                for item in multiplestudentserializer.data:
-                    item['Garnishment case'] = 'Multiple Student Loan Result'
-                for item in federalcaseserializer.data:
-                    item['Garnishment case'] = 'Federal Tax Case Result'
-
-                # Combine all serialized data into one list
-                final_result = (
-                    calculatoinserializer.data + 
-                    singlestudentserializer.data + 
-                    multiplestudentserializer.data + 
-                    federalcaseserializer.data
-                )
-
-                response_data = {
-                    'success': True,
-                    'message': 'Data retrieved successfully',
-                    'status code': status.HTTP_200_OK,
-                    'data': final_result
-                }
-                return JsonResponse(response_data, status=status.HTTP_200_OK)
-            except Exception as e:
-                return JsonResponse({'message': f'Error occurred: {str(e)}', 'status code': status.HTTP_500_INTERNAL_SERVER_ERROR})
-        else:
-            return JsonResponse({'message': 'Employer ID not found', 'status code': status.HTTP_404_NOT_FOUND})
 
 
-# from django.db.models import Count
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
-# from ..models import APICallLog
-# from ..serializers import APICallCountSerializer
-# from django.utils.timezone import make_aware
-# import datetime
+
+
+class convert_excel_to_json(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        file = request.FILES.get('file')
+        try:
+            if not file:
+                return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # try:
+            # Load the Excel workbook
+
+            employee_details = pd.read_excel(file, sheet_name='Employee Details ')
+            garnishment_order_details = pd.read_excel(file, sheet_name='Garnishment Order details')
+            payroll_batch_details = pd.read_excel(file, sheet_name='Payroll Batch Details', header=[0, 1])
+            # Concatenate the DataFrames
+            concatenated_df = pd.concat([employee_details, garnishment_order_details, payroll_batch_details], axis=1)
+            # Column cleanup
+            concatenated_df.columns = concatenated_df.columns.map(
+                lambda x: '_'.join(str(i) for i in x) if isinstance(x, tuple) else x
+            )
+
+            concatenated_df.rename(columns={
+                "Deductions 401K": 'Deductions 401(K)',
+                "Deductions_MedicalInsurance": 'medical_insurance',
+                "Deductions_SDI": 'SDI',
+                "Deductions_UnionDues": 'union_dues',
+                "Deductions_Voluntary": 'voluntary',
+                "GrossPay_Unnamed: 6_level_1": 'gross_pay',
+                "NetPay_Unnamed: 17_level_1": 'net_pay',
+                "PayPeriod_Unnamed: 3_level_1": 'Pay cycle',
+                "PayPeriod": "pay_period",
+                "PayDate_Unnamed: 5_level_1": 'Pay Date',
+                "PayrollDate_Unnamed: 4_level_1": 'Payroll Date',
+                "State Unnamed: 2_level_1": 'state',
+                'Taxes_FederalIncomeTax': 'federal_income_tax',
+                'Taxes_StateTax': 'state_tax',
+                'Taxes_LocalTax': 'local_tax',
+                "FilingStatus":'filing_status',
+
+                'Taxes_SocialSecurityTax': 'social_security_tax',
+                'Taxes_MedicareTax': 'medicare_tax',
+            }, inplace=True)
+
+
+            # Create a dictionary mapping merged_df column names to JSON keys
+            column_mapping = {
+                'EEID': 'ee_id',
+                "CID": 'cid',
+                'IsBlind': 'is_blind',
+                'Age': 'age',
+                'FilingStatus': 'filing_status',
+                'SupportSecondFamily': 'support_second_family',
+                'SpouseAge ': 'spouse_age',
+                'IsSpouseBlind': 'is_spouse_blind',
+                'Amount': 'amount',
+                'ArrearsGreaterThan12Weeks': 'arrears_greater_than_12_weeks',
+                "CaseID":'case_id',
+                'TotalExemptions':'no_of_exception_for_self',
+                'WorkState':'Work State',
+                'HomeState':'Home State',
+                'NumberofStudentLoan' : 'no_of_student_default_loan',
+                'No.OFExemptionIncludingSelf':'no_of_exception_for_self',
+                "Type":"garnishment_type",
+                "ArrearAmount":"arrear",
+                "State":"state"
+            }
+            concatenated_df = concatenated_df.rename(columns=column_mapping)
+            concatenated_df = concatenated_df.loc[:, ~concatenated_df.columns.duplicated(keep='first')] 
+
+
+            # print(concatenated_df.columns)
+            # Data preparation
+            concatenated_df['filing_status'] = concatenated_df['filing_status'].str.lower().str.replace(' ', '_')
+            concatenated_df['batch_id'] = "B001A"
+            concatenated_df['arrears_greater_than_12_weeks'] = concatenated_df['arrears_greater_than_12_weeks'].replace(
+                {True: "Yes", False: "No"}
+            )
+            concatenated_df['support_second_family'] = concatenated_df['support_second_family'].replace(
+                {True: "Yes", False: "No"}
+            )
+            concatenated_df['garnishment_type'] = concatenated_df['garnishment_type'].replace(
+                {'Student Loan': "student default loan"}
+            )
+            concatenated_df['filing_status'] = concatenated_df['filing_status'].apply(
+                lambda x: 'married_filing_separate' if x == 'married_filing_separate_return' else x
+            )
+            concatenated_df = concatenated_df.fillna(0)
+            # print(concatenated_df.columns)
+            # Create JSON structure
+            output_json = {}
+            for (batch_id, cid), group in concatenated_df.groupby(["batch_id", "cid"]):
+                employees = []
+                for _, row in group.iterrows():
+                    employee = {
+                        "ee_id": row["ee_id"],
+                        "gross_pay": row["gross_pay"],
+                        "state": row["state"],
+                        "no_of_exemption_for_self": row["no_of_exception_for_self"],
+                        "pay_period": row["pay_period"],
+                        "filing_status": row["filing_status"],
+                        "net_pay": row["net_pay"],
+                        "payroll_taxes": [
+                            {"federal_income_tax": row["federal_income_tax"]},
+                            {"social_security_tax": row["social_security_tax"]},
+                            {"medicare_tax": row["medicare_tax"]},
+                            {"state_tax": row["state_tax"]},
+                            {"local_tax": row["local_tax"]}
+                        ],
+                        "payroll_deductions": {
+                            "medical_insurance": row["medical_insurance"]
+                        },
+                        "age": row["age"],
+                        "is_blind": row["is_blind"],
+                        "is_spouse_blind": row["is_spouse_blind"],
+                        "spouse_age": row["spouse_age"],
+                        "support_second_family": row["support_second_family"],
+                        "no_of_student_default_loan": row["no_of_student_default_loan"],
+                        "arrears_greater_than_12_weeks": row["arrears_greater_than_12_weeks"],
+                        "garnishment_data": [
+                            {
+                                "type": row["garnishment_type"],
+                                "data": [
+                                    {
+                                        "case_id": row["case_id"],
+                                        "amount": row["amount"],
+                                        "arrear": row["arrear"]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                    employees.append(employee)
+
+                output_json["batch_id"] = batch_id  # Add batch_id key as a top-level key
+                if "cid" not in output_json:
+                    output_json["cid"] = {}  # Create "cid" as a top-level key
+                output_json["cid"][cid] = {"employees": employees}
+            return Response(output_json, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
 class APICallCountView(APIView):
     def get(self, request):
         logs = APICallLog.objects.values('date', 'endpoint', 'count')
         return Response(logs)
+
+
+@csrf_exempt
+def import_employees_api(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']  # Uploaded file
+        file_name = file.name  # Get the name of the uploaded file
+        updated_employees = []
+        added_employees = []
+
+        try:
+            # Handle file formats
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx', '.xls', '.xlsm', '.xlsb', '.odf', '.ods', '.odt')):
+                df = pd.read_excel(file)
+            else:
+                return JsonResponse({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=400)
+
+            # Process the data from DataFrame
+            for _, row in df.iterrows():
+                # Check if the employee exists
+                employee = Employee_Detail.objects.filter(ee_id=row['ee_id']).first()
+
+                if employee:
+                    # Detect changes in employee data
+                    has_changes = (
+                        employee.cid != row['cid'] or
+                        employee.age != int(row['age']) or
+                        employee.social_security_number != row['social_security_number'] or
+                        employee.blind != (str(row['blind']).lower() == 'true') or
+                        employee.home_state != row['home_state'] or
+                        employee.work_state != row['work_state'] or
+                        employee.gender != row.get('gender', None) or
+                        employee.pay_period != row['pay_period'] or
+                        employee.number_of_exemptions != int(row['number_of_exemptions']) or
+                        employee.filing_status != row['filing_status'] or
+                        employee.marital_status != row['marital_status'] or
+                        employee.number_of_student_default_loan != int(row['number_of_student_default_loan']) or
+                        employee.support_second_family != (str(row['support_second_family']).lower() == 'true') or
+                        employee.spouse_age != int(row.get('spouse_age', 0)) or
+                        employee.is_spouse_blind != (str(row.get('is_spouse_blind', '')).lower() == 'true')
+                    )
+
+                    if has_changes:
+                        # Update employee details
+                        employee.cid = row['cid']
+                        employee.age = int(row['age'])
+                        employee.social_security_number = row['social_security_number']
+                        employee.blind = str(row['blind']).lower() == 'true'
+                        employee.home_state = row['home_state']
+                        employee.work_state = row['work_state']
+                        employee.gender = row.get('gender', None)
+                        employee.pay_period = row['pay_period']
+                        employee.number_of_exemptions = int(row['number_of_exemptions'])
+                        employee.filing_status = row['filing_status']
+                        employee.marital_status = row['marital_status']
+                        employee.number_of_student_default_loan = int(row['number_of_student_default_loan'])
+                        employee.support_second_family = str(row['support_second_family']).lower() == 'true'
+                        employee.spouse_age = int(row.get('spouse_age', 0))
+                        employee.is_spouse_blind = str(row.get('is_spouse_blind', '')).lower() == 'true'
+                        employee.save()
+                        updated_employees.append(employee.ee_id)
+                else:
+                    # Add new employee
+                    Employee_Detail.objects.create(
+                        ee_id=row['ee_id'],
+                        cid=row['cid'],
+                        age=int(row['age']),
+                        social_security_number=row['social_security_number'],
+                        blind=str(row['blind']).lower() == 'true',
+                        home_state=row['home_state'],
+                        work_state=row['work_state'],
+                        gender=row.get('gender', None),
+                        pay_period=row['pay_period'],
+                        number_of_exemptions=int(row['number_of_exemptions']),
+                        filing_status=row['filing_status'],
+                        marital_status=row['marital_status'],
+                        number_of_student_default_loan=int(row['number_of_student_default_loan']),
+                        support_second_family=str(row['support_second_family']).lower() == 'true',
+                        spouse_age=int(row.get('spouse_age', 0)),
+                        is_spouse_blind=str(row.get('is_spouse_blind', '')).lower() == 'true'
+                    )
+                    added_employees.append(row['ee_id'])
+
+            # Prepare response
+            response_data = []
+            if added_employees:
+                response_data.append({
+                    'message': 'Employee(s) imported successfully',
+                    'added_employees': added_employees
+                })
+            if updated_employees:
+                response_data.append({
+                    'message': 'Employee details updated successfully',
+                    'updated_employees': updated_employees
+                })
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+#Upsert the company details
+@csrf_exempt
+def upsert_employees_data(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        print("called")
+        file = request.FILES['file']
+        updated_employees = []
+        added_employees = []
+
+        try:
+            
+            if file.name.endswith('.csv'):
+                
+                data = list(csv.DictReader(file.read().decode('utf-8').splitlines()))
+            elif file.name.endswith(('.xls', '.xlsx')):
+                
+                df = pd.read_excel(file)
+                data = df.to_dict(orient='records')  
+            else:
+                return JsonResponse({'error': 'Unsupported file format. Please upload a CSV or Excel file.'}, status=400)
+
+           
+            for row in data:
+                
+                row = {k: v for k, v in row.items() if k and not k.startswith('Unnamed:')}
+
+                
+                updated_row = {}
+                for k, v in row.items():
+                    if k == "social_security_number" and isinstance(v, float) and math.isnan(v):
+                        updated_row[k] = ""
+                    else:
+                        updated_row[k] = v
+
+                try:
+                    
+                    employee_detail = Employee_Detail.objects.get(ee_id=updated_row['ee_id'], cid=updated_row['cid'])
+
+                    
+                    has_changes = False
+                    for field_name in [
+                        'age', 'social_security_number', 'is_blind', 'home_state', 'work_state', 'gender', 'pay_period',
+                        'number_of_exemptions', 'filing_status', 'marital_status', 'number_of_student_default_loan',
+                        'support_second_family', 'spouse_age', 'is_spouse_blind'
+                    ]:
+                        incoming_value = updated_row.get(field_name)
+                        if isinstance(getattr(employee_detail, field_name), bool) and isinstance(incoming_value, str):
+                            incoming_value = incoming_value.lower() in ['true', '1', 'yes']
+                        elif isinstance(getattr(employee_detail, field_name), bool):
+                            incoming_value = bool(incoming_value)  
+                        if getattr(employee_detail, field_name) != incoming_value:
+                            has_changes = True
+                            break
+
+                    if has_changes:
+                        
+                        for field_name in [
+                            'age', 'social_security_number', 'is_blind', 'home_state', 'work_state', 'gender', 'pay_period',
+                            'number_of_exemptions', 'filing_status', 'marital_status', 'number_of_student_default_loan',
+                            'support_second_family', 'spouse_age', 'is_spouse_blind'
+                        ]:
+                            incoming_value = updated_row.get(field_name)
+                            if isinstance(getattr(employee_detail, field_name), bool) and isinstance(incoming_value, str):
+                                incoming_value = incoming_value.lower() in ['true', '1', 'yes']
+                            elif isinstance(getattr(employee_detail, field_name), bool):
+                                incoming_value = bool(incoming_value)  
+                            setattr(employee_detail, field_name, incoming_value)
+                        employee_detail.save()
+                        updated_employees.append(employee_detail.ee_id)
+                except Employee_Detail.DoesNotExist:
+                    
+                    Employee_Detail.objects.create(
+                        ee_id=updated_row['ee_id'],
+                        cid=updated_row['cid'],
+                        age=updated_row.get('age'),
+                        social_security_number=updated_row.get('social_security_number'),
+                        is_blind=updated_row.get('is_blind').lower() in ['true', '1', 'yes'] if isinstance(updated_row.get('is_blind'), str) else updated_row.get('is_blind'),
+                        home_state=updated_row.get('home_state'),
+                        work_state=updated_row.get('work_state'),
+                        gender=updated_row.get('gender'),
+                        pay_period=updated_row.get('pay_period'),
+                        number_of_exemptions=updated_row.get('number_of_exemptions'),
+                        filing_status=updated_row.get('filing_status'),
+                        marital_status=updated_row.get('marital_status'),
+                        number_of_student_default_loan=updated_row.get('number_of_student_default_loan'),
+                        support_second_family=updated_row.get('support_second_family').lower() in ['true', '1', 'yes'] if isinstance(updated_row.get('support_second_family'), str) else updated_row.get('support_second_family'),
+                        spouse_age=updated_row.get('spouse_age'),
+                        is_spouse_blind=updated_row.get('is_spouse_blind').lower() in ['true', '1', 'yes'] if isinstance(updated_row.get('is_spouse_blind'), str) else updated_row.get('is_spouse_blind')
+                    )
+                    added_employees.append(updated_row['ee_id'])
+
+           
+            if not updated_employees and not added_employees:
+                return JsonResponse({'message': 'No data was updated or inserted.'}, status=200)
+
+            response_data = []
+
+            if added_employees:
+                response_data.append({
+                    'message': 'Employee(s) imported successfully',
+                    'added_employees': added_employees
+                })
+
+            if updated_employees:
+                response_data.append({
+                    'message': 'Employee details updated successfully',
+                    'updated_employees': updated_employees
+                })
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+ 
+@csrf_exempt
+def upsert_garnishment_order(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']
+        file_name = file.name
+        updated_orders = []
+        added_orders = []
+        no_change = []
+
+        try:
+            # Load file into a DataFrame
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx', '.xls', '.xlsm', '.xlsb', '.odf', '.ods', '.odt')):
+                df = pd.read_excel(file)
+            else:
+                return JsonResponse({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=400)
+
+            # Format date columns
+            date_columns = ['start_date', 'end_date']
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+                    df[col] = df[col].apply(lambda x: x.date() if not pd.isna(x) else None)
+
+            # Process each row
+            for _, row in df.iterrows():
+                try:
+                    # Skip rows with missing 'cid' or 'eeid'
+                    if pd.isna(row['cid']) or pd.isna(row['eeid']):
+                        continue
+
+                    # Retrieve existing order
+                    order = garnishment_order.objects.filter(cid=row['cid'], eeid=row['eeid']).first()
+
+                    if order:
+                        # Check for changes
+                        has_changes = (
+                            order.case_id != row.get('case_id', None) or
+                            order.state != row['state'] or
+                            order.type != row['type'] or
+                            order.sdu != row.get('sdu', None) or
+                            order.start_date != row.get('start_date', None) or
+                            order.end_date != row.get('end_date', None) or
+                            float(order.amount) != float(row['amount']) or
+                            order.arrear_greater_than_12_weeks != row['arrear_greater_than_12_weeks'] or
+                            float(order.arrear_amount) != float(row['arrear_amount'])
+                        )
+
+                        if has_changes:
+                            # Update order
+                            order.case_id = row.get('case_id', None)
+                            order.state = row['state']
+                            order.type = row['type']
+                            order.sdu = row.get('sdu', None)
+                            order.start_date = row.get('start_date', None)
+                            order.end_date = row.get('end_date', None)
+                            order.amount = row['amount']
+                            order.arrear_greater_than_12_weeks = row['arrear_greater_than_12_weeks']
+                            order.arrear_amount = row['arrear_amount']
+                            order.save()
+                            updated_orders.append({'cid': order.cid, 'eeid': order.eeid})
+                        else:
+                            no_change.append({'cid': order.cid, 'eeid': order.eeid})
+                    else:
+                        # Create new order
+                        garnishment_order.objects.create(
+                            cid=row['cid'],
+                            eeid=row['eeid'],
+                            case_id=row.get('case_id', None),
+                            state=row['state'],
+                            type=row['type'],
+                            sdu=row.get('sdu', None),
+                            start_date=row.get('start_date', None),
+                            end_date=row.get('end_date', None),
+                            amount=row['amount'],
+                            arrear_greater_than_12_weeks=row['arrear_greater_than_12_weeks'],
+                            arrear_amount=row['arrear_amount']
+                        )
+                        added_orders.append({'cid': row['cid'], 'eeid': row['eeid']})
+
+                except Exception as row_error:
+                    # Error is no longer printed in terminal, only logged in exception handling
+                    continue
+
+            # Prepare response data
+            if added_orders or updated_orders:
+                response_data = []
+                if added_orders:
+                    response_data.append({
+                        'message': 'Garnishment orders imported successfully',
+                        'added_orders': added_orders
+                    })
+                if updated_orders:
+                    response_data.append({
+                        'message': 'Garnishment orders updated successfully',
+                        'updated_orders': updated_orders
+                    })
+                if no_change:
+                    response_data.append({
+                        'message': 'No change for certain orders',
+                        'no_change_orders': no_change
+                    })
+            else:
+                response_data = {'message': 'No changes in data'}
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def upsert_company_details(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']  
+        file_name = file.name  
+        updated_companies = []
+        added_companies = []
+        unchanged_companies = []  
+        new_data_found = False 
+
+        try:
+            
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file_name.endswith(('.xlsx', '.xls', '.xlsm', '.xlsb', '.odf', '.ods', '.odt')):
+                df = pd.read_excel(file)
+            else:
+                return JsonResponse({"error": "Unsupported file format. Please upload a CSV or Excel file."}, status=400)
+
+            
+            for _, row in df.iterrows():
+                company = company_details.objects.filter(cid=row['cid']).first()
+
+                if company:
+                    
+                    existing_data = {
+                        'ein': str(company.ein).strip() if company.ein else '',
+                        'company_name': str(company.company_name).strip() if company.company_name else '',
+                        'zipcode': str(company.zipcode).strip() if company.zipcode else '',
+                        'state': str(company.state).strip() if company.state else '',
+                        'dba_name': str(company.dba_name).strip() if company.dba_name else '',
+                        'bank_name': str(company.bank_name).strip() if company.bank_name else '',
+                        'bank_account_number': str(company.bank_account_number).strip() if company.bank_account_number else '',
+                        'location': str(company.location).strip() if company.location else '',
+                        'registered_address': str(company.registered_address).strip() if company.registered_address else ''
+                    }
+
+                    file_data = {
+                        'ein': str(row['ein']).strip() if row['ein'] else '',
+                        'company_name': str(row['company_name']).strip() if row['company_name'] else '',
+                        'zipcode': str(row['zipcode']).strip() if row['zipcode'] else '',
+                        'state': str(row['state']).strip() if row['state'] else '',
+                        'dba_name': str(row['dba_name']).strip() if row['dba_name'] else '',
+                        'bank_name': str(row.get('bank_name', '')).strip() if row.get('bank_name') else '',
+                        'bank_account_number': str(row.get('bank_account_number', '')).strip() if row.get('bank_account_number') else '',
+                        'location': str(row.get('location', '')).strip() if row.get('location') else '',
+                        'registered_address': str(row.get('registered_address', '')).strip() if row.get('registered_address') else ''
+                    }
+
+                    
+                    has_changes = any(existing_data[key] != file_data[key] for key in existing_data)
+
+                    if has_changes:
+                        
+                        company.ein = row['ein']
+                        company.company_name = row['company_name']
+                        company.zipcode = row['zipcode']
+                        company.state = row['state']
+                        company.dba_name = row['dba_name']
+                        company.bank_name = row.get('bank_name', None)
+                        company.bank_account_number = row.get('bank_account_number', None)
+                        company.location = row.get('location', None)
+                        company.registered_address = row.get('registered_address', None)
+                        company.save()
+                        updated_companies.append(company.cid)
+                    else:
+                        
+                        unchanged_companies.append(company.cid)
+                else:
+                    
+                    company_details.objects.create(
+                        cid=row['cid'],
+                        ein=row['ein'],
+                        company_name=row['company_name'],
+                        zipcode=row['zipcode'],
+                        state=row['state'],
+                        dba_name=row['dba_name'],
+                        bank_name=row.get('bank_name', None),
+                        bank_account_number=row.get('bank_account_number', None),
+                        location=row.get('location', None),
+                        registered_address=row.get('registered_address', None)
+                    )
+                    added_companies.append(row['cid'])
+                    new_data_found = True  
+
+            
+            response_data = []
+            if added_companies:
+                response_data.append({
+                    'message': 'Company details imported successfully',
+                    'added_companies': added_companies
+                })
+            
+            if updated_companies:
+                response_data.append({
+                    'message': 'Company details updated successfully',
+                    'updated_companies': updated_companies
+                })
+            
+            
+            if not added_companies and not updated_companies:
+                response_data.append({'message': 'No changes are found'})
+
+            return JsonResponse({'responses': response_data}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)

@@ -4,12 +4,10 @@ import sys
 from pathlib import Path
 import dj_database_url
 from datetime import timedelta
-from .config import ccpa_limit
-from reused_classes.gar_reused_classes import *
+from dotenv import load_dotenv
 
-MY_GLOBAL_FUNCTION = DisposableIncomeCalculator()
-MY_GLOBAL_STATE_FUNCTION = StateMethodIdentifiers(state="indiana")
-
+ # Load environment variables from .env file
+load_dotenv()
 
 
 SIMPLE_JWT = {
@@ -23,21 +21,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(BASE_DIR, 'garnishment_library'))
 
 
-
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-4j-q2^gpu9&%imydt@@vq*h0i#9#(yv0)&q5ewvaftj(eocs2='
 
 # # SECURITY WARNING: don't run with debug turned on in production!
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static"),
+# ]
+
 
 DEBUG = os.environ.get('DEBUG','False')=="False"
 STATIC_URL = '/static/'
@@ -57,8 +48,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework.authtoken',
     'django_rest_passwordreset',
-    'User_app'
-]
+    # 'celery',
+    # 'django-celery-results',
+    'User_app',]
 
 AUTHENTICATION_BACKENDS=[
     'django.contrib.auth.backends.ModelBackend'
@@ -106,6 +98,14 @@ TEMPLATES = [
     },
 ]
 
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'  # Use Redis as broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# Django-Celery-Results
+
+CELERY_RESULT_BACKEND = 'django-db'
 
 
 
@@ -160,7 +160,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-os.environ['DATABASE_URL'] = "postgres://default:vlH6ye2fmEQn@ep-round-mountain-a1tgg5p9.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require"
+
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL')
@@ -215,6 +215,8 @@ USE_TZ = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

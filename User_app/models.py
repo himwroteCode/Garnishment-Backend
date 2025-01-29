@@ -4,12 +4,31 @@ from django.db import models
 
 
 
-# Employer_Profile details
+# # Employer_Profile details
+# class Employer_Profile(AbstractBaseUser):
+#     employer_id = models.CharField(max_length=100,primary_key=True)
+#     company_name = models.CharField(max_length=100)
+#     email = models.EmailField(unique=True)
+#     registered_address = models.CharField(max_length=100, unique=True)
+#     zipcode = models.CharField(max_length=10, null=True, blank=True)
+#     ein = models.IntegerField()
+#     bank_name = models.CharField(max_length=255, null=True, blank=True)
+#     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+#     location = models.CharField(max_length=255, null=True, blank=True)
+
+
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = ['username', 'employer_name']
+
+#     def __str__(self):
+#         return self.username
+
 class Employer_Profile(AbstractBaseUser):
     employer_id = models.AutoField(primary_key=True)
-    employer_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=100, unique=True)
+    cid=models.CharField(max_length=100,default="ABS")
+    employer_name = models.CharField(max_length=100,default="ABS")
+    email = models.EmailField(unique=True,default="rtt@gmail.com")
+    username = models.CharField(max_length=100, unique=True,default="USN")
     street_name = models.CharField(max_length=255, null=True, blank=True)
     federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
     city = models.CharField(max_length=255, null=True, blank=True)
@@ -26,11 +45,18 @@ class Employer_Profile(AbstractBaseUser):
 
     def __str__(self):
         return self.username
-    
 
+class peo_table(AbstractBaseUser):
+    peo_id= models.AutoField(primary_key=True)
+    peo_name=models.CharField(max_length=255)
+    email=models.EmailField(unique=True)
+    password1=models.CharField(max_length=255)
+    password2=models.CharField(max_length=255)
+
+    
 class Calculation_data_results(models.Model):
-    employee_id=models.IntegerField()
-    employer_id=models.IntegerField()
+    employee_id=models.CharField(max_length=255)
+    cid=models.CharField(max_length=255)
     state=models.CharField(max_length=255)
     support_second_family=models.BooleanField()
     disposable_income =models.FloatField()
@@ -54,18 +80,85 @@ class Calculation_data_results(models.Model):
     amount_left_for_arrears=models.FloatField()
     allowed_amount_for_other_garnishment=models.FloatField()
 
-class Employee_Details(models.Model):
-    employee_id = models.AutoField(primary_key=True)
-    employer_id = models.IntegerField()
-    employee_name = models.CharField(max_length=255)
-    department = models.CharField(max_length=255)
-    pay_cycle = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    number_of_child_support_order=models.IntegerField()
+
+class Employee_Detail(models.Model):
+    ee_id = models.CharField(max_length=255)
+    cid=models.CharField(max_length=255)
+    age = models.IntegerField()
+    social_security_number = models.CharField(max_length=255)
+    is_blind = models.BooleanField(null=True, blank=True)
+    home_state=models.CharField(max_length=255)
+    work_state=models.CharField(max_length=255)
+    gender=models.CharField(max_length=255,null=True, blank=True)
+    pay_period = models.CharField(max_length=255)
+    number_of_exemptions = models.IntegerField()
+    filing_status = models.CharField(max_length=255)
+    marital_status = models.CharField(max_length=255)
+    number_of_student_default_loan = models.IntegerField()
+    support_second_family = models.BooleanField()
+    spouse_age = models.IntegerField(null=True, blank=True)
+    is_spouse_blind = models.BooleanField(null=True, blank=True)
+    record_import = models.DateTimeField(auto_now_add=True)
+    record_updated = models.DateTimeField(auto_now_add=True)
+
+class payroll(models.Model):
+    cid= models.CharField(max_length=255)
+    eeid= models.CharField(max_length=255)
+    payroll_date=models.DateField()
+    pay_date= models.DateField()
+    gross_pay=models.DecimalField(max_digits=250,decimal_places=2)
+    net_pay=models.DecimalField(max_digits=250,decimal_places=2)
+    tax_federal_income_tax=models.DecimalField(max_digits=250,decimal_places=2)
+    tax_state_tax=models.DecimalField(max_digits=250,decimal_places=2)
+    tax_local_tax=models.DecimalField(max_digits=250,decimal_places=2)
+    tax_medicare_tax=models.DecimalField(max_digits=250,decimal_places=2)
+    tax_social_security = models.CharField(max_length=255)
+    deduction_sdi=models.DecimalField(max_digits=250,decimal_places=2)
+    deduction_medical_insurance=models.DecimalField(max_digits=250,decimal_places=2)
+    deduction_401k=models.DecimalField(max_digits=250,decimal_places=2)
+    deduction_union_dues=models.DecimalField(max_digits=250,decimal_places=2)
+    deduction_voluntary=models.DecimalField(max_digits=250,decimal_places=2)
+    type=models.CharField(max_length=255)
+    amount=models.DecimalField(max_digits=250,decimal_places=2)
     
+
+class garnishment_order(models.Model):
+    cid = models.CharField(max_length=254)
+    eeid= models.CharField(max_length=254)
+    case_id= models.CharField(max_length=255, null=True, blank=True)
+    state= models.CharField(max_length=255)
+    type= models.CharField(max_length=255)
+    sdu= models.CharField(max_length=255, null=True, blank=True)
+    start_date= models.DateField(max_length=255, null=True, blank=True)
+    end_date= models.DateField(max_length=255, null=True, blank=True)
+    amount= models.DecimalField(max_digits=250,decimal_places=2)
+    arrear_greater_than_12_weeks= models.BooleanField(default=False, blank=False)
+    arrear_amount= models.DecimalField(max_digits=250,decimal_places=2)
+    record_import = models.DateTimeField(auto_now_add=True)
+    record_updated = models.DateTimeField(auto_now_add=True)
+   
+# # Employer_Profile details
+# class Employer_Profile(models.Model):
+#     employer_id = models.AutoField(primary_key=True)
+#     employer_name = models.CharField(max_length=100)
+#     email = models.EmailField(unique=True)
+#     username = models.CharField(max_length=100, unique=True)
+#     street_name = models.CharField(max_length=255, null=True, blank=True)
+#     federal_employer_identification_number = models.CharField(max_length=255, null=True, blank=True)
+#     city = models.CharField(max_length=255, null=True, blank=True)
+#     state = models.CharField(max_length=255, null=True, blank=True)
+#     country = models.CharField(max_length=255, null=True, blank=True)
+#     zipcode = models.CharField(max_length=10, null=True, blank=True)
+#     number_of_employees = models.IntegerField(null=True, blank=True)
+#     department = models.CharField(max_length=255, null=True, blank=True)
+#     location = models.CharField(max_length=255, null=True, blank=True)
+
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'employer_name']
+
     def __str__(self):
-        return self.employee_name
-  
+        return self.username
 class Tax_details(models.Model):
     tax_id = models.AutoField(primary_key=True)
     employer_id=models.IntegerField(unique=True)
@@ -90,8 +183,8 @@ class IWOPDFFile(models.Model):
  
 class IWO_Details_PDF(models.Model):
     IWO_ID = models.AutoField(primary_key=True)
-    employer_id=models.IntegerField(unique=True)
-    employee_id=models.IntegerField()
+    cid=models.CharField(max_length=250)
+    ee_id=models.CharField(max_length=250)
     IWO_Status =models.CharField(max_length=250)
 
 
@@ -130,7 +223,8 @@ class Garcalculation_data(models.Model):
     number_of_arrear= models.IntegerField()
     order_id=models.CharField(max_length=255)
     state=models.CharField(max_length=255)
-    disposable_income =models.FloatField()
+    gross_pay =models.FloatField()
+    mandatory_deductions=models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class CalculationResult(models.Model):
@@ -265,55 +359,6 @@ class federal_tax_data_and_result(models.Model):
     net_pay=models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-class federal_case_result(models.Model):
-    employee_id = models.CharField(max_length=255)
-    employer_id = models.CharField(max_length=255)
-    net_pay = models.FloatField()  
-    batch_id=models.CharField(max_length=255)
-    result= models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-class single_filing_status(models.Model):
-    pay_period = models.CharField(max_length=255) 
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()   
-    exemptions_6= models.FloatField()   
-    morethan7= models.CharField(max_length=255)
-
-class head_of_household(models.Model):
-    pay_period = models.CharField(max_length=255)
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()   
-    exemptions_6= models.FloatField()   
-    morethan7= models.CharField(max_length=255)
-
-
-class married_filing_joint_return(models.Model):
-    pay_period = models.CharField(max_length=255) 
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField()  
-    exemptions_6= models.FloatField()    
-    morethan7= models.CharField(max_length=255)
-
-class married_filing_sepearte_return(models.Model):
-    pay_period = models.CharField(max_length=255)
-    exemptions_1= models.FloatField() 
-    exemptions_2= models.FloatField()  
-    exemptions_3= models.FloatField()  
-    exemptions_4= models.FloatField()  
-    exemptions_5= models.FloatField() 
-    exemptions_6= models.FloatField()     
-    morethan7= models.CharField(max_length=255)
-
 class setting(models.Model):
     employer_id=models.IntegerField()
     modes=models.BooleanField()
@@ -407,4 +452,16 @@ class multiple_garnishment_case_result(models.Model):
 
 
 
-
+class company_details(models.Model):
+    cid= models.CharField(max_length=255) 
+    ein = models.IntegerField() 
+    company_name = models.CharField(max_length=255)
+    registered_address= models.CharField(max_length=255, null=True, blank=True)
+    zipcode= models.IntegerField()
+    state= models.CharField(max_length=255)
+    dba_name= models.CharField(max_length=255)
+    bank_name = models.CharField(max_length=255, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    record_import = models.DateTimeField(auto_now_add=True)
+    record_updated = models.DateTimeField(auto_now_add=True)

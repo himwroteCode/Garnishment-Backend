@@ -140,11 +140,11 @@ def federal_case(request):
     
                 amount_deduct=round(disposable_income-exempt_amount,2)
     
-                net_pay=round(disposable_income-amount_deduct,2) 
-                if net_pay <0:
-                    net_pay=0
-                else:
-                    net_pay=net_pay
+                # net_pay=round(disposable_income-amount_deduct,2) 
+                # if net_pay <0:
+                #     net_pay=0
+                # else:
+                #     net_pay=net_pay
     
                 # Create CalculationResult object
                 federal_case_result.objects.create(
@@ -271,8 +271,7 @@ class FederalCaseBatchResult(APIView):
         employees = federal_case_result.objects.filter(batch_id=batch_id)
         if employees.exists():
             try:
-                employee= employees.order_by('-timestamp')
-                serializer = federal_case_result_Serializer(employee,many=True)
+                serializer = federal_case_result_Serializer(employees,many=True)
                 response_data = {
                     'success': True,
                     'message': 'Data retrieved successfully',
